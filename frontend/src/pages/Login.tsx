@@ -2,22 +2,14 @@ import { useState } from 'react'
 import { Heart, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
-const ROLES = [
-  { value: 'admin', label: 'Administrador' },
-  { value: 'medico', label: 'Médico' },
-  { value: 'enfermeiro', label: 'Enfermeiro' },
-  { value: 'psicologo', label: 'Psicólogo' },
-  { value: 'fisioterapeuta', label: 'Fisioterapeuta' },
-  { value: 'paciente', label: 'Paciente' },
-  { value: 'marketing_admin', label: 'Admin Marketing' },
-]
+
 
 export default function Login() {
   const [isRegister, setIsRegister] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
-  const [role, setRole] = useState('paciente')
+
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -29,7 +21,7 @@ export default function Login() {
     setLoading(true)
     try {
       if (isRegister) {
-        await register(email, password, fullName, role)
+        await register(email, password, fullName)
       } else {
         await login(email, password)
       }
@@ -78,19 +70,11 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {isRegister && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
-                  <input type="text" required value={fullName} onChange={e => setFullName(e.target.value)}
-                    className="input-field" placeholder="Seu nome completo" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Usuário</label>
-                  <select value={role} onChange={e => setRole(e.target.value)} className="input-field">
-                    {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                  </select>
-                </div>
-              </>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                <input type="text" required value={fullName} onChange={e => setFullName(e.target.value)}
+                  className="input-field" placeholder="Seu nome completo" />
+              </div>
             )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>

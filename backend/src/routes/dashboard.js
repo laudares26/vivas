@@ -29,14 +29,16 @@ router.get('/', async (req, res) => {
       GROUP BY manchester_color
     `);
 
-    // Weekly attendance stats (last 7 days)
-    const weeklyStats = await pool.query(`
-      SELECT to_char(date_time, 'Dy') as day, COUNT(*) as count
+    // Weekly attendance stats (last 7 days) — use ISO day-of-week to map to Portuguese
+    const PT_DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const weeklyRaw = await pool.query(`
+      SELECT EXTRACT(DOW FROM date_time)::int as dow, COUNT(*) as count
       FROM appointments
       WHERE date_time >= NOW() - INTERVAL '7 days'
-      GROUP BY to_char(date_time, 'Dy'), DATE(date_time)
+      GROUP BY EXTRACT(DOW FROM date_time)::int, DATE(date_time)
       ORDER BY DATE(date_time)
     `);
+    const weeklyStats = { rows: weeklyRaw.rows.map(r => ({ day: PT_DAYS[r.dow] || r.dow, count: r.count })) };
 
     res.json({
       kpis: {

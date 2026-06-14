@@ -58,11 +58,11 @@ router.get('/:id', async (req, res) => {
 // POST create patient
 router.post('/', async (req, res) => {
   try {
-    const { full_name, cpf, cns, birth_date, gender, phone, email, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip, blood_type, allergies, notes } = req.body;
+    const { full_name, cpf, cns, birth_date, gender, phone, email, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip, blood_type, allergies, notes, convenio, status } = req.body;
     const result = await pool.query(
-      `INSERT INTO patients (full_name, cpf, cns, birth_date, gender, phone, email, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip, blood_type, allergies, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
-      [full_name, cpf, cns, birth_date, gender, phone, email, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip, blood_type, allergies, notes]
+      `INSERT INTO patients (full_name, cpf, cns, birth_date, gender, phone, email, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip, blood_type, allergies, notes, convenio, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING *`,
+      [full_name, cpf, cns, birth_date, gender, phone, email, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip, blood_type, allergies, notes, convenio || 'SUS', status || 'Ativo']
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -75,13 +75,13 @@ router.post('/', async (req, res) => {
 // PUT update patient
 router.put('/:id', async (req, res) => {
   try {
-    const { full_name, cpf, cns, birth_date, gender, phone, email, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip, blood_type, allergies, notes, active } = req.body;
+    const { full_name, cpf, cns, birth_date, gender, phone, email, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip, blood_type, allergies, notes, active, convenio, status } = req.body;
     const result = await pool.query(
       `UPDATE patients SET full_name=$1, cpf=$2, cns=$3, birth_date=$4, gender=$5, phone=$6, email=$7, 
        address_street=$8, address_number=$9, address_complement=$10, address_neighborhood=$11, 
        address_city=$12, address_state=$13, address_zip=$14, blood_type=$15, allergies=$16, notes=$17, 
-       active=$18, updated_at=NOW() WHERE id=$19 RETURNING *`,
-      [full_name, cpf, cns, birth_date, gender, phone, email, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip, blood_type, allergies, notes, active, req.params.id]
+       active=$18, convenio=$19, status=$20, updated_at=NOW() WHERE id=$21 RETURNING *`,
+      [full_name, cpf, cns, birth_date, gender, phone, email, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip, blood_type, allergies, notes, active, convenio, status, req.params.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Paciente não encontrado' });
     res.json(result.rows[0]);

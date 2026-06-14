@@ -4,7 +4,14 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'vivas-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET || (() => {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('FATAL: JWT_SECRET environment variable is required in production');
+    process.exit(1);
+  }
+  console.warn('WARNING: Using default JWT_SECRET — set JWT_SECRET env var for production');
+  return 'vivas-dev-only-secret';
+})();
 
 // Middleware to verify JWT
 const authenticate = (req, res, next) => {
@@ -53,10 +60,10 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// POST /api/auth/register
+// POST /api/auth/register (public self-registration — always forces role 'paciente')
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, full_name, role = 'paciente', avatar_color } = req.body;
+    const { email, password, full_name, avatar_color } = req.body;
     const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'Email já cadastrado' });
@@ -64,8 +71,8 @@ router.post('/register', async (req, res) => {
     const password_hash = await bcrypt.hash(password, 10);
     const result = await pool.query(
       `INSERT INTO users (email, password_hash, full_name, role, avatar_color)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id, email, full_name, role, avatar_color`,
-      [email, password_hash, full_name, role, avatar_color || '#0057B8']
+       VALUES ($1, $2, $3, 'paciente', $4) RETURNING id, email, full_name, role, avatar_color`,
+      [email, password_hash, full_name, avatar_color || '#0057B8']
     );
     const user = result.rows[0];
     const token = jwt.sign(
@@ -74,6 +81,30 @@ router.post('/register', async (req, res) => {
       { expiresIn: '24h' }
     );
     res.status(201).json({ token, user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/users (admin only — create user with any role)
+router.post('/users', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const { email, password, full_name, role = 'paciente', avatar_color } = req.body;
+    const VALID_ROLES = ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta', 'paciente', 'marketing_admin'];
+    if (!VALID_ROLES.includes(role)) {
+      return res.status(400).json({ error: 'Perfil inválido' });
+    }
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Email já cadastrado' });
+    }
+    const password_hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      `INSERT INTO users (email, password_hash, full_name, role, avatar_color)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id, email, full_name, role, avatar_color, active, created_at`,
+      [email, password_hash, full_name, role, avatar_color || '#0057B8']
+    );
+    res.status(201).json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

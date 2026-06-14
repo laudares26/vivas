@@ -3,8 +3,10 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const pool = require('../config/database');
+const { authenticate, authorize } = require('./auth');
 
 const router = express.Router();
+const MEDICAL_ROLES = ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'];
 
 // Configure storage for DICOM files
 const DICOM_DIR = process.env.DICOM_STORAGE_PATH || path.join(__dirname, '../../dicom_storage');
@@ -39,7 +41,7 @@ const upload = multer({
 });
 
 // GET /api/dicom/studies - List all studies
-router.get('/studies', async (req, res) => {
+router.get('/studies', authenticate, authorize(...MEDICAL_ROLES), async (req, res) => {
   try {
     const { search } = req.query;
     let query = `SELECT * FROM dicom_studies ORDER BY study_date DESC, created_at DESC`;
@@ -58,7 +60,7 @@ router.get('/studies', async (req, res) => {
 });
 
 // GET /api/dicom/studies/:id - Get study with series
-router.get('/studies/:id', async (req, res) => {
+router.get('/studies/:id', authenticate, authorize(...MEDICAL_ROLES), async (req, res) => {
   try {
     const study = await pool.query('SELECT * FROM dicom_studies WHERE id = $1', [req.params.id]);
     if (study.rows.length === 0) return res.status(404).json({ error: 'Estudo não encontrado' });
@@ -76,7 +78,7 @@ router.get('/studies/:id', async (req, res) => {
 });
 
 // POST /api/dicom/upload - Upload DICOM files
-router.post('/upload', upload.array('files', 100), async (req, res) => {
+router.post('/upload', authenticate, authorize(...MEDICAL_ROLES), upload.array('files', 100), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'Nenhum arquivo enviado' });
@@ -223,22 +225,25 @@ router.post('/upload', upload.array('files', 100), async (req, res) => {
 });
 
 // GET /api/dicom/file/:instanceId - Serve raw DICOM file
-router.get('/file/:instanceId', async (req, res) => {
+router.get('/file/:instanceId', authenticate, authorize(...MEDICAL_ROLES), async (req, res) => {
   try {
     const result = await pool.query('SELECT file_path FROM dicom_instances WHERE id = $1', [req.params.instanceId]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Arquivo não encontrado' });
     const filePath = result.rows[0].file_path;
-    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Arquivo não disponível no disco' });
+    const resolvedPath = path.resolve(filePath);
+    if (!resolvedPath.startsWith(path.resolve(DICOM_DIR))) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+    if (!fs.existsSync(resolvedPath)) return res.status(404).json({ error: 'Arquivo não disponível no disco' });
     res.setHeader('Content-Type', 'application/dicom');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    fs.createReadStream(filePath).pipe(res);
+    fs.createReadStream(resolvedPath).pipe(res);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 // GET /api/dicom/series/:seriesId/instances - Get all instances in a series
-router.get('/series/:seriesId/instances', async (req, res) => {
+router.get('/series/:seriesId/instances', authenticate, authorize(...MEDICAL_ROLES), async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT * FROM dicom_instances WHERE series_id = $1 ORDER BY instance_number',
@@ -251,7 +256,7 @@ router.get('/series/:seriesId/instances', async (req, res) => {
 });
 
 // DELETE /api/dicom/studies/:id - Delete study and all related data
-router.delete('/studies/:id', async (req, res) => {
+router.delete('/studies/:id', authenticate, authorize(...MEDICAL_ROLES), async (req, res) => {
   try {
     // Get all file paths
     const instances = await pool.query(
@@ -277,7 +282,7 @@ router.delete('/studies/:id', async (req, res) => {
 });
 
 // GET /api/dicom/pacs/sources - Get configured PACS sources
-router.get('/pacs/sources', async (req, res) => {
+router.get('/pacs/sources', authenticate, authorize(...MEDICAL_ROLES), async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM dicom_pacs_sources ORDER BY name');
     res.json(result.rows);
@@ -287,7 +292,7 @@ router.get('/pacs/sources', async (req, res) => {
 });
 
 // POST /api/dicom/pacs/sources - Add PACS source
-router.post('/pacs/sources', async (req, res) => {
+router.post('/pacs/sources', authenticate, authorize('admin'), async (req, res) => {
   try {
     const { name, ae_title, host, port, protocol, description } = req.body;
     const result = await pool.query(
@@ -302,7 +307,7 @@ router.post('/pacs/sources', async (req, res) => {
 });
 
 // DELETE /api/dicom/pacs/sources/:id
-router.delete('/pacs/sources/:id', async (req, res) => {
+router.delete('/pacs/sources/:id', authenticate, authorize('admin'), async (req, res) => {
   try {
     await pool.query('DELETE FROM dicom_pacs_sources WHERE id = $1', [req.params.id]);
     res.json({ message: 'Fonte PACS removida' });

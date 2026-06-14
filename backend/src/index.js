@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const { router: authRouter } = require('./routes/auth');
+const { router: authRouter, authenticate } = require('./routes/auth');
 const patientsRouter = require('./routes/patients');
 const professionalsRouter = require('./routes/professionals');
 const appointmentsRouter = require('./routes/appointments');
@@ -25,18 +25,18 @@ app.use(express.json());
 
 // API routes
 app.use('/api/auth', authRouter);
-app.use('/api/patients', patientsRouter);
-app.use('/api/professionals', professionalsRouter);
-app.use('/api/appointments', appointmentsRouter);
-app.use('/api/medical-records', medicalRecordsRouter);
-app.use('/api/prescriptions', prescriptionsRouter);
-app.use('/api/exams', examsRouter);
-app.use('/api/ehr', ehrRouter);
-app.use('/api/triage', triageRouter);
-app.use('/api/risk', riskRouter);
-app.use('/api/dashboard', dashboardRouter);
-app.use('/api/coupons', couponsRouter);
-app.use('/api/dicom', dicomRouter);
+app.use('/api/patients', authenticate, patientsRouter);
+app.use('/api/professionals', authenticate, professionalsRouter);
+app.use('/api/appointments', authenticate, appointmentsRouter);
+app.use('/api/medical-records', authenticate, medicalRecordsRouter);
+app.use('/api/prescriptions', authenticate, prescriptionsRouter);
+app.use('/api/exams', authenticate, examsRouter);
+app.use('/api/ehr', authenticate, ehrRouter);
+app.use('/api/triage', authenticate, triageRouter);
+app.use('/api/risk', authenticate, riskRouter);
+app.use('/api/dashboard', authenticate, dashboardRouter);
+app.use('/api/coupons', authenticate, couponsRouter);
+app.use('/api/dicom', dicomRouter); // DICOM routes handle their own auth + role checks
 
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
