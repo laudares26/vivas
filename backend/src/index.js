@@ -15,6 +15,7 @@ const triageRouter = require('./routes/triage');
 const riskRouter = require('./routes/risk');
 const dashboardRouter = require('./routes/dashboard');
 const couponsRouter = require('./routes/coupons');
+const dicomRouter = require('./routes/dicom');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -35,6 +36,7 @@ app.use('/api/triage', triageRouter);
 app.use('/api/risk', riskRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/coupons', couponsRouter);
+app.use('/api/dicom', dicomRouter);
 
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {

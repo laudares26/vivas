@@ -17,6 +17,7 @@ import Predicao from './pages/Predicao'
 import Cupons from './pages/Cupons'
 import Usuarios from './pages/Usuarios'
 import Configuracoes from './pages/Configuracoes'
+import DicomViewer from './pages/DicomViewer'
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth()
@@ -52,6 +53,7 @@ function ProtectedRoutes() {
         <Route path="/cupons" element={<Cupons />} />
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
+        <Route path="/dicom" element={<DicomViewer />} />
       </Routes>
     </Layout>
   )

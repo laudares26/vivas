@@ -223,6 +223,79 @@ CREATE INDEX IF NOT EXISTS idx_triage_status ON triage_records(status);
 CREATE INDEX IF NOT EXISTS idx_ehr_patient ON ehr_entries(patient_id);
 CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);
 
+-- DICOM Studies (Isis DICOM Viewer)
+CREATE TABLE IF NOT EXISTS dicom_studies (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  study_instance_uid VARCHAR(128) UNIQUE,
+  patient_name VARCHAR(255),
+  patient_id VARCHAR(64),
+  patient_birth_date VARCHAR(10),
+  patient_sex VARCHAR(4),
+  study_date VARCHAR(10),
+  study_time VARCHAR(16),
+  study_description VARCHAR(255),
+  accession_number VARCHAR(64),
+  modality VARCHAR(16),
+  num_series INT DEFAULT 0,
+  num_instances INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- DICOM Series
+CREATE TABLE IF NOT EXISTS dicom_series (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  study_id UUID REFERENCES dicom_studies(id) ON DELETE CASCADE,
+  series_instance_uid VARCHAR(128) UNIQUE,
+  series_number VARCHAR(10),
+  series_description VARCHAR(255),
+  modality VARCHAR(16),
+  num_instances INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- DICOM Instances (individual files)
+CREATE TABLE IF NOT EXISTS dicom_instances (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  series_id UUID REFERENCES dicom_series(id) ON DELETE CASCADE,
+  sop_instance_uid VARCHAR(128),
+  instance_number VARCHAR(10),
+  file_path TEXT,
+  rows INT,
+  columns INT,
+  bits_allocated INT,
+  bits_stored INT,
+  pixel_spacing VARCHAR(50),
+  slice_thickness VARCHAR(20),
+  window_center VARCHAR(50),
+  window_width VARCHAR(50),
+  rescale_intercept VARCHAR(20),
+  rescale_slope VARCHAR(20),
+  photometric_interpretation VARCHAR(30),
+  transfer_syntax_uid VARCHAR(128),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- DICOM PACS Sources
+CREATE TABLE IF NOT EXISTS dicom_pacs_sources (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(100) NOT NULL,
+  ae_title VARCHAR(16),
+  host VARCHAR(255),
+  port INT DEFAULT 104,
+  protocol VARCHAR(20) DEFAULT 'DIMSE',
+  description TEXT,
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- DICOM Indexes
+CREATE INDEX IF NOT EXISTS idx_dicom_studies_patient ON dicom_studies(patient_name);
+CREATE INDEX IF NOT EXISTS idx_dicom_studies_date ON dicom_studies(study_date);
+CREATE INDEX IF NOT EXISTS idx_dicom_studies_modality ON dicom_studies(modality);
+CREATE INDEX IF NOT EXISTS idx_dicom_series_study ON dicom_series(study_id);
+CREATE INDEX IF NOT EXISTS idx_dicom_instances_series ON dicom_instances(series_id);
+
 -- Add new columns if they don't exist (safe migration)
 DO $$ BEGIN
   ALTER TABLE patients ADD COLUMN IF NOT EXISTS convenio VARCHAR(50) DEFAULT 'SUS';

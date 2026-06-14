@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, UserCog, CalendarDays, Stethoscope, FileText,
   TestTubeDiagonal, ClipboardList, Video, Brain, Bot, Activity,
-  ChevronLeft, ChevronRight, Heart, Tag, Settings, UsersRound, LogOut
+  ChevronLeft, ChevronRight, Heart, Tag, Settings, UsersRound, LogOut, Layers
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -22,6 +22,7 @@ const clinicalLinks: NavItem[] = [
   { to: '/atendimento', icon: Stethoscope, label: 'Atendimento Médico', roles: ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'] },
   { to: '/prontuario', icon: FileText, label: 'Prontuário Eletrônico', roles: ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'] },
   { to: '/exames', icon: TestTubeDiagonal, label: 'Exames e Laudos', roles: ['admin', 'medico', 'enfermeiro'] },
+  { to: '/dicom', icon: Layers, label: 'Isis DICOM Viewer', roles: ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'] },
   { to: '/prescricoes', icon: ClipboardList, label: 'Receitas e Prescrições', roles: ['admin', 'medico'] },
   { to: '/teleconsulta', icon: Video, label: 'Teleconsulta' },
 ]
