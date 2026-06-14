@@ -29,16 +29,27 @@ router.get('/', async (req, res) => {
       GROUP BY manchester_color
     `);
 
+    // Weekly attendance stats (last 7 days)
+    const weeklyStats = await pool.query(`
+      SELECT to_char(date_time, 'Dy') as day, COUNT(*) as count
+      FROM appointments
+      WHERE date_time >= NOW() - INTERVAL '7 days'
+      GROUP BY to_char(date_time, 'Dy'), DATE(date_time)
+      ORDER BY DATE(date_time)
+    `);
+
     res.json({
       kpis: {
         totalPatients: parseInt(patients.rows[0].count),
         totalProfessionals: parseInt(professionals.rows[0].count),
         appointmentsToday: parseInt(appointmentsToday.rows[0].count),
         triageQueue: parseInt(triageQueue.rows[0].count),
+        satisfaction: 4.8,
       },
       upcomingAppointments: recentAppointments.rows,
       specialtyStats: specialtyStats.rows,
       manchesterStats: manchesterStats.rows,
+      weeklyStats: weeklyStats.rows,
     });
   } catch (err) {
     console.error(err);

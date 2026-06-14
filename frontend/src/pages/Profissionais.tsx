@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Search, Plus, Edit2, Trash2 } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, Star, CalendarDays } from 'lucide-react'
 import { api, type Professional } from '../services/api'
 import { useToast } from '../components/Toast'
 import Modal from '../components/Modal'
@@ -8,11 +8,23 @@ const TABS = [
   { key: '', label: 'Todos' },
   { key: 'Médico', label: 'Médicos' },
   { key: 'Enfermeiro', label: 'Enfermeiros' },
+  { key: 'Psicólogo', label: 'Psicólogos' },
   { key: 'Fisioterapeuta', label: 'Fisioterapeutas' },
 ]
 
 const EMPTY: Partial<Professional> = {
   full_name: '', cpf: '', professional_id: '', category: 'Médico', specialty: '', cnes: '', phone: '', email: '',
+}
+
+function getInitials(name: string): string {
+  return name.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()
+}
+
+const CAT_COLORS: Record<string, string> = {
+  'Médico': 'bg-blue-100 text-blue-700',
+  'Enfermeiro': 'bg-green-100 text-green-700',
+  'Psicólogo': 'bg-pink-100 text-pink-700',
+  'Fisioterapeuta': 'bg-purple-100 text-purple-700',
 }
 
 export default function Profissionais() {
@@ -93,29 +105,60 @@ export default function Profissionais() {
       {loading ? (
         <div className="flex items-center justify-center h-40"><div className="animate-spin w-8 h-8 border-4 border-vivas-blue border-t-transparent rounded-full" /></div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {professionals.map(p => (
-            <div key={p.id} className="card">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{p.full_name}</h3>
-                  <p className="text-sm text-gray-500">{p.specialty}</p>
-                </div>
-                <span className={`badge ${p.category === 'Médico' ? 'bg-blue-100 text-blue-700' : p.category === 'Enfermeiro' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>
-                  {p.category}
-                </span>
-              </div>
-              <div className="mt-3 space-y-1 text-sm text-gray-600">
-                <p className="font-mono text-xs">{p.professional_id}</p>
-                {p.cnes && <span className="badge-cnes">CNES {p.cnes}</span>}
-                <p>{p.phone}</p>
-              </div>
-              <div className="flex gap-1 mt-3 pt-3 border-t border-gray-100">
-                <button onClick={() => openEdit(p)} className="btn-ghost !px-3 !py-1.5 text-xs flex items-center gap-1"><Edit2 className="w-3 h-3" />Editar</button>
-                <button onClick={() => handleDelete(p.id)} className="btn-ghost !px-3 !py-1.5 text-xs flex items-center gap-1 text-red-600 hover:bg-red-50"><Trash2 className="w-3 h-3" />Remover</button>
-              </div>
-            </div>
-          ))}
+        <div className="card !p-0 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-100">
+              <tr className="text-left text-gray-500 uppercase text-xs">
+                <th className="px-6 py-3 font-medium">Profissional</th>
+                <th className="px-6 py-3 font-medium">Registro</th>
+                <th className="px-6 py-3 font-medium">Especialidade</th>
+                <th className="px-6 py-3 font-medium">CNES</th>
+                <th className="px-6 py-3 font-medium">Agenda</th>
+                <th className="px-6 py-3 font-medium">Consultas/Mês</th>
+                <th className="px-6 py-3 font-medium">Avaliação</th>
+                <th className="px-6 py-3 font-medium text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {professionals.map(p => (
+                <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-vivas-blue flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                        {getInitials(p.full_name)}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{p.full_name}</p>
+                        <span className={`badge text-[10px] ${CAT_COLORS[p.category] || 'bg-gray-100 text-gray-700'}`}>{p.category}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-3 font-mono text-xs text-gray-600">{p.professional_id}</td>
+                  <td className="px-6 py-3 text-gray-600">{p.specialty}</td>
+                  <td className="px-6 py-3">{p.cnes ? <span className="badge-cnes text-xs">CNES {p.cnes}</span> : '—'}</td>
+                  <td className="px-6 py-3">
+                    <div className="flex items-center gap-1 text-gray-600 text-xs">
+                      <CalendarDays className="w-3.5 h-3.5 text-gray-400" />
+                      {p.schedule || 'Seg-Sex'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-3 text-gray-600 font-medium">{p.consultations_month || 0}</td>
+                  <td className="px-6 py-3">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                      <span className="text-sm font-medium text-gray-900">{Number(p.rating || 0).toFixed(1)}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-3 text-right">
+                    <div className="flex gap-1 justify-end">
+                      <button onClick={() => openEdit(p)} className="p-2 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-vivas-blue"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => handleDelete(p.id)} className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -139,7 +182,7 @@ export default function Profissionais() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
               <select className="input-field" value={editing.category || 'Médico'} onChange={e => updateField('category', e.target.value)}>
-                <option>Médico</option><option>Enfermeiro</option><option>Fisioterapeuta</option>
+                <option>Médico</option><option>Enfermeiro</option><option>Psicólogo</option><option>Fisioterapeuta</option>
               </select>
             </div>
             <div>

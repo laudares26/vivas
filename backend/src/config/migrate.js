@@ -5,6 +5,21 @@ const migration = `
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Users table (authentication & roles)
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  full_name VARCHAR(255) NOT NULL,
+  role VARCHAR(30) NOT NULL DEFAULT 'paciente',
+  avatar_color VARCHAR(7) DEFAULT '#0057B8',
+  active BOOLEAN DEFAULT true,
+  professional_id UUID,
+  patient_id UUID,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Patients table
 CREATE TABLE IF NOT EXISTS patients (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -25,6 +40,8 @@ CREATE TABLE IF NOT EXISTS patients (
   blood_type VARCHAR(5),
   allergies TEXT,
   notes TEXT,
+  convenio VARCHAR(50) DEFAULT 'SUS',
+  status VARCHAR(20) DEFAULT 'Ativo',
   active BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
@@ -41,6 +58,9 @@ CREATE TABLE IF NOT EXISTS professionals (
   cnes VARCHAR(20),
   phone VARCHAR(20),
   email VARCHAR(255),
+  schedule VARCHAR(20) DEFAULT 'Seg-Sex',
+  consultations_month INT DEFAULT 0,
+  rating DECIMAL(2,1) DEFAULT 4.5,
   active BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
@@ -164,7 +184,33 @@ CREATE TABLE IF NOT EXISTS risk_predictions (
   prediction_date TIMESTAMP DEFAULT NOW()
 );
 
+-- Coupons table
+CREATE TABLE IF NOT EXISTS coupons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  code VARCHAR(30) UNIQUE NOT NULL,
+  campaign VARCHAR(100),
+  discount VARCHAR(30),
+  redemptions INT DEFAULT 0,
+  max_redemptions INT,
+  valid_until DATE,
+  status VARCHAR(20) DEFAULT 'Ativo',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- System settings
+CREATE TABLE IF NOT EXISTS system_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  category VARCHAR(50) NOT NULL,
+  key VARCHAR(100) NOT NULL,
+  value TEXT,
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(category, key)
+);
+
 -- Indexes
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_patients_cpf ON patients(cpf);
 CREATE INDEX IF NOT EXISTS idx_patients_cns ON patients(cns);
 CREATE INDEX IF NOT EXISTS idx_patients_name ON patients(full_name);
@@ -175,6 +221,16 @@ CREATE INDEX IF NOT EXISTS idx_medical_records_patient ON medical_records(patien
 CREATE INDEX IF NOT EXISTS idx_exams_patient ON exams(patient_id);
 CREATE INDEX IF NOT EXISTS idx_triage_status ON triage_records(status);
 CREATE INDEX IF NOT EXISTS idx_ehr_patient ON ehr_entries(patient_id);
+CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);
+
+-- Add new columns if they don't exist (safe migration)
+DO $$ BEGIN
+  ALTER TABLE patients ADD COLUMN IF NOT EXISTS convenio VARCHAR(50) DEFAULT 'SUS';
+  ALTER TABLE patients ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'Ativo';
+  ALTER TABLE professionals ADD COLUMN IF NOT EXISTS schedule VARCHAR(20) DEFAULT 'Seg-Sex';
+  ALTER TABLE professionals ADD COLUMN IF NOT EXISTS consultations_month INT DEFAULT 0;
+  ALTER TABLE professionals ADD COLUMN IF NOT EXISTS rating DECIMAL(2,1) DEFAULT 4.5;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 `;
 
 async function migrate() {

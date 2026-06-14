@@ -1,8 +1,13 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
+function getAuthHeaders(): Record<string, string> {
+  const token = localStorage.getItem('vivas_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${url}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders(), ...options?.headers },
     ...options,
   });
   if (!res.ok) {
@@ -63,6 +68,12 @@ export const api = {
   // Risk Predictions
   getRiskPredictions: (patientId: string) => request<RiskPrediction[]>(`/risk/${patientId}`),
   createRiskPrediction: (data: Partial<RiskPrediction>) => request<RiskPrediction>('/risk', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Coupons
+  getCoupons: () => request<Coupon[]>('/coupons'),
+  createCoupon: (data: Partial<Coupon>) => request<Coupon>('/coupons', { method: 'POST', body: JSON.stringify(data) }),
+  updateCoupon: (id: string, data: Partial<Coupon>) => request<Coupon>(`/coupons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCoupon: (id: string) => request<void>(`/coupons/${id}`, { method: 'DELETE' }),
 };
 
 // Types
@@ -70,14 +81,16 @@ export interface Patient {
   id: string; full_name: string; cpf: string; cns: string; birth_date: string; gender: string;
   phone: string; email: string; address_street: string; address_number: string; address_complement: string;
   address_neighborhood: string; address_city: string; address_state: string; address_zip: string;
-  blood_type: string; allergies: string; notes: string; active: boolean; created_at: string; updated_at: string;
+  blood_type: string; allergies: string; notes: string; convenio: string; status: string;
+  active: boolean; created_at: string; updated_at: string;
 }
 
 export interface PatientsResponse { data: Patient[]; total: number; page: number; limit: number; }
 
 export interface Professional {
   id: string; full_name: string; cpf: string; professional_id: string; category: string;
-  specialty: string; cnes: string; phone: string; email: string; active: boolean;
+  specialty: string; cnes: string; phone: string; email: string; schedule: string;
+  consultations_month: number; rating: number; active: boolean;
   created_at: string; updated_at: string;
 }
 
@@ -136,8 +149,14 @@ export interface RiskPrediction {
 }
 
 export interface DashboardData {
-  kpis: { totalPatients: number; totalProfessionals: number; appointmentsToday: number; triageQueue: number; };
+  kpis: { totalPatients: number; totalProfessionals: number; appointmentsToday: number; triageQueue: number; satisfaction: number; };
   upcomingAppointments: Appointment[];
   specialtyStats: { specialty: string; count: number; }[];
   manchesterStats: { manchester_color: string; count: number; }[];
+  weeklyStats: { day: string; count: number; }[];
+}
+
+export interface Coupon {
+  id: string; code: string; campaign: string; discount: string; redemptions: number;
+  max_redemptions: number; valid_until: string; status: string; created_at: string; updated_at: string;
 }
