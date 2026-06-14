@@ -1,8 +1,13 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
+function getAuthHeaders(): Record<string, string> {
+  const token = localStorage.getItem('vivas_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${url}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders(), ...options?.headers },
     ...options,
   });
   if (!res.ok) {
@@ -63,6 +68,33 @@ export const api = {
   // Risk Predictions
   getRiskPredictions: (patientId: string) => request<RiskPrediction[]>(`/risk/${patientId}`),
   createRiskPrediction: (data: Partial<RiskPrediction>) => request<RiskPrediction>('/risk', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Coupons
+  getCoupons: () => request<Coupon[]>('/coupons'),
+  createCoupon: (data: Partial<Coupon>) => request<Coupon>('/coupons', { method: 'POST', body: JSON.stringify(data) }),
+  updateCoupon: (id: string, data: Partial<Coupon>) => request<Coupon>(`/coupons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCoupon: (id: string) => request<void>(`/coupons/${id}`, { method: 'DELETE' }),
+
+  // DICOM (Isis DICOM Viewer)
+  getDicomStudies: (search?: string) => request<DicomStudy[]>(`/dicom/studies${search ? `?search=${search}` : ''}`),
+  getDicomStudy: (id: string) => request<DicomStudyDetail>(`/dicom/studies/${id}`),
+  deleteDicomStudy: (id: string) => request<void>(`/dicom/studies/${id}`, { method: 'DELETE' }),
+  getDicomSeriesInstances: (seriesId: string) => request<DicomInstance[]>(`/dicom/series/${seriesId}/instances`),
+  uploadDicomFiles: async (files: File[]) => {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+    const res = await fetch(`${API_BASE}/dicom/upload`, {
+      method: 'POST',
+      headers: { ...getAuthHeaders() },
+      body: formData,
+    });
+    if (!res.ok) { const err = await res.json().catch(() => ({ error: 'Erro' })); throw new Error(err.error); }
+    return res.json();
+  },
+  getDicomFileUrl: (instanceId: string) => `${API_BASE}/dicom/file/${instanceId}`,
+  getPacsSources: () => request<PacsSource[]>('/dicom/pacs/sources'),
+  createPacsSource: (data: Partial<PacsSource>) => request<PacsSource>('/dicom/pacs/sources', { method: 'POST', body: JSON.stringify(data) }),
+  deletePacsSource: (id: string) => request<void>(`/dicom/pacs/sources/${id}`, { method: 'DELETE' }),
 };
 
 // Types
@@ -70,14 +102,16 @@ export interface Patient {
   id: string; full_name: string; cpf: string; cns: string; birth_date: string; gender: string;
   phone: string; email: string; address_street: string; address_number: string; address_complement: string;
   address_neighborhood: string; address_city: string; address_state: string; address_zip: string;
-  blood_type: string; allergies: string; notes: string; active: boolean; created_at: string; updated_at: string;
+  blood_type: string; allergies: string; notes: string; convenio: string; status: string;
+  active: boolean; created_at: string; updated_at: string;
 }
 
 export interface PatientsResponse { data: Patient[]; total: number; page: number; limit: number; }
 
 export interface Professional {
   id: string; full_name: string; cpf: string; professional_id: string; category: string;
-  specialty: string; cnes: string; phone: string; email: string; active: boolean;
+  specialty: string; cnes: string; phone: string; email: string; schedule: string;
+  consultations_month: number; rating: number; active: boolean;
   created_at: string; updated_at: string;
 }
 
@@ -136,8 +170,44 @@ export interface RiskPrediction {
 }
 
 export interface DashboardData {
-  kpis: { totalPatients: number; totalProfessionals: number; appointmentsToday: number; triageQueue: number; };
+  kpis: { totalPatients: number; totalProfessionals: number; appointmentsToday: number; triageQueue: number; satisfaction: number; };
   upcomingAppointments: Appointment[];
   specialtyStats: { specialty: string; count: number; }[];
   manchesterStats: { manchester_color: string; count: number; }[];
+  weeklyStats: { day: string; count: number; }[];
+}
+
+export interface Coupon {
+  id: string; code: string; campaign: string; discount: string; redemptions: number;
+  max_redemptions: number; valid_until: string; status: string; created_at: string; updated_at: string;
+}
+
+export interface DicomStudy {
+  id: string; study_instance_uid: string; patient_name: string; patient_id: string;
+  patient_birth_date: string; patient_sex: string; study_date: string; study_time: string;
+  study_description: string; accession_number: string; modality: string;
+  num_series: number; num_instances: number; created_at: string;
+}
+
+export interface DicomSeries {
+  id: string; study_id: string; series_instance_uid: string; series_number: string;
+  series_description: string; modality: string; num_instances: number; created_at: string;
+}
+
+export interface DicomInstance {
+  id: string; series_id: string; sop_instance_uid: string; instance_number: string;
+  file_path: string; rows: number; columns: number; bits_allocated: number; bits_stored: number;
+  pixel_spacing: string; slice_thickness: string; window_center: string; window_width: string;
+  rescale_intercept: string; rescale_slope: string; photometric_interpretation: string;
+  transfer_syntax_uid: string; created_at: string;
+}
+
+export interface DicomStudyDetail extends DicomStudy {
+  series: DicomSeries[];
+  instances: DicomInstance[];
+}
+
+export interface PacsSource {
+  id: string; name: string; ae_title: string; host: string; port: number;
+  protocol: string; description: string; active: boolean; created_at: string;
 }

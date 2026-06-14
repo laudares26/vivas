@@ -1,0 +1,135 @@
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const pool = require('../config/database');
+
+const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'vivas-secret-key-2024';
+
+// Middleware to verify JWT
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'Token não fornecido' });
+  try {
+    req.user = jwt.verify(token, JWT_SECRET);
+    next();
+  } catch {
+    res.status(401).json({ error: 'Token inválido' });
+  }
+};
+
+// Middleware for role check
+const authorize = (...roles) => (req, res, next) => {
+  if (!roles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'Acesso negado' });
+  }
+  next();
+};
+
+// POST /api/auth/login
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const result = await pool.query('SELECT * FROM users WHERE email = $1 AND active = true', [email]);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Email ou senha inválidos' });
+    }
+    const user = result.rows[0];
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Email ou senha inválidos' });
+    }
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role, full_name: user.full_name, avatar_color: user.avatar_color },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    res.json({
+      token,
+      user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name, avatar_color: user.avatar_color }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/register
+router.post('/register', async (req, res) => {
+  try {
+    const { email, password, full_name, role = 'paciente', avatar_color } = req.body;
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Email já cadastrado' });
+    }
+    const password_hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      `INSERT INTO users (email, password_hash, full_name, role, avatar_color)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id, email, full_name, role, avatar_color`,
+      [email, password_hash, full_name, role, avatar_color || '#0057B8']
+    );
+    const user = result.rows[0];
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role, full_name: user.full_name, avatar_color: user.avatar_color },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    res.status(201).json({ token, user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/auth/me
+router.get('/me', authenticate, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, email, full_name, role, avatar_color, active, created_at FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/auth/users (admin only)
+router.get('/users', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, email, full_name, role, avatar_color, active, created_at FROM users ORDER BY created_at DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/auth/users/:id (admin only)
+router.put('/users/:id', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const { full_name, role, active } = req.body;
+    const result = await pool.query(
+      `UPDATE users SET full_name = COALESCE($1, full_name), role = COALESCE($2, role), 
+       active = COALESCE($3, active), updated_at = NOW() WHERE id = $4 
+       RETURNING id, email, full_name, role, avatar_color, active`,
+      [full_name, role, active, req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/auth/users/:id (admin only)
+router.delete('/users/:id', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    await pool.query('UPDATE users SET active = false WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = { router, authenticate, authorize };

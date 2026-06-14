@@ -1,43 +1,65 @@
 require('dotenv').config();
+const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
 
 const seedData = async () => {
   try {
+    // Seed default users
+    const adminHash = await bcrypt.hash('admin123', 10);
+    const medicoHash = await bcrypt.hash('medico123', 10);
+    const enfermeiroHash = await bcrypt.hash('enfermeiro123', 10);
+    const pacienteHash = await bcrypt.hash('paciente123', 10);
+    const marketingHash = await bcrypt.hash('marketing123', 10);
+    const psicologoHash = await bcrypt.hash('psicologo123', 10);
+
+    await pool.query(`
+      INSERT INTO users (email, password_hash, full_name, role, avatar_color)
+      VALUES 
+        ('admin@vivas.com', $1, 'Dr. Admin', 'admin', '#0057B8'),
+        ('ricardo@vivas.com', $2, 'Dr. Ricardo Mendes', 'medico', '#2563EB'),
+        ('mariana@vivas.com', $3, 'Enf. Mariana Costa', 'enfermeiro', '#16A34A'),
+        ('maria@email.com', $4, 'Maria Silva Santos', 'paciente', '#EA580C'),
+        ('marketing@vivas.com', $5, 'Ana Marketing', 'marketing_admin', '#9333EA'),
+        ('psicologa@vivas.com', $6, 'Dra. Carla Sousa', 'psicologo', '#EC4899')
+      ON CONFLICT (email) DO NOTHING;
+    `, [adminHash, medicoHash, enfermeiroHash, pacienteHash, marketingHash, psicologoHash]);
+
     // Seed patients
     await pool.query(`
-      INSERT INTO patients (full_name, cpf, cns, birth_date, gender, phone, email, address_city, address_state, blood_type, allergies)
+      INSERT INTO patients (full_name, cpf, cns, birth_date, gender, phone, email, address_city, address_state, blood_type, allergies, convenio, status)
       VALUES 
-        ('Maria Silva Santos', '123.456.789-00', '898 0001 2345 0001', '1985-03-15', 'Feminino', '(31) 99999-1111', 'maria.silva@email.com', 'Belo Horizonte', 'MG', 'O+', 'Penicilina'),
-        ('João Carlos Oliveira', '234.567.890-11', '898 0001 2345 0002', '1972-08-22', 'Masculino', '(31) 99999-2222', 'joao.oliveira@email.com', 'Belo Horizonte', 'MG', 'A+', NULL),
-        ('Ana Paula Ferreira', '345.678.901-22', '898 0001 2345 0003', '1990-11-10', 'Feminino', '(31) 99999-3333', 'ana.ferreira@email.com', 'Contagem', 'MG', 'B+', 'Dipirona, Látex'),
-        ('Carlos Eduardo Lima', '456.789.012-33', '898 0001 2345 0004', '1968-05-30', 'Masculino', '(31) 99999-4444', 'carlos.lima@email.com', 'Betim', 'MG', 'AB+', NULL),
-        ('Fernanda Costa Ribeiro', '567.890.123-44', '898 0001 2345 0005', '1995-01-18', 'Feminino', '(31) 99999-5555', 'fernanda.ribeiro@email.com', 'Belo Horizonte', 'MG', 'O-', 'Sulfa'),
-        ('Pedro Henrique Souza', '678.901.234-55', '898 0001 2345 0006', '1980-07-05', 'Masculino', '(31) 99999-6666', 'pedro.souza@email.com', 'Nova Lima', 'MG', 'A-', NULL),
-        ('Lucia Helena Martins', '789.012.345-66', '898 0001 2345 0007', '1955-12-20', 'Feminino', '(31) 99999-7777', 'lucia.martins@email.com', 'Belo Horizonte', 'MG', 'B-', 'AAS'),
-        ('Roberto Santos Neto', '890.123.456-77', '898 0001 2345 0008', '1978-09-14', 'Masculino', '(31) 99999-8888', 'roberto.neto@email.com', 'Sabará', 'MG', 'O+', NULL),
-        ('Camila Rodrigues Alves', '901.234.567-88', '898 0001 2345 0009', '2000-04-25', 'Feminino', '(31) 99999-9999', 'camila.alves@email.com', 'Belo Horizonte', 'MG', 'A+', NULL),
-        ('Marcos Vinícius Pereira', '012.345.678-99', '898 0001 2345 0010', '1988-06-08', 'Masculino', '(31) 99999-0000', 'marcos.pereira@email.com', 'Ibirité', 'MG', 'AB-', 'Ibuprofeno')
+        ('Maria Silva Santos', '123.456.789-00', '898 0001 2345 0001', '1985-03-15', 'Feminino', '(31) 99999-1111', 'maria.silva@email.com', 'Belo Horizonte', 'MG', 'O+', 'Penicilina', 'SUS', 'Ativo'),
+        ('João Carlos Oliveira', '234.567.890-11', '898 0001 2345 0002', '1972-08-22', 'Masculino', '(31) 99999-2222', 'joao.oliveira@email.com', 'Belo Horizonte', 'MG', 'A+', NULL, 'SUS', 'Ativo'),
+        ('Ana Paula Ferreira', '345.678.901-22', '898 0001 2345 0003', '1990-11-10', 'Feminino', '(31) 99999-3333', 'ana.ferreira@email.com', 'Contagem', 'MG', 'B+', 'Dipirona, Látex', 'Unimed', 'Ativo'),
+        ('Carlos Eduardo Lima', '456.789.012-33', '898 0001 2345 0004', '1968-05-30', 'Masculino', '(31) 99999-4444', 'carlos.lima@email.com', 'Betim', 'MG', 'AB+', NULL, 'SUS', 'Em atendimento'),
+        ('Fernanda Costa Ribeiro', '567.890.123-44', '898 0001 2345 0005', '1995-01-18', 'Feminino', '(31) 99999-5555', 'fernanda.ribeiro@email.com', 'Belo Horizonte', 'MG', 'O-', 'Sulfa', 'SUS', 'Ativo'),
+        ('Pedro Henrique Souza', '678.901.234-55', '898 0001 2345 0006', '1980-07-05', 'Masculino', '(31) 99999-6666', 'pedro.souza@email.com', 'Nova Lima', 'MG', 'A-', NULL, 'Bradesco Saúde', 'Ativo'),
+        ('Lucia Helena Martins', '789.012.345-66', '898 0001 2345 0007', '1955-12-20', 'Feminino', '(31) 99999-7777', 'lucia.martins@email.com', 'Belo Horizonte', 'MG', 'B-', 'AAS', 'SUS', 'Ativo'),
+        ('Roberto Santos Neto', '890.123.456-77', '898 0001 2345 0008', '1978-09-14', 'Masculino', '(31) 99999-8888', 'roberto.neto@email.com', 'Sabará', 'MG', 'O+', NULL, 'SUS', 'Ativo'),
+        ('Camila Rodrigues Alves', '901.234.567-88', '898 0001 2345 0009', '2000-04-25', 'Feminino', '(31) 99999-9999', 'camila.alves@email.com', 'Belo Horizonte', 'MG', 'A+', NULL, 'Unimed', 'Ativo'),
+        ('Marcos Vinícius Pereira', '012.345.678-99', '898 0001 2345 0010', '1988-06-08', 'Masculino', '(31) 99999-0000', 'marcos.pereira@email.com', 'Ibirité', 'MG', 'AB-', 'Ibuprofeno', 'SUS', 'Ativo')
       ON CONFLICT (cpf) DO NOTHING;
     `);
 
-    // Seed professionals
+    // Seed professionals (added Psicólogo)
     await pool.query(`
-      INSERT INTO professionals (full_name, cpf, professional_id, category, specialty, cnes, phone, email)
+      INSERT INTO professionals (full_name, cpf, professional_id, category, specialty, cnes, phone, email, schedule, consultations_month, rating)
       VALUES
-        ('Dr. Ricardo Mendes', '111.222.333-44', 'CRM-MG 12345', 'Médico', 'Clínica Geral', '1234567', '(31) 98888-1111', 'dr.ricardo@vivas.com'),
-        ('Dra. Patrícia Gomes', '222.333.444-55', 'CRM-MG 23456', 'Médico', 'Cardiologia', '1234567', '(31) 98888-2222', 'dra.patricia@vivas.com'),
-        ('Dr. Antônio Almeida', '333.444.555-66', 'CRM-MG 34567', 'Médico', 'Pediatria', '1234567', '(31) 98888-3333', 'dr.antonio@vivas.com'),
-        ('Dra. Juliana Barros', '444.555.666-77', 'CRM-MG 45678', 'Médico', 'Ginecologia', '1234567', '(31) 98888-4444', 'dra.juliana@vivas.com'),
-        ('Enf. Mariana Costa', '555.666.777-88', 'COREN-MG 56789', 'Enfermeiro', 'Enfermagem Geral', '1234567', '(31) 98888-5555', 'enf.mariana@vivas.com'),
-        ('Enf. Lucas Ferreira', '666.777.888-99', 'COREN-MG 67890', 'Enfermeiro', 'UTI', '1234567', '(31) 98888-6666', 'enf.lucas@vivas.com'),
-        ('Ft. Daniela Rocha', '777.888.999-00', 'CREFITO-MG 78901', 'Fisioterapeuta', 'Ortopedia', '1234567', '(31) 98888-7777', 'ft.daniela@vivas.com'),
-        ('Ft. Bruno Cardoso', '888.999.000-11', 'CREFITO-MG 89012', 'Fisioterapeuta', 'Respiratória', '1234567', '(31) 98888-8888', 'ft.bruno@vivas.com')
+        ('Dr. Ricardo Mendes', '111.222.333-44', 'CRM-MG 12345', 'Médico', 'Clínica Geral', '7891023', '(31) 98888-1111', 'dr.ricardo@vivas.com', 'Seg-Sex', 180, 4.9),
+        ('Dra. Patrícia Gomes', '222.333.444-55', 'CRM-MG 23456', 'Médico', 'Cardiologia', '7891023', '(31) 98888-2222', 'dra.patricia@vivas.com', 'Seg-Qui', 145, 4.8),
+        ('Dr. Antônio Almeida', '333.444.555-66', 'CRM-MG 34567', 'Médico', 'Pediatria', '7891023', '(31) 98888-3333', 'dr.antonio@vivas.com', 'Ter-Sáb', 210, 4.7),
+        ('Dra. Juliana Barros', '444.555.666-77', 'CRM-MG 45678', 'Médico', 'Ginecologia', '7891023', '(31) 98888-4444', 'dra.juliana@vivas.com', 'Seg-Sex', 160, 4.9),
+        ('Enf. Mariana Costa', '555.666.777-88', 'COREN-MG 56789', 'Enfermeiro', 'Enfermagem Geral', '7891023', '(31) 98888-5555', 'enf.mariana@vivas.com', 'Seg-Sex', 0, 4.8),
+        ('Enf. Lucas Ferreira', '666.777.888-99', 'COREN-MG 67890', 'Enfermeiro', 'UTI', '7891023', '(31) 98888-6666', 'enf.lucas@vivas.com', 'Seg-Sex', 0, 4.6),
+        ('Ft. Daniela Rocha', '777.888.999-00', 'CREFITO-MG 78901', 'Fisioterapeuta', 'Ortopedia', '7891023', '(31) 98888-7777', 'ft.daniela@vivas.com', 'Seg-Sex', 0, 4.7),
+        ('Ft. Bruno Cardoso', '888.999.000-11', 'CREFITO-MG 89012', 'Fisioterapeuta', 'Respiratória', '7891023', '(31) 98888-8888', 'ft.bruno@vivas.com', 'Seg-Sex', 0, 4.5),
+        ('Dra. Carla Sousa', '999.111.222-33', 'CRP-MG 12345', 'Psicólogo', 'Psicologia Clínica', '7891023', '(31) 98888-9999', 'psicologa@vivas.com', 'Seg-Sex', 120, 4.9)
       ON CONFLICT (cpf) DO NOTHING;
     `);
 
     // Get IDs for relationships
     const patients = await pool.query('SELECT id, full_name FROM patients ORDER BY full_name LIMIT 10');
-    const professionals = await pool.query('SELECT id, full_name, category FROM professionals ORDER BY full_name LIMIT 8');
+    const professionals = await pool.query('SELECT id, full_name, category FROM professionals ORDER BY full_name LIMIT 9');
 
     if (patients.rows.length > 0 && professionals.rows.length > 0) {
       const now = new Date();
@@ -193,6 +215,19 @@ const seedData = async () => {
           entryDate.toISOString()
         ]);
       }
+
+      // Seed coupons
+      await pool.query(`
+        INSERT INTO coupons (code, campaign, discount, redemptions, max_redemptions, valid_until, status)
+        VALUES
+          ('VIVAS30', 'Campanha Instagram Março', '30%', 1234, 2000, '2026-03-31', 'Ativo'),
+          ('TIKTOK25', 'TikTok Viral', 'Exame Grátis', 897, 1500, '2026-04-15', 'Ativo'),
+          ('SAUDE10', 'Email Marketing', '10%', 456, 500, '2026-03-25', 'Quase esgotado'),
+          ('FB20OFF', 'Facebook Ads', '20%', 78, 300, '2026-04-30', 'Ativo'),
+          ('AMIG015', 'Indicação (Referral)', '15%', 312, NULL, NULL, 'Ativo'),
+          ('JANE1R020', 'Campanha Janeiro', '20%', 2100, 2000, '2026-01-31', 'Expirado')
+        ON CONFLICT (code) DO NOTHING;
+      `);
     }
 
     console.log('Seed completed successfully');
