@@ -62,9 +62,9 @@ export default function Usuarios() {
         if (!res.ok) throw new Error((await res.json()).error)
         addToast('success', 'Usuário atualizado')
       } else {
-        const res = await fetch(`${API_BASE}/auth/register`, {
+        const res = await fetch(`${API_BASE}/auth/users`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ email: editing.email, password: newPassword, full_name: editing.full_name, role: editing.role }),
         })
         if (!res.ok) throw new Error((await res.json()).error)
