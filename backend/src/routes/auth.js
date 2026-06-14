@@ -141,7 +141,7 @@ router.get('/users', authenticate, authorize('admin'), async (req, res) => {
 router.put('/users/:id', authenticate, authorize('admin'), async (req, res) => {
   try {
     const { full_name, role, active } = req.body;
-    if (role && !VALID_ROLES.includes(role)) {
+    if (role !== undefined && role !== null && !VALID_ROLES.includes(role)) {
       return res.status(400).json({ error: 'Perfil inválido' });
     }
     const result = await pool.query(
