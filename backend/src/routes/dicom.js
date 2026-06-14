@@ -266,10 +266,13 @@ router.delete('/studies/:id', authenticate, authorize(...MEDICAL_ROLES), async (
       [req.params.id]
     );
 
-    // Delete files from disk
+    // Delete files from disk (with path containment check)
     for (const inst of instances.rows) {
-      if (inst.file_path && fs.existsSync(inst.file_path)) {
-        fs.unlinkSync(inst.file_path);
+      if (inst.file_path) {
+        const resolved = path.resolve(inst.file_path);
+        if (resolved.startsWith(path.resolve(DICOM_DIR)) && fs.existsSync(resolved)) {
+          fs.unlinkSync(resolved);
+        }
       }
     }
 

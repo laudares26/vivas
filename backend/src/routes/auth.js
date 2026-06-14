@@ -86,11 +86,12 @@ router.post('/register', async (req, res) => {
   }
 });
 
+const VALID_ROLES = ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta', 'paciente', 'marketing_admin'];
+
 // POST /api/auth/users (admin only — create user with any role)
 router.post('/users', authenticate, authorize('admin'), async (req, res) => {
   try {
     const { email, password, full_name, role = 'paciente', avatar_color } = req.body;
-    const VALID_ROLES = ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta', 'paciente', 'marketing_admin'];
     if (!VALID_ROLES.includes(role)) {
       return res.status(400).json({ error: 'Perfil inválido' });
     }
@@ -140,6 +141,9 @@ router.get('/users', authenticate, authorize('admin'), async (req, res) => {
 router.put('/users/:id', authenticate, authorize('admin'), async (req, res) => {
   try {
     const { full_name, role, active } = req.body;
+    if (role && !VALID_ROLES.includes(role)) {
+      return res.status(400).json({ error: 'Perfil inválido' });
+    }
     const result = await pool.query(
       `UPDATE users SET full_name = COALESCE($1, full_name), role = COALESCE($2, role), 
        active = COALESCE($3, active), updated_at = NOW() WHERE id = $4 
