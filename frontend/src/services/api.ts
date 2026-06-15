@@ -169,12 +169,20 @@ export interface RiskPrediction {
   hypertension_risk: number; renal_risk: number; recommendations: string; prediction_date: string;
 }
 
+export interface HealthAlert {
+  id: string; patient_user_id: string; indicator_name: string; value: number;
+  threshold: number; severity: string; created_at: string; read_by_patient: boolean;
+  read_by_professional: boolean; patient_name?: string;
+}
+
 export interface DashboardData {
   kpis: { totalPatients: number; totalProfessionals: number; appointmentsToday: number; triageQueue: number; satisfaction: number; };
   upcomingAppointments: Appointment[];
   specialtyStats: { specialty: string; count: number; }[];
   manchesterStats: { manchester_color: string; count: number; }[];
   weeklyStats: { day: string; count: number; }[];
+  healthAlerts: { total: number; unread: number; recent: HealthAlert[]; };
+  personalStats: { totalConsultations: number; lastConsultation: string | null; };
 }
 
 export interface Coupon {
