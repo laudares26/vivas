@@ -16,9 +16,10 @@ const seedData = async () => {
       INSERT INTO users (email, password_hash, full_name, role, avatar_color)
       VALUES 
         ('admin@vivas.com', $1, 'Dr. Admin', 'admin', '#0057B8'),
-        ('ricardo@vivas.com', $2, 'Dr. Ricardo Mendes', 'medico', '#2563EB'),
+        ('bruno.hodos@gmail.com', $2, 'Dr. Bruno Hodos', 'medico', '#2563EB'),
         ('mariana@vivas.com', $3, 'Enf. Mariana Costa', 'enfermeiro', '#16A34A'),
         ('maria@email.com', $4, 'Maria Silva Santos', 'paciente', '#EA580C'),
+        ('brunocorreafotografo@gmail.com', $4, 'Bruno Correa', 'paciente', '#F59E0B'),
         ('marketing@vivas.com', $5, 'Ana Marketing', 'marketing_admin', '#9333EA'),
         ('psicologa@vivas.com', $6, 'Dra. Carla Sousa', 'psicologo', '#EC4899')
       ON CONFLICT (email) DO NOTHING;
@@ -45,7 +46,7 @@ const seedData = async () => {
     await pool.query(`
       INSERT INTO professionals (full_name, cpf, professional_id, category, specialty, cnes, phone, email, schedule, consultations_month, rating)
       VALUES
-        ('Dr. Ricardo Mendes', '111.222.333-44', 'CRM-MG 12345', 'Médico', 'Clínica Geral', '7891023', '(31) 98888-1111', 'dr.ricardo@vivas.com', 'Seg-Sex', 180, 4.9),
+        ('Dr. Bruno Hodos', '111.222.333-44', 'CRM-MG 12345', 'Médico', 'Clínica Geral', '7891023', '(31) 98888-1111', 'bruno.hodos@gmail.com', 'Seg-Sex', 180, 4.9),
         ('Dra. Patrícia Gomes', '222.333.444-55', 'CRM-MG 23456', 'Médico', 'Cardiologia', '7891023', '(31) 98888-2222', 'dra.patricia@vivas.com', 'Seg-Qui', 145, 4.8),
         ('Dr. Antônio Almeida', '333.444.555-66', 'CRM-MG 34567', 'Médico', 'Pediatria', '7891023', '(31) 98888-3333', 'dr.antonio@vivas.com', 'Ter-Sáb', 210, 4.7),
         ('Dra. Juliana Barros', '444.555.666-77', 'CRM-MG 45678', 'Médico', 'Ginecologia', '7891023', '(31) 98888-4444', 'dra.juliana@vivas.com', 'Seg-Sex', 160, 4.9),
