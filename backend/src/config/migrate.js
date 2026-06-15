@@ -308,6 +308,33 @@ CREATE TABLE IF NOT EXISTS professional_patient_relationships (
 CREATE INDEX IF NOT EXISTS idx_ppr_professional ON professional_patient_relationships(professional_user_id);
 CREATE INDEX IF NOT EXISTS idx_ppr_patient ON professional_patient_relationships(patient_user_id);
 
+-- Health notifications (alerts sent to patients/professionals)
+CREATE TABLE IF NOT EXISTS health_notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  patient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  alert_data JSONB NOT NULL,
+  notified_professionals JSONB,
+  read_by_patient BOOLEAN DEFAULT false,
+  read_by_professional BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_health_notifications_patient ON health_notifications(patient_user_id);
+
+-- Preventive health indicators (stored values per patient)
+CREATE TABLE IF NOT EXISTS health_indicators (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  patient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  indicator_name VARCHAR(50) NOT NULL,
+  value DECIMAL(10,2) NOT NULL,
+  unit VARCHAR(20),
+  recorded_at TIMESTAMP DEFAULT NOW(),
+  source VARCHAR(50) DEFAULT 'manual'
+);
+
+CREATE INDEX IF NOT EXISTS idx_health_indicators_patient ON health_indicators(patient_user_id);
+CREATE INDEX IF NOT EXISTS idx_health_indicators_name ON health_indicators(indicator_name);
+
 -- Add new columns if they don't exist (safe migration)
 DO $$ BEGIN
   ALTER TABLE patients ADD COLUMN IF NOT EXISTS convenio VARCHAR(50) DEFAULT 'SUS';

@@ -57,14 +57,14 @@ router.post('/login', async (req, res) => {
     const PROFESSIONAL_ROLES = ['medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'];
     if (PROFESSIONAL_ROLES.includes(user.role)) {
       const rel = await pool.query(
-        `SELECT u.id, u.full_name, u.email FROM professional_patient_relationships ppr
+        `SELECT u.id, u.full_name FROM professional_patient_relationships ppr
          JOIN users u ON u.id = ppr.patient_user_id
          WHERE ppr.professional_user_id = $1 AND u.active = true`, [user.id]
       );
       relationships.patients = rel.rows;
     } else if (user.role === 'paciente') {
       const rel = await pool.query(
-        `SELECT u.id, u.full_name, u.email, u.role FROM professional_patient_relationships ppr
+        `SELECT u.id, u.full_name, u.role FROM professional_patient_relationships ppr
          JOIN users u ON u.id = ppr.professional_user_id
          WHERE ppr.patient_user_id = $1 AND u.active = true`, [user.id]
       );
@@ -140,7 +140,28 @@ router.get('/me', authenticate, async (req, res) => {
       [req.user.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
-    res.json(result.rows[0]);
+    const user = result.rows[0];
+
+    // Include relationships for data isolation
+    let relationships = { patients: [], professionals: [] };
+    const PROFESSIONAL_ROLES = ['medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'];
+    if (PROFESSIONAL_ROLES.includes(user.role)) {
+      const rel = await pool.query(
+        `SELECT u.id, u.full_name FROM professional_patient_relationships ppr
+         JOIN users u ON u.id = ppr.patient_user_id
+         WHERE ppr.professional_user_id = $1 AND u.active = true`, [user.id]
+      );
+      relationships.patients = rel.rows;
+    } else if (user.role === 'paciente') {
+      const rel = await pool.query(
+        `SELECT u.id, u.full_name, u.role FROM professional_patient_relationships ppr
+         JOIN users u ON u.id = ppr.professional_user_id
+         WHERE ppr.patient_user_id = $1 AND u.active = true`, [user.id]
+      );
+      relationships.professionals = rel.rows;
+    }
+
+    res.json({ ...user, relationships });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

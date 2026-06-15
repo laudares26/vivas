@@ -37,7 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token) {
       fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
         .then(r => r.ok ? r.json() : Promise.reject())
-        .then(setUser)
+        .then(data => {
+          const { relationships: rel, ...userData } = data
+          setUser(userData)
+          if (rel) setRelationships(rel)
+        })
         .catch(() => { setToken(null); localStorage.removeItem('vivas_token') })
         .finally(() => setLoading(false))
     } else {

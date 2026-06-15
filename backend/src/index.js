@@ -16,6 +16,7 @@ const riskRouter = require('./routes/risk');
 const dashboardRouter = require('./routes/dashboard');
 const couponsRouter = require('./routes/coupons');
 const dicomRouter = require('./routes/dicom');
+const preventiveHealthRouter = require('./routes/preventiveHealth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -37,6 +38,7 @@ app.use('/api/risk', authenticate, riskRouter);
 app.use('/api/dashboard', authenticate, dashboardRouter);
 app.use('/api/coupons', authenticate, couponsRouter);
 app.use('/api/dicom', dicomRouter); // DICOM routes handle their own auth + role checks
+app.use('/api/preventive-health', preventiveHealthRouter); // handles own auth
 
 // Serve institutional site for vivasaudeinteligente.com.br
 const INSTITUTIONAL_HOSTS = ['vivasaudeinteligente.com.br', 'www.vivasaudeinteligente.com.br'];

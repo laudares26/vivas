@@ -43,9 +43,10 @@ const adminLinks: NavItem[] = [
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
+  mobileHidden?: boolean
 }
 
-export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarProps) {
   const { user, logout } = useAuth()
   const role = user?.role || 'paciente'
 
@@ -78,7 +79,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     <aside
       className={`fixed left-0 top-0 h-full z-40 flex flex-col transition-all duration-300 ${
         collapsed ? 'w-[72px]' : 'w-[260px]'
-      }`}
+      } ${mobileHidden ? '-translate-x-full' : 'translate-x-0'}`}
       style={{
         background: 'linear-gradient(180deg, #0057B8 0%, #003D82 50%, #002D61 100%)',
       }}

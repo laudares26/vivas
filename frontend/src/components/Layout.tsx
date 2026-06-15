@@ -41,9 +41,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
       )}
 
       {/* Sidebar */}
-      <div className={`${isMobile ? (mobileOpen ? 'translate-x-0' : '-translate-x-full') : ''} transition-transform duration-300 z-40`}>
-        <Sidebar collapsed={isMobile ? false : collapsed} onToggle={handleToggle} />
-      </div>
+      <Sidebar collapsed={isMobile ? false : collapsed} onToggle={handleToggle} mobileHidden={isMobile && !mobileOpen} />
 
       {/* Main content */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ${

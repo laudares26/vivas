@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Upload, FileText, Activity, Heart, Droplets, TrendingUp, AlertCircle, CheckCircle2, Clock } from 'lucide-react'
+import { Upload, FileText, Activity, Heart, Droplets, TrendingUp, AlertCircle, CheckCircle2, Clock, Bell, Send } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import { useToast } from '../components/Toast'
+import { useAuth } from '../contexts/AuthContext'
 
 interface HealthExam {
   id: number
@@ -57,18 +58,45 @@ const CHOLESTEROL_HISTORY = [
   { month: 'Mai', ldl: 165, hdl: 46 }, { month: 'Jun', ldl: 163, hdl: 47 },
 ]
 
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
+
 export default function SaudePreventiva() {
   const [exams] = useState<HealthExam[]>(SAMPLE_EXAMS)
   const [selectedExam, setSelectedExam] = useState<HealthExam | null>(null)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'exams' | 'upload'>('overview')
+  const [alertSending, setAlertSending] = useState(false)
+  const [alertResult, setAlertResult] = useState<{ notified: boolean; alerts?: { label: string; value: number; unit: string; status: string }[]; emailsSent?: { patient: { success: boolean }; professionals: { name: string; success: boolean }[] } } | null>(null)
   const { addToast } = useToast()
+  const { token } = useAuth()
 
   const handleUpload = () => {
     if (!uploadFile) return
     addToast('success', `Exame "${uploadFile.name}" enviado com sucesso! A IA irá analisar em breve.`)
     setUploadFile(null)
     setActiveTab('exams')
+  }
+
+  const handleSimulateAlert = async () => {
+    setAlertSending(true)
+    setAlertResult(null)
+    try {
+      const res = await fetch(`${API_BASE}/preventive-health/simulate-alert`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      })
+      const data = await res.json()
+      setAlertResult(data)
+      if (data.notified) {
+        addToast('success', `Alertas enviados por email! Paciente + ${data.emailsSent?.professionals?.length || 0} profissional(is) notificados.`)
+      } else {
+        addToast('info', data.reason || 'Nenhum alerta gerado.')
+      }
+    } catch (err) {
+      addToast('error', 'Erro ao simular alerta.')
+    } finally {
+      setAlertSending(false)
+    }
   }
 
   const statusIcon = (status: string) => {
@@ -144,6 +172,50 @@ export default function SaudePreventiva() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Alert Notification System */}
+          <div className="card border border-amber-200 bg-amber-50/50">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-amber-600" />
+                  Alertas de Saúde Preventiva
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">Quando indicadores atingem limites de atenção, emails são enviados para você e seus profissionais de saúde</p>
+              </div>
+              <button
+                onClick={handleSimulateAlert}
+                disabled={alertSending}
+                className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 text-sm font-medium"
+              >
+                <Send className="w-4 h-4" />
+                {alertSending ? 'Enviando...' : 'Simular Alerta'}
+              </button>
+            </div>
+            {alertResult && alertResult.notified && (
+              <div className="mt-4 p-4 bg-white rounded-lg border border-amber-200">
+                <p className="text-sm font-medium text-green-700 mb-2">Notificações enviadas com sucesso!</p>
+                <div className="space-y-1 text-xs text-gray-600">
+                  <p>• Email enviado para: <span className="font-medium">você (paciente)</span></p>
+                  {alertResult.emailsSent?.professionals?.map((prof, i) => (
+                    <p key={i}>• Email enviado para: <span className="font-medium">{prof.name}</span> {prof.success ? '✓' : '✗'}</p>
+                  ))}
+                </div>
+                {alertResult.alerts && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <p className="text-xs font-medium text-gray-700 mb-1">Indicadores em alerta:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {alertResult.alerts.map((a, i) => (
+                        <span key={i} className={`text-xs px-2 py-0.5 rounded-full ${a.status === 'alerta' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {a.label}: {a.value} {a.unit}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Indicators Grid */}
