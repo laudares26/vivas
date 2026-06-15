@@ -29,8 +29,9 @@ const clinicalLinks: NavItem[] = [
 
 const aiLinks: NavItem[] = [
   { to: '/triagem', icon: Brain, label: 'Triagem Inteligente', roles: ['admin', 'medico', 'enfermeiro'] },
-  { to: '/assistente', icon: Bot, label: 'Assistente Médico IA', roles: ['admin', 'medico'] },
-  { to: '/predicao', icon: Activity, label: 'Predição de Riscos', roles: ['admin', 'medico'] },
+  { to: '/assistente', icon: Bot, label: 'Assistente IA (Apoio)', roles: ['admin', 'medico'] },
+  { to: '/predicao', icon: Activity, label: 'Suporte Preventivo', roles: ['admin', 'medico'] },
+  { to: '/saude-preventiva', icon: Heart, label: 'Saúde Preventiva', roles: ['paciente'] },
 ]
 
 const adminLinks: NavItem[] = [
@@ -82,14 +83,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         background: 'linear-gradient(180deg, #0057B8 0%, #003D82 50%, #002D61 100%)',
       }}
     >
-      <div className="flex items-center gap-3 px-4 h-14 border-b border-white/10">
-        <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-          <Heart className="w-5 h-5 text-white" />
-        </div>
+      <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
+        <img src="/logo_vivas.jpg" alt="VIVAS" className={`flex-shrink-0 object-contain ${collapsed ? 'h-8 w-8' : 'h-10'}`} />
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-white font-bold text-lg leading-tight">VIVAS Saúde</h1>
-            <p className="text-blue-200 text-[10px] leading-tight">Sistema Integrado SUS</p>
+            <p className="text-blue-200 text-[10px] leading-tight">Saúde Inteligente</p>
           </div>
         )}
       </div>
@@ -109,7 +107,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {filteredAI.length > 0 && (
           <>
             <div className="my-3 mx-3 border-t border-white/10" />
-            {!collapsed && <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">Inteligência Artificial</p>}
+            {!collapsed && <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">IA — Suporte e Apoio</p>}
             {filteredAI.map(renderLink)}
           </>
         )}

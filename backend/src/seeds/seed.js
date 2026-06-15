@@ -230,6 +230,25 @@ const seedData = async () => {
       `);
     }
 
+    // Seed professional-patient relationships for data isolation
+    const profUsers = await pool.query(
+      "SELECT id, role FROM users WHERE role IN ('medico', 'enfermeiro', 'psicologo', 'fisioterapeuta') AND active = true"
+    );
+    const patientUsers = await pool.query(
+      "SELECT id FROM users WHERE role = 'paciente' AND active = true"
+    );
+    if (profUsers.rows.length > 0 && patientUsers.rows.length > 0) {
+      for (const prof of profUsers.rows) {
+        for (const pat of patientUsers.rows) {
+          await pool.query(
+            `INSERT INTO professional_patient_relationships (professional_user_id, patient_user_id)
+             VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [prof.id, pat.id]
+          );
+        }
+      }
+    }
+
     console.log('Seed completed successfully');
     process.exit(0);
   } catch (err) {

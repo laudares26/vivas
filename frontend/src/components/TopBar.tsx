@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom'
-import { Search, Bell, LogOut } from 'lucide-react'
+import { Search, Bell, LogOut, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 const BREADCRUMBS: Record<string, string> = {
@@ -7,9 +7,10 @@ const BREADCRUMBS: Record<string, string> = {
   '/agendamentos': 'Agendamentos', '/atendimento': 'Atendimento Médico',
   '/prontuario': 'Prontuário Eletrônico', '/exames': 'Exames e Laudos',
   '/prescricoes': 'Receitas e Prescrições', '/teleconsulta': 'Teleconsulta',
-  '/triagem': 'Triagem Inteligente', '/assistente': 'Assistente IA',
-  '/predicao': 'Predição de Riscos', '/cupons': 'Cupons e Promoções',
+  '/triagem': 'Triagem Inteligente', '/assistente': 'Assistente IA (Apoio)',
+  '/predicao': 'Suporte Preventivo', '/cupons': 'Cupons e Promoções',
   '/configuracoes': 'Configurações', '/usuarios': 'Gerenciamento de Usuários',
+  '/saude-preventiva': 'Saúde Preventiva', '/dicom': 'Isis DICOM Viewer',
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -18,22 +19,31 @@ const ROLE_LABELS: Record<string, string> = {
   paciente: 'Paciente', marketing_admin: 'Marketing',
 }
 
-export default function TopBar() {
+interface TopBarProps {
+  onMenuClick?: () => void
+}
+
+export default function TopBar({ onMenuClick }: TopBarProps) {
   const { pathname } = useLocation()
   const { user, logout } = useAuth()
   const pageName = BREADCRUMBS[pathname] || 'Página'
   const initials = user?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'US'
 
   return (
-    <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
+    <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 flex-shrink-0">
       <div className="flex items-center gap-2 text-sm">
-        <span className="text-gray-400">VIVAS Saúde</span>
-        <span className="text-gray-300">›</span>
-        <span className="font-medium text-gray-900">{pageName}</span>
+        {onMenuClick && (
+          <button onClick={onMenuClick} className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 md:hidden">
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
+        <span className="text-gray-400 hidden sm:inline">VIVAS</span>
+        <span className="text-gray-300 hidden sm:inline">›</span>
+        <span className="font-medium text-gray-900 truncate">{pageName}</span>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative hidden md:block">
+      <div className="flex items-center gap-2 md:gap-4">
+        <div className="relative hidden lg:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" placeholder="Buscar pacientes, médicos, exames..."
             className="pl-10 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm w-64 

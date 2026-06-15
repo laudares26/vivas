@@ -51,9 +51,30 @@ router.post('/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    // Fetch data isolation relationships
+    let relationships = { patients: [], professionals: [] };
+    const PROFESSIONAL_ROLES = ['medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'];
+    if (PROFESSIONAL_ROLES.includes(user.role)) {
+      const rel = await pool.query(
+        `SELECT u.id, u.full_name, u.email FROM professional_patient_relationships ppr
+         JOIN users u ON u.id = ppr.patient_user_id
+         WHERE ppr.professional_user_id = $1 AND u.active = true`, [user.id]
+      );
+      relationships.patients = rel.rows;
+    } else if (user.role === 'paciente') {
+      const rel = await pool.query(
+        `SELECT u.id, u.full_name, u.email, u.role FROM professional_patient_relationships ppr
+         JOIN users u ON u.id = ppr.professional_user_id
+         WHERE ppr.patient_user_id = $1 AND u.active = true`, [user.id]
+      );
+      relationships.professionals = rel.rows;
+    }
+
     res.json({
       token,
-      user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name, avatar_color: user.avatar_color }
+      user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name, avatar_color: user.avatar_color },
+      relationships
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

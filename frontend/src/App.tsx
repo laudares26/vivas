@@ -18,6 +18,7 @@ import Cupons from './pages/Cupons'
 import Usuarios from './pages/Usuarios'
 import Configuracoes from './pages/Configuracoes'
 import DicomViewer from './pages/DicomViewer'
+import SaudePreventiva from './pages/SaudePreventiva'
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth()
@@ -54,6 +55,7 @@ function ProtectedRoutes() {
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/dicom" element={<DicomViewer />} />
+        <Route path="/saude-preventiva" element={<SaudePreventiva />} />
       </Routes>
     </Layout>
   )

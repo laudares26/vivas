@@ -132,7 +132,7 @@ export default function Assistente() {
           <div className="flex gap-2 pt-3 border-t border-gray-100">
             <input
               className="input-field flex-1"
-              placeholder="Pergunte sobre medicamentos, protocolos, diagnósticos..."
+              placeholder="Pergunte sobre medicamentos, protocolos, condutas..."
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage()}

@@ -60,8 +60,7 @@ img { max-width: 100%; display: block; }
 }
 .navbar-content { display: flex; align-items: center; justify-content: space-between; }
 .logo { display: flex; align-items: center; gap: 10px; }
-.logo-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
-.logo-text { font-size: 1.5rem; font-weight: 800; color: white; letter-spacing: -0.5px; }
+.logo-img { height: 40px; object-fit: contain; }
 .nav-links { display: flex; gap: 32px; }
 .nav-links a { color: rgba(255,255,255,0.85); font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
 .nav-links a:hover { color: white; }

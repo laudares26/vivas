@@ -296,6 +296,18 @@ CREATE INDEX IF NOT EXISTS idx_dicom_studies_modality ON dicom_studies(modality)
 CREATE INDEX IF NOT EXISTS idx_dicom_series_study ON dicom_series(study_id);
 CREATE INDEX IF NOT EXISTS idx_dicom_instances_series ON dicom_instances(series_id);
 
+-- Professional-Patient relationships (data isolation)
+CREATE TABLE IF NOT EXISTS professional_patient_relationships (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  professional_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  patient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(professional_user_id, patient_user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ppr_professional ON professional_patient_relationships(professional_user_id);
+CREATE INDEX IF NOT EXISTS idx_ppr_patient ON professional_patient_relationships(patient_user_id);
+
 -- Add new columns if they don't exist (safe migration)
 DO $$ BEGIN
   ALTER TABLE patients ADD COLUMN IF NOT EXISTS convenio VARCHAR(50) DEFAULT 'SUS';
