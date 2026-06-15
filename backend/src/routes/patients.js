@@ -1,7 +1,9 @@
 const router = require('express').Router();
 const pool = require('../config/database');
 
-// GET all patients with search, filter, pagination
+const PROFESSIONAL_ROLES = ['medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'];
+
+// GET all patients with search, filter, pagination (filtered by role)
 router.get('/', async (req, res) => {
   try {
     const { search, page = 1, limit = 20, active } = req.query;
@@ -10,6 +12,18 @@ router.get('/', async (req, res) => {
     let countQuery = 'SELECT COUNT(*) FROM patients';
     const params = [];
     const conditions = [];
+
+    // Data isolation: professionals see only their linked patients, paciente sees only themselves
+    if (PROFESSIONAL_ROLES.includes(req.user.role)) {
+      // Get patient emails linked to this professional via professional_patient_relationships
+      params.push(req.user.id);
+      conditions.push(`email IN (SELECT u.email FROM users u JOIN professional_patient_relationships ppr ON ppr.patient_user_id = u.id WHERE ppr.professional_user_id = $${params.length})`);
+    } else if (req.user.role === 'paciente') {
+      // Patient only sees themselves
+      params.push(req.user.email);
+      conditions.push(`email = $${params.length}`);
+    }
+    // admin and marketing_admin see all patients
 
     if (search) {
       params.push(`%${search}%`);
@@ -44,12 +58,27 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET single patient
+// GET single patient (with data isolation)
 router.get('/:id', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM patients WHERE id = $1', [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Paciente não encontrado' });
-    res.json(result.rows[0]);
+    const patient = result.rows[0];
+
+    // Data isolation check
+    if (PROFESSIONAL_ROLES.includes(req.user.role)) {
+      const check = await pool.query(
+        `SELECT 1 FROM professional_patient_relationships ppr
+         JOIN users u ON u.id = ppr.patient_user_id
+         WHERE ppr.professional_user_id = $1 AND u.email = $2`,
+        [req.user.id, patient.email]
+      );
+      if (check.rows.length === 0) return res.status(403).json({ error: 'Acesso negado a este paciente' });
+    } else if (req.user.role === 'paciente' && patient.email !== req.user.email) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    res.json(patient);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar paciente' });
   }
