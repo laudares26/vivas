@@ -231,7 +231,7 @@ router.get('/file/:instanceId', authenticate, authorize(...MEDICAL_ROLES), async
     if (result.rows.length === 0) return res.status(404).json({ error: 'Arquivo não encontrado' });
     const filePath = result.rows[0].file_path;
     const resolvedPath = path.resolve(filePath);
-    if (!resolvedPath.startsWith(path.resolve(DICOM_DIR))) {
+    if (!resolvedPath.startsWith(path.resolve(DICOM_DIR) + path.sep)) {
       return res.status(403).json({ error: 'Acesso negado' });
     }
     if (!fs.existsSync(resolvedPath)) return res.status(404).json({ error: 'Arquivo não disponível no disco' });
@@ -270,7 +270,7 @@ router.delete('/studies/:id', authenticate, authorize(...MEDICAL_ROLES), async (
     for (const inst of instances.rows) {
       if (inst.file_path) {
         const resolved = path.resolve(inst.file_path);
-        if (resolved.startsWith(path.resolve(DICOM_DIR)) && fs.existsSync(resolved)) {
+        if (resolved.startsWith(path.resolve(DICOM_DIR) + path.sep) && fs.existsSync(resolved)) {
           fs.unlinkSync(resolved);
         }
       }
