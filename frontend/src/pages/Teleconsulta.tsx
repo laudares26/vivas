@@ -78,8 +78,8 @@ export default function Teleconsulta() {
   useEffect(() => { chatRef.current?.scrollTo(0, chatRef.current.scrollHeight) }, [messages])
 
   useEffect(() => {
-    if (selectedProfessional && selectedDate) { setSlots(generateSlots()); setSelectedSlot(null) }
-  }, [selectedProfessional, selectedDate])
+    if (isPaciente ? selectedProfessional && selectedDate : selectedDate) { setSlots(generateSlots()); setSelectedSlot(null) }
+  }, [selectedProfessional, selectedDate, isPaciente])
 
   const formatTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 

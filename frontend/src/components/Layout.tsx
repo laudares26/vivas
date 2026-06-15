@@ -1,4 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 import Toast, { ToastProvider, useToast } from './Toast'
@@ -8,6 +9,10 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const { toasts, removeToast } = useToast()
+  const location = useLocation()
+
+  // Close mobile sidebar on navigation
+  useEffect(() => { setMobileOpen(false) }, [location.pathname])
 
   useEffect(() => {
     const check = () => {

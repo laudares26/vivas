@@ -8,9 +8,15 @@ interface User {
   avatar_color: string
 }
 
+interface Relationships {
+  patients: { id: string; full_name: string; email: string }[]
+  professionals: { id: string; full_name: string; email: string; role: string }[]
+}
+
 interface AuthContextType {
   user: User | null
   token: string | null
+  relationships: Relationships
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, full_name: string) => Promise<void>
   logout: () => void
@@ -24,6 +30,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api'
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(localStorage.getItem('vivas_token'))
+  const [relationships, setRelationships] = useState<Relationships>({ patients: [], professionals: [] })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -52,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('vivas_token', data.token)
     setToken(data.token)
     setUser(data.user)
+    if (data.relationships) setRelationships(data.relationships)
   }
 
   const register = async (email: string, password: string, full_name: string) => {
@@ -74,10 +82,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('vivas_token')
     setToken(null)
     setUser(null)
+    setRelationships({ patients: [], professionals: [] })
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, relationships, login, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   )
