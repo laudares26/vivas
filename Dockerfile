@@ -13,12 +13,14 @@ COPY backend/package.json backend/package-lock.json ./
 RUN npm ci --omit=dev
 COPY backend/src/ ./src/
 COPY --from=frontend-build /app/frontend/dist ./frontend-dist/
+COPY institutional/ ./institutional/
 
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Adjust static path for production
+# Adjust static paths for production
 RUN sed -i 's|../../frontend/dist|../frontend-dist|g' ./src/index.js
+RUN sed -i 's|../../institutional|../institutional|g' ./src/index.js
 
 EXPOSE 8080
 CMD ["node", "src/index.js"]
