@@ -67,7 +67,7 @@ export default function Dashboard() {
         <div className="card">
           <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-vivas-blue" />
-            Atendimentos — Últimos 7 dias
+            Atendimentos - Últimos 7 dias
           </h3>
           <p className="text-xs text-gray-400 mb-4">Frequência diária de atendimentos</p>
           <ResponsiveContainer width="100%" height={240}>

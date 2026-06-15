@@ -85,7 +85,9 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
       }}
     >
       <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
-        <img src="/logo_vivas.jpg" alt="VIVAS" className={`flex-shrink-0 object-contain ${collapsed ? 'h-8 w-8' : 'h-10'}`} />
+        <div className={`bg-white rounded-lg flex items-center justify-center flex-shrink-0 ${collapsed ? 'p-1' : 'px-3 py-1'}`}>
+          <img src="/logo_vivas.jpg" alt="VIVAS" className={`object-contain ${collapsed ? 'h-7 w-7' : 'h-8'}`} />
+        </div>
         {!collapsed && (
           <div className="overflow-hidden">
             <p className="text-blue-200 text-[10px] leading-tight">Saúde Inteligente</p>
@@ -108,7 +110,7 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
         {filteredAI.length > 0 && (
           <>
             <div className="my-3 mx-3 border-t border-white/10" />
-            {!collapsed && <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">IA — Suporte e Apoio</p>}
+            {!collapsed && <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">IA - Suporte e Apoio</p>}
             {filteredAI.map(renderLink)}
           </>
         )}

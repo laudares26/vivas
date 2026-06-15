@@ -48,7 +48,7 @@ export default function Configuracoes() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Unidade</label>
-                  <input className="input-field" defaultValue="VIVAS Saúde — Unidade Central" />
+                  <input className="input-field" defaultValue="VIVAS Saúde - Unidade Central" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">CNES</label>
@@ -65,12 +65,12 @@ export default function Configuracoes() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
-                <input className="input-field" defaultValue="Av. Augusto de Lima, 1715 — Barro Preto, Belo Horizonte/MG" />
+                <input className="input-field" defaultValue="Av. Augusto de Lima, 1715, Barro Preto, Belo Horizonte/MG" />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Horário de Funcionamento</label>
-                  <input className="input-field" defaultValue="07:00 — 22:00" />
+                  <input className="input-field" defaultValue="07:00 às 22:00" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Dias de Funcionamento</label>

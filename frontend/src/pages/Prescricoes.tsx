@@ -176,7 +176,7 @@ export default function Prescricoes() {
                   <span className="text-vivas-blue font-bold">{i + 1}.</span>
                   <div>
                     <p className="font-semibold">{item.medication_name}</p>
-                    <p className="text-sm text-gray-600">{item.dosage} — {item.frequency} — {item.duration}</p>
+                    <p className="text-sm text-gray-600">{item.dosage} | {item.frequency} | {item.duration}</p>
                     <p className="text-sm text-gray-500">Via: {item.route}</p>
                     {item.instructions && <p className="text-sm text-gray-400 italic">{item.instructions}</p>}
                   </div>

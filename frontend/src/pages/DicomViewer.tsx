@@ -703,7 +703,7 @@ export default function DicomViewer() {
           </div>
           <div>
             <h1 className="text-lg font-bold">Isis DICOM Viewer</h1>
-            <p className="text-xs text-gray-400">Visualizador de Imagens Médicas — VIVAS Saúde</p>
+            <p className="text-xs text-gray-400">Visualizador de Imagens Médicas | VIVAS Saúde</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -958,7 +958,7 @@ export default function DicomViewer() {
                 <div className="absolute top-3 right-3 text-green-400 text-xs font-mono space-y-0.5 pointer-events-none text-right">
                   <div>{selectedStudy.study_description || ''}</div>
                   <div>{formatDicomDate(selectedStudy.study_date)} {formatDicomTime(selectedStudy.study_time)}</div>
-                  <div>{selectedStudy.modality} — {selectedStudy.accession_number || ''}</div>
+                  <div>{selectedStudy.modality} | {selectedStudy.accession_number || ''}</div>
                 </div>
 
                 {/* Active tool indicator */}
@@ -1127,7 +1127,7 @@ export default function DicomViewer() {
 
               {/* Feature parity section */}
               <div className="mt-6 bg-white rounded-xl border border-gray-200 p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">Paridade de Funcionalidades — Isis DICOM Viewer</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">Paridade de Funcionalidades - Isis DICOM Viewer</h3>
                 <p className="text-xs text-gray-500 mb-4">Baseado nas bibliotecas DICOM-Swift, MTKDicomBridge e MTK</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                   {[

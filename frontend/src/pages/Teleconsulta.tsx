@@ -210,7 +210,7 @@ export default function Teleconsulta() {
           </div>
           {selectedDate && (isPaciente ? selectedProfessional : true) && (
             <div className="card">
-              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2"><Clock className="w-5 h-5 text-vivas-blue" />Horários Disponíveis {isPaciente && selectedProfessional ? `— ${selectedProfessional.name}` : ''}</h3>
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2"><Clock className="w-5 h-5 text-vivas-blue" />Horários Disponíveis {isPaciente && selectedProfessional ? `- ${selectedProfessional.name}` : ''}</h3>
               <p className="text-xs text-gray-500 mb-3">{isPaciente ? 'Horários em que ambos (você e o profissional) estão disponíveis' : 'Seus horários disponíveis para teleconsulta'}</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {slots.map(slot => (

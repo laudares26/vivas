@@ -164,7 +164,7 @@ export default function Agendamentos() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Profissional *</label>
             <select className="input-field" value={form.professional_id} onChange={e => setForm(f => ({ ...f, professional_id: e.target.value }))}>
               <option value="">Selecione</option>
-              {professionals.map(p => <option key={p.id} value={p.id}>{p.full_name} — {p.specialty}</option>)}
+              {professionals.map(p => <option key={p.id} value={p.id}>{p.full_name} - {p.specialty}</option>)}
             </select>
           </div>
           <div>
