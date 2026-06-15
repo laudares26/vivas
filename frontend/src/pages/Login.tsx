@@ -112,7 +112,8 @@ export default function Login() {
             <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
               <p className="font-medium mb-1">Contas de demonstração:</p>
               <p>Admin: admin@vivas.com / admin123</p>
-              <p>Médico: ricardo@vivas.com / medico123</p>
+              <p>Médico: bruno.hodos@gmail.com / medico123</p>
+              <p>Paciente: brunocorreafotografo@gmail.com / paciente123</p>
               <p>Enfermeiro: mariana@vivas.com / enfermeiro123</p>
               <p>Marketing: marketing@vivas.com / marketing123</p>
             </div>
