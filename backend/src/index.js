@@ -38,6 +38,21 @@ app.use('/api/dashboard', authenticate, dashboardRouter);
 app.use('/api/coupons', authenticate, couponsRouter);
 app.use('/api/dicom', dicomRouter); // DICOM routes handle their own auth + role checks
 
+// Serve institutional site for vivasaudeinteligente.com.br
+const INSTITUTIONAL_HOSTS = ['vivasaudeinteligente.com.br', 'www.vivasaudeinteligente.com.br'];
+const institutionalDir = path.join(__dirname, '../../institutional');
+
+app.use((req, res, next) => {
+  const host = (req.headers.host || '').split(':')[0];
+  if (INSTITUTIONAL_HOSTS.includes(host) && !req.path.startsWith('/api/')) {
+    express.static(institutionalDir)(req, res, () => {
+      res.sendFile(path.join(institutionalDir, 'index.html'));
+    });
+  } else {
+    next();
+  }
+});
+
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../../frontend/dist')));
