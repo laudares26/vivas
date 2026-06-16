@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import Layout from './components/Layout'
+import InstallBanner from './components/InstallBanner'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -113,10 +114,13 @@ export default function App() {
   const { user, loading } = useAuth()
 
   return (
-    <Routes>
-      <Route path="/login" element={loading ? null : user ? <Navigate to="/" replace /> : <Login />} />
-      <Route path="/register" element={loading ? null : user ? <Navigate to="/" replace /> : <Register />} />
-      <Route path="/*" element={<ProtectedRoutes />} />
-    </Routes>
+    <>
+      <InstallBanner />
+      <Routes>
+        <Route path="/login" element={loading ? null : user ? <Navigate to="/" replace /> : <Login />} />
+        <Route path="/register" element={loading ? null : user ? <Navigate to="/" replace /> : <Register />} />
+        <Route path="/*" element={<ProtectedRoutes />} />
+      </Routes>
+    </>
   )
 }
