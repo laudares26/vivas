@@ -92,6 +92,7 @@ export default function Login() {
             <p>Paciente: brunocorreafotografo@gmail.com / paciente123</p>
             <p>Enfermeiro: mariana@vivas.com / enfermeiro123</p>
             <p>Marketing: marketing@vivas.com / marketing123</p>
+            <p>RH Empresa: rh@techcorp.com.br / rh12345</p>
           </div>
         </div>
       </div>

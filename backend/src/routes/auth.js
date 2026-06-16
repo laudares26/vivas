@@ -71,10 +71,24 @@ router.post('/login', async (req, res) => {
       relationships.professionals = rel.rows;
     }
 
+    // Fetch company info for RH users
+    let company = null;
+    if (user.role === 'rh') {
+      const companyResult = await pool.query(
+        `SELECT c.* FROM companies c
+         JOIN company_employees ce ON ce.company_id = c.id
+         WHERE ce.user_id = $1 AND ce.role = 'rh'`, [user.id]
+      );
+      if (companyResult.rows.length > 0) {
+        company = companyResult.rows[0];
+      }
+    }
+
     res.json({
       token,
       user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name, avatar_color: user.avatar_color },
-      relationships
+      relationships,
+      company
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -160,7 +174,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-const VALID_ROLES = ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta', 'paciente', 'marketing_admin'];
+const VALID_ROLES = ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta', 'paciente', 'marketing_admin', 'rh'];
 
 // POST /api/auth/users (admin only — create user with any role)
 router.post('/users', authenticate, authorize('admin'), async (req, res) => {

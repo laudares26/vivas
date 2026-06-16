@@ -22,6 +22,7 @@ import Configuracoes from './pages/Configuracoes'
 import DicomViewer from './pages/DicomViewer'
 import SaudePreventiva from './pages/SaudePreventiva'
 import FamilyMembers from './pages/FamilyMembers'
+import EmpresaDashboard from './pages/EmpresaDashboard'
 
 function PatientRoutes() {
   return (
@@ -34,6 +35,19 @@ function PatientRoutes() {
       <Route path="/configuracoes" element={<Layout><Configuracoes /></Layout>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+  )
+}
+
+function RHRoutes() {
+  return (
+    <Layout>
+      <Routes>
+        <Route path="/" element={<EmpresaDashboard />} />
+        <Route path="/empresas" element={<EmpresaDashboard />} />
+        <Route path="/configuracoes" element={<Configuracoes />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Layout>
   )
 }
 
@@ -59,6 +73,7 @@ function ProfessionalRoutes() {
         <Route path="/dicom" element={<DicomViewer />} />
         <Route path="/saude-preventiva" element={<SaudePreventiva />} />
         <Route path="/familia" element={<FamilyMembers />} />
+        <Route path="/empresas" element={<EmpresaDashboard />} />
       </Routes>
     </Layout>
   )
@@ -82,6 +97,10 @@ function ProtectedRoutes() {
 
   if (user.role === 'paciente') {
     return <PatientRoutes />
+  }
+
+  if (user.role === 'rh') {
+    return <RHRoutes />
   }
 
   return <ProfessionalRoutes />

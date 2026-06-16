@@ -18,6 +18,7 @@ const couponsRouter = require('./routes/coupons');
 const dicomRouter = require('./routes/dicom');
 const preventiveHealthRouter = require('./routes/preventiveHealth');
 const subscriptionsRouter = require('./routes/subscriptions');
+const companiesRouter = require('./routes/companies');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -44,6 +45,7 @@ app.use('/api/coupons', authenticate, couponsRouter);
 app.use('/api/dicom', dicomRouter); // DICOM routes handle their own auth + role checks
 app.use('/api/preventive-health', preventiveHealthRouter); // handles own auth
 app.use('/api/subscriptions', subscriptionsRouter); // handles own auth per route
+app.use('/api/companies', companiesRouter); // handles own auth per route
 
 // Serve institutional site for vivasaudeinteligente.com.br
 const INSTITUTIONAL_HOSTS = ['vivasaudeinteligente.com.br', 'www.vivasaudeinteligente.com.br'];
@@ -52,6 +54,10 @@ const institutionalDir = path.join(__dirname, '../../institutional');
 app.use((req, res, next) => {
   const host = (req.headers.host || '').split(':')[0];
   if (INSTITUTIONAL_HOSTS.includes(host) && !req.path.startsWith('/api/')) {
+    // Serve /empresas page
+    if (req.path === '/empresas' || req.path === '/empresas/') {
+      return res.sendFile(path.join(institutionalDir, 'empresas.html'));
+    }
     express.static(institutionalDir)(req, res, () => {
       res.sendFile(path.join(institutionalDir, 'index.html'));
     });

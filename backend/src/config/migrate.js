@@ -352,6 +352,52 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe ON subscriptions(stripe_subscription_id);
 
+-- Companies table (B2B)
+CREATE TABLE IF NOT EXISTS companies (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  cnpj VARCHAR(18) UNIQUE,
+  trade_name VARCHAR(255),
+  sector VARCHAR(100),
+  employee_count INT,
+  contact_email VARCHAR(255),
+  contact_phone VARCHAR(20),
+  address_city VARCHAR(100),
+  address_state VARCHAR(2),
+  plan VARCHAR(30) DEFAULT 'empresa',
+  status VARCHAR(20) DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Company employees (links users to companies, RH or employee)
+CREATE TABLE IF NOT EXISTS company_employees (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role VARCHAR(20) NOT NULL DEFAULT 'employee',
+  department VARCHAR(100),
+  job_title VARCHAR(100),
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(company_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_companies_cnpj ON companies(cnpj);
+CREATE INDEX IF NOT EXISTS idx_company_employees_company ON company_employees(company_id);
+CREATE INDEX IF NOT EXISTS idx_company_employees_user ON company_employees(user_id);
+
+-- Company leads (contact form submissions)
+CREATE TABLE IF NOT EXISTS company_leads (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  company VARCHAR(255),
+  employees VARCHAR(20),
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(20),
+  status VARCHAR(20) DEFAULT 'new',
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Add new columns if they don't exist (safe migration)
 DO $$ BEGIN
   ALTER TABLE patients ADD COLUMN IF NOT EXISTS convenio VARCHAR(50) DEFAULT 'SUS';
@@ -361,6 +407,7 @@ DO $$ BEGIN
   ALTER TABLE professionals ADD COLUMN IF NOT EXISTS schedule VARCHAR(20) DEFAULT 'Seg-Sex';
   ALTER TABLE professionals ADD COLUMN IF NOT EXISTS consultations_month INT DEFAULT 0;
   ALTER TABLE professionals ADD COLUMN IF NOT EXISTS rating DECIMAL(2,1) DEFAULT 4.5;
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id UUID REFERENCES companies(id) ON DELETE SET NULL;
 EXCEPTION WHEN OTHERS THEN NULL; END $$;
 `;
 

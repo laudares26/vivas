@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, UserCog, CalendarDays, Stethoscope, FileText,
   TestTubeDiagonal, ClipboardList, Video, Brain, Bot, Activity,
-  ChevronLeft, ChevronRight, Heart, Tag, Settings, UsersRound, LogOut, Layers
+  ChevronLeft, ChevronRight, Heart, Tag, Settings, UsersRound, LogOut, Layers, Building2
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -34,10 +34,17 @@ const aiLinks: NavItem[] = [
   { to: '/saude-preventiva', icon: Heart, label: 'Saúde Preventiva', roles: ['paciente'] },
 ]
 
+const rhLinks: NavItem[] = [
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/empresas', icon: Building2, label: 'Minha Empresa' },
+  { to: '/configuracoes', icon: Settings, label: 'Configurações' },
+]
+
 const adminLinks: NavItem[] = [
   { to: '/cupons', icon: Tag, label: 'Cupons e Promoções', roles: ['admin', 'marketing_admin'] },
   { to: '/usuarios', icon: UsersRound, label: 'Usuários', roles: ['admin'] },
   { to: '/configuracoes', icon: Settings, label: 'Configurações', roles: ['admin'] },
+  { to: '/empresas', icon: Building2, label: 'Empresas', roles: ['admin'] },
 ]
 
 interface SidebarProps {
@@ -74,6 +81,44 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
       {!collapsed && <span className="text-sm font-medium truncate">{link.label}</span>}
     </NavLink>
   )
+
+  // RH gets a special sidebar
+  if (role === 'rh') {
+    return (
+      <aside
+        className={`fixed left-0 top-0 h-full z-40 flex flex-col transition-all duration-300 ${
+          collapsed ? 'w-[72px]' : 'w-[260px]'
+        } ${mobileHidden ? '-translate-x-full' : 'translate-x-0'}`}
+        style={{
+          background: 'linear-gradient(180deg, #5E1730 0%, #3D0F20 50%, #2A0A16 100%)',
+        }}
+      >
+        <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
+          <div className={`bg-white rounded-lg flex items-center justify-center flex-shrink-0 ${collapsed ? 'p-1' : 'px-3 py-1'}`}>
+            <img src="/logo_vivas.jpg" alt="VIVAS" className={`object-contain ${collapsed ? 'h-7 w-7' : 'h-8'}`} />
+          </div>
+          {!collapsed && (
+            <div className="overflow-hidden">
+              <p className="text-pink-200 text-[10px] leading-tight">Empresas</p>
+            </div>
+          )}
+        </div>
+        <nav className="flex-1 overflow-y-auto py-4 px-2">
+          {!collapsed && <p className="text-pink-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">Gestão</p>}
+          {rhLinks.map(renderLink)}
+        </nav>
+        <div className="border-t border-white/10">
+          <button onClick={logout} className="flex items-center gap-3 px-5 py-3 text-pink-200 hover:text-white hover:bg-white/10 transition-colors w-full">
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            {!collapsed && <span className="text-sm font-medium">Sair</span>}
+          </button>
+          <button onClick={onToggle} className="flex items-center justify-center h-10 border-t border-white/10 text-pink-200 hover:text-white hover:bg-white/10 transition-colors w-full">
+            {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          </button>
+        </div>
+      </aside>
+    )
+  }
 
   return (
     <aside
