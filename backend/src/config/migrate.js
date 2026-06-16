@@ -335,10 +335,29 @@ CREATE TABLE IF NOT EXISTS health_indicators (
 CREATE INDEX IF NOT EXISTS idx_health_indicators_patient ON health_indicators(patient_user_id);
 CREATE INDEX IF NOT EXISTS idx_health_indicators_name ON health_indicators(indicator_name);
 
+-- Subscriptions table (Stripe payments)
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  plan VARCHAR(30) NOT NULL DEFAULT 'individual',
+  status VARCHAR(30) NOT NULL DEFAULT 'active',
+  max_members INT DEFAULT 1,
+  stripe_customer_id VARCHAR(255),
+  stripe_subscription_id VARCHAR(255),
+  current_period_end TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe ON subscriptions(stripe_subscription_id);
+
 -- Add new columns if they don't exist (safe migration)
 DO $$ BEGIN
   ALTER TABLE patients ADD COLUMN IF NOT EXISTS convenio VARCHAR(50) DEFAULT 'SUS';
   ALTER TABLE patients ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'Ativo';
+  ALTER TABLE patients ADD COLUMN IF NOT EXISTS titular_id UUID REFERENCES patients(id) ON DELETE SET NULL;
+  ALTER TABLE patients ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL;
   ALTER TABLE professionals ADD COLUMN IF NOT EXISTS schedule VARCHAR(20) DEFAULT 'Seg-Sex';
   ALTER TABLE professionals ADD COLUMN IF NOT EXISTS consultations_month INT DEFAULT 0;
   ALTER TABLE professionals ADD COLUMN IF NOT EXISTS rating DECIMAL(2,1) DEFAULT 4.5;

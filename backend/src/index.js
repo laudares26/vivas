@@ -17,11 +17,15 @@ const dashboardRouter = require('./routes/dashboard');
 const couponsRouter = require('./routes/coupons');
 const dicomRouter = require('./routes/dicom');
 const preventiveHealthRouter = require('./routes/preventiveHealth');
+const subscriptionsRouter = require('./routes/subscriptions');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
+
+// Stripe webhook needs raw body
+app.use('/api/subscriptions/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
 // API routes
@@ -39,6 +43,7 @@ app.use('/api/dashboard', authenticate, dashboardRouter);
 app.use('/api/coupons', authenticate, couponsRouter);
 app.use('/api/dicom', dicomRouter); // DICOM routes handle their own auth + role checks
 app.use('/api/preventive-health', preventiveHealthRouter); // handles own auth
+app.use('/api/subscriptions', subscriptionsRouter); // handles own auth per route
 
 // Serve institutional site for vivasaudeinteligente.com.br
 const INSTITUTIONAL_HOSTS = ['vivasaudeinteligente.com.br', 'www.vivasaudeinteligente.com.br'];

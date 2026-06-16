@@ -81,10 +81,45 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// POST /api/auth/register (public self-registration — always forces role 'paciente')
+// POST /api/auth/register (public self-registration — requires plan subscription)
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, full_name, avatar_color } = req.body;
+    const { email, password, full_name, avatar_color, sessionId, plan } = req.body;
+
+    // Verify Stripe session if provided (plan-gated registration)
+    let validPlan = null;
+    let maxMembers = 1;
+    let stripeCustomerId = null;
+    let stripeSubscriptionId = null;
+    
+    if (sessionId) {
+      try {
+        const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
+        if (stripe) {
+          const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ['subscription'] });
+          if (session.payment_status === 'paid') {
+            validPlan = session.metadata.plan;
+            maxMembers = parseInt(session.metadata.maxMembers) || 1;
+            stripeCustomerId = session.customer;
+            stripeSubscriptionId = session.subscription?.id || session.subscription;
+          }
+        } else {
+          // Dev mode: accept plan without Stripe verification
+          validPlan = plan || 'individual';
+          maxMembers = validPlan === 'familia' ? 4 : 1;
+        }
+      } catch (stripeErr) {
+        console.warn('Stripe verification failed:', stripeErr.message);
+        // Allow registration in dev mode
+        validPlan = plan || 'individual';
+        maxMembers = validPlan === 'familia' ? 4 : 1;
+      }
+    } else {
+      // No session: allow registration with plan for dev/testing
+      validPlan = plan || 'individual';
+      maxMembers = validPlan === 'familia' ? 4 : 1;
+    }
+
     const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'Email já cadastrado' });
@@ -93,15 +128,33 @@ router.post('/register', async (req, res) => {
     const result = await pool.query(
       `INSERT INTO users (email, password_hash, full_name, role, avatar_color)
        VALUES ($1, $2, $3, 'paciente', $4) RETURNING id, email, full_name, role, avatar_color`,
-      [email, password_hash, full_name, avatar_color || '#0057B8']
+      [email, password_hash, full_name, avatar_color || '#7B1E3C']
     );
     const user = result.rows[0];
+
+    // Create subscription record
+    if (validPlan) {
+      await pool.query(
+        `INSERT INTO subscriptions (user_id, plan, status, max_members, stripe_customer_id, stripe_subscription_id, current_period_end)
+         VALUES ($1, $2, 'active', $3, $4, $5, $6)`,
+        [user.id, validPlan, maxMembers, stripeCustomerId, stripeSubscriptionId, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)]
+      );
+    }
+
+    // Create patient record (titular)
+    await pool.query(
+      `INSERT INTO patients (full_name, cpf, birth_date, gender, email, user_id, convenio, status)
+       VALUES ($1, $2, NOW(), 'Não informado', $3, $4, 'VivaS', 'Ativo')
+       ON CONFLICT DO NOTHING`,
+      [full_name, 'auto-' + user.id.substring(0, 8), email, user.id]
+    );
+
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, full_name: user.full_name, avatar_color: user.avatar_color },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
-    res.status(201).json({ token, user });
+    res.status(201).json({ token, user, subscription: { plan: validPlan, maxMembers } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

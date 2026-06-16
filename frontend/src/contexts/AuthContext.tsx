@@ -18,7 +18,7 @@ interface AuthContextType {
   token: string | null
   relationships: Relationships
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string, full_name: string) => Promise<void>
+  register: (email: string, password: string, full_name: string, sessionId?: string, plan?: string) => Promise<void>
   logout: () => void
   loading: boolean
 }
@@ -66,11 +66,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data.relationships) setRelationships(data.relationships)
   }
 
-  const register = async (email: string, password: string, full_name: string) => {
+  const register = async (email: string, password: string, full_name: string, sessionId?: string, plan?: string) => {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, full_name }),
+      body: JSON.stringify({ email, password, full_name, sessionId, plan }),
     })
     if (!res.ok) {
       const err = await res.json()

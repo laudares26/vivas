@@ -2,7 +2,9 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import Layout from './components/Layout'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
+import PatientDashboard from './pages/PatientDashboard'
 import Pacientes from './pages/Pacientes'
 import Profissionais from './pages/Profissionais'
 import Agendamentos from './pages/Agendamentos'
@@ -19,23 +21,23 @@ import Usuarios from './pages/Usuarios'
 import Configuracoes from './pages/Configuracoes'
 import DicomViewer from './pages/DicomViewer'
 import SaudePreventiva from './pages/SaudePreventiva'
+import FamilyMembers from './pages/FamilyMembers'
 
-function ProtectedRoutes() {
-  const { user, loading } = useAuth()
+function PatientRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<PatientDashboard />} />
+      <Route path="/agendamentos" element={<Layout><Agendamentos /></Layout>} />
+      <Route path="/teleconsulta" element={<Layout><Teleconsulta /></Layout>} />
+      <Route path="/saude-preventiva" element={<Layout><SaudePreventiva /></Layout>} />
+      <Route path="/familia" element={<Layout><FamilyMembers /></Layout>} />
+      <Route path="/configuracoes" element={<Layout><Configuracoes /></Layout>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin w-10 h-10 border-4 border-vivas-blue border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">Carregando VIVAS Saúde...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user) return <Navigate to="/login" replace />
-
+function ProfessionalRoutes() {
   return (
     <Layout>
       <Routes>
@@ -56,9 +58,33 @@ function ProtectedRoutes() {
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/dicom" element={<DicomViewer />} />
         <Route path="/saude-preventiva" element={<SaudePreventiva />} />
+        <Route path="/familia" element={<FamilyMembers />} />
       </Routes>
     </Layout>
   )
+}
+
+function ProtectedRoutes() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-bg">
+        <div className="text-center">
+          <div className="animate-spin w-10 h-10 border-4 border-wine border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-muted text-sm">Carregando VivaS Saúde...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) return <Navigate to="/login" replace />
+
+  if (user.role === 'paciente') {
+    return <PatientRoutes />
+  }
+
+  return <ProfessionalRoutes />
 }
 
 export default function App() {
@@ -67,6 +93,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={loading ? null : user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/register" element={loading ? null : user ? <Navigate to="/" replace /> : <Register />} />
       <Route path="/*" element={<ProtectedRoutes />} />
     </Routes>
   )
