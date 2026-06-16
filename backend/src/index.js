@@ -32,6 +32,13 @@ app.use(express.json());
 // API routes
 app.use('/api/auth', authRouter);
 app.use('/api/patients', authenticate, patientsRouter);
+// Public onboarding endpoint (no auth required)
+const multer = require('multer');
+const onboardingUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+app.post('/api/professionals/onboarding', onboardingUpload.fields([
+  { name: 'documento', maxCount: 1 },
+  { name: 'selfie', maxCount: 1 }
+]), require('./routes/professionals').onboardingHandler);
 app.use('/api/professionals', authenticate, professionalsRouter);
 app.use('/api/appointments', authenticate, appointmentsRouter);
 app.use('/api/medical-records', authenticate, medicalRecordsRouter);

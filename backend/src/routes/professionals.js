@@ -83,14 +83,9 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Professional onboarding - public (no auth required)
-const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 const bcrypt = require('bcryptjs');
 
-router.post('/onboarding', upload.fields([
-  { name: 'documento', maxCount: 1 },
-  { name: 'selfie', maxCount: 1 }
-]), async (req, res) => {
+async function onboardingHandler(req, res) {
   try {
     const { type, nome, sobrenome, email, nascimento, celular, registro, registroUf, cpf, especialidade, signature } = req.body;
 
@@ -200,12 +195,15 @@ router.post('/onboarding', upload.fields([
         </div>
       `;
 
-      await transporter.sendMail({
+      const info = await transporter.sendMail({
         from: `"VivaS Saúde" <${smtpUser}>`,
         to: email,
         subject: 'VivaS - Contrato assinado e acesso à plataforma',
         html
       });
+      console.log(`[ONBOARDING] Contract email sent to ${email} - Response: ${info.response}`);
+    } else {
+      console.log(`[ONBOARDING] No SMTP_PASS - email would be sent to ${email}`);
     }
 
     res.json({ success: true, id: profId });
@@ -214,6 +212,7 @@ router.post('/onboarding', upload.fields([
     if (err.code === '23505') return res.status(400).json({ error: 'Email ou CPF já cadastrado' });
     res.status(500).json({ error: 'Erro ao processar cadastro' });
   }
-});
+}
 
 module.exports = router;
+module.exports.onboardingHandler = onboardingHandler;

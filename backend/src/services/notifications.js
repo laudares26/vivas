@@ -83,9 +83,9 @@ function buildPatientAlertEmail(patientName, alerts) {
 
   return `
     <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: linear-gradient(135deg, #0057B8, #003d82); padding: 20px; text-align: center;">
+      <div style="background: linear-gradient(135deg, #7B1E3C, #5E1730); padding: 20px; text-align: center;">
         <h1 style="color: white; margin: 0; font-size: 22px;">VIVAS Saúde Preventiva</h1>
-        <p style="color: #93c5fd; margin: 5px 0 0;">Monitoramento de Indicadores</p>
+        <p style="color: #E9C4BE; margin: 5px 0 0;">Monitoramento de Indicadores</p>
       </div>
       <div style="padding: 24px; background: white;">
         <p>Olá <strong>${patientName}</strong>,</p>
@@ -104,10 +104,10 @@ function buildPatientAlertEmail(patientName, alerts) {
           <p style="margin: 0; font-size: 13px;"><strong>⚠️ Apoio Preventivo IA:</strong> Estes dados são suporte preventivo e não constituem diagnóstico médico. Consulte seu profissional de saúde para orientações clínicas.</p>
         </div>
         <p>Recomendamos agendar uma consulta com seu profissional de saúde para avaliação.</p>
-        <a href="https://vivas.digital/login" style="display: inline-block; background: #0057B8; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; margin-top: 12px;">Acessar VIVAS</a>
+        <a href="https://vivas.digital/login" style="display: inline-block; background: #7B1E3C; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; margin-top: 12px;">Acessar VIVAS</a>
       </div>
       <div style="padding: 16px; background: #f8fafc; text-align: center; font-size: 12px; color: #6b7280;">
-        <p>VIVAS Saúde Inteligente — Suporte Preventivo</p>
+        <p>VIVAS Saúde Inteligente - Suporte Preventivo</p>
       </div>
     </div>
   `;
@@ -124,9 +124,9 @@ function buildProfessionalAlertEmail(professionalName, patientName, patientEmail
 
   return `
     <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: linear-gradient(135deg, #0057B8, #003d82); padding: 20px; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 22px;">VIVAS — Alerta de Paciente</h1>
-        <p style="color: #93c5fd; margin: 5px 0 0;">Monitoramento Preventivo</p>
+      <div style="background: linear-gradient(135deg, #7B1E3C, #5E1730); padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 22px;">VIVAS - Alerta de Paciente</h1>
+        <p style="color: #E9C4BE; margin: 5px 0 0;">Monitoramento Preventivo</p>
       </div>
       <div style="padding: 24px; background: white;">
         <p>Olá <strong>${professionalName}</strong>,</p>
@@ -141,13 +141,13 @@ function buildProfessionalAlertEmail(professionalName, patientName, patientEmail
           </thead>
           <tbody>${alertRows}</tbody>
         </table>
-        <div style="background: #DBEAFE; border-left: 4px solid #0057B8; padding: 12px; margin: 16px 0; border-radius: 4px;">
+        <div style="background: #F6E7E1; border-left: 4px solid #7B1E3C; padding: 12px; margin: 16px 0; border-radius: 4px;">
           <p style="margin: 0; font-size: 13px;"><strong>ℹ️ Ação sugerida:</strong> Considere agendar uma consulta de acompanhamento ou teleconsulta com o paciente.</p>
         </div>
-        <a href="https://vivas.digital/login" style="display: inline-block; background: #0057B8; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; margin-top: 12px;">Acessar VIVAS</a>
+        <a href="https://vivas.digital/login" style="display: inline-block; background: #7B1E3C; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; margin-top: 12px;">Acessar VIVAS</a>
       </div>
       <div style="padding: 16px; background: #f8fafc; text-align: center; font-size: 12px; color: #6b7280;">
-        <p>VIVAS Saúde Inteligente — Notificação Profissional</p>
+        <p>VIVAS Saúde Inteligente - Notificação Profissional</p>
       </div>
     </div>
   `;

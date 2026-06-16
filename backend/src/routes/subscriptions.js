@@ -349,14 +349,15 @@ router.post('/quote', async (req, res) => {
         </div>
       `;
 
-      await transporter.sendMail({
+      const info = await transporter.sendMail({
         from: `"VivaS Saúde" <${smtpUser}>`,
         to: email,
         subject: 'VivaS - Sua cotação está pronta!',
         html
       });
+      console.log(`[QUOTE] Email sent to ${email} - Response: ${info.response}`);
     } else {
-      console.log(`[QUOTE] Email would be sent to ${email} - Total: R$ ${total.toFixed(2)}`);
+      console.log(`[QUOTE] No SMTP_PASS - Email would be sent to ${email} - Total: R$ ${total.toFixed(2)}`);
     }
 
     res.json({ success: true, quoteId, total, confirmUrl });
