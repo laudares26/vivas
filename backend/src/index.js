@@ -66,6 +66,10 @@ app.use((req, res, next) => {
     if (req.path === '/cotacao' || req.path === '/cotacao/') {
       return res.sendFile(path.join(institutionalDir, 'cotacao.html'));
     }
+    // Serve /profissionais page
+    if (req.path === '/profissionais' || req.path === '/profissionais/') {
+      return res.sendFile(path.join(institutionalDir, 'profissionais.html'));
+    }
     express.static(institutionalDir)(req, res, () => {
       res.sendFile(path.join(institutionalDir, 'index.html'));
     });
