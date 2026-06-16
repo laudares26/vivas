@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { Video, Plus, Calendar, Heart, MessageCircle, Moon, BookOpen, Activity } from 'lucide-react'
 
 const moods = [
-  { emoji: '😞', label: 'Muito difícil' },
-  { emoji: '🙁', label: 'Difícil' },
-  { emoji: '😐', label: 'Neutro' },
-  { emoji: '🙂', label: 'Bem' },
-  { emoji: '😄', label: 'Muito bem' },
+  { emoji: '1', label: 'Muito difícil' },
+  { emoji: '2', label: 'Difícil' },
+  { emoji: '3', label: 'Neutro' },
+  { emoji: '4', label: 'Bem' },
+  { emoji: '5', label: 'Muito bem' },
 ]
 
 export default function MentalDashboard() {
@@ -34,7 +34,7 @@ export default function MentalDashboard() {
         {/* Header */}
         <div className="mb-5">
           <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#9A2D43' }}>Meu espaço</div>
-          <h1 className="text-[26px] font-semibold mt-0.5" style={{ fontFamily: "'Fraunces', Georgia, serif", color: '#3F1019', letterSpacing: '-0.01em' }}>Olá, Bruno</h1>
+          <h1 className="text-[26px] font-semibold mt-0.5" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", color: '#3F1019', letterSpacing: '-0.01em' }}>Olá, Bruno</h1>
           <p className="text-sm mt-1" style={{ color: '#857470' }}>Que bom ter você por aqui. Como você está se sentindo hoje?</p>
         </div>
 
@@ -61,7 +61,7 @@ export default function MentalDashboard() {
               <span className="text-[10px] font-bold uppercase px-2 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.18)' }}>Hoje</span>
             </div>
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-semibold" style={{ background: 'rgba(255,255,255,0.2)', fontFamily: "'Fraunces', serif" }}>C</div>
+              <div className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-semibold" style={{ background: 'rgba(255,255,255,0.2)', fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>C</div>
               <div>
                 <div className="font-bold text-base">Dra. Carla Sousa</div>
                 <div className="text-sm opacity-80 mt-0.5">Psicóloga · TCC · Hoje, 18h30</div>
@@ -80,7 +80,7 @@ export default function MentalDashboard() {
               <MessageCircle className="w-4 h-4" />
             </div>
             <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#857470' }}>Sessões realizadas</div>
-            <div className="text-3xl font-semibold mt-2" style={{ fontFamily: "'Fraunces', serif", color: '#3F1019' }}>8</div>
+            <div className="text-3xl font-semibold mt-2" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", color: '#3F1019' }}>8</div>
             <div className="text-[11px] mt-1.5" style={{ color: '#A99B96' }}>desde março</div>
           </div>
           <div className="bg-white border rounded-2xl p-5" style={{ borderColor: '#ECE3DE' }}>
@@ -88,7 +88,7 @@ export default function MentalDashboard() {
               <Activity className="w-4 h-4" />
             </div>
             <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#857470' }}>Sequência de check-ins</div>
-            <div className="text-3xl font-semibold mt-2" style={{ fontFamily: "'Fraunces', serif", color: '#3F1019' }}>5 <small className="text-sm font-semibold" style={{ color: '#A99B96' }}>dias</small></div>
+            <div className="text-3xl font-semibold mt-2" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", color: '#3F1019' }}>5 <small className="text-sm font-semibold" style={{ color: '#A99B96' }}>dias</small></div>
             <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold px-2 py-0.5 rounded-full mt-1" style={{ color: '#2FA56B', background: '#E4F4EC' }}>▲ continue assim</span>
           </div>
           <div className="bg-white border rounded-2xl p-5" style={{ borderColor: '#ECE3DE' }}>
@@ -96,7 +96,7 @@ export default function MentalDashboard() {
               <Heart className="w-4 h-4" />
             </div>
             <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#857470' }}>Meu bem-estar</div>
-            <div className="text-3xl font-semibold mt-2" style={{ fontFamily: "'Fraunces', serif", color: '#3F1019' }}>68<small className="text-sm font-semibold" style={{ color: '#A99B96' }}>/100</small></div>
+            <div className="text-3xl font-semibold mt-2" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", color: '#3F1019' }}>68<small className="text-sm font-semibold" style={{ color: '#A99B96' }}>/100</small></div>
             <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold px-2 py-0.5 rounded-full mt-1" style={{ color: '#2FA56B', background: '#E4F4EC' }}>▲ 7 no mês</span>
           </div>
         </div>

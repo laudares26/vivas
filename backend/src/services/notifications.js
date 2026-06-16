@@ -77,7 +77,7 @@ function buildPatientAlertEmail(patientName, alerts) {
     <tr>
       <td style="padding: 8px; border-bottom: 1px solid #eee;">${a.label}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold; color: ${a.status === 'alerta' ? '#DC2626' : '#F59E0B'};">${a.value} ${a.unit}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee;">${a.status === 'alerta' ? '🔴 Alerta' : '🟡 Atenção'}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee;">${a.status === 'alerta' ? 'Alerta' : 'Atenção'}</td>
     </tr>
   `).join('');
 
@@ -101,7 +101,7 @@ function buildPatientAlertEmail(patientName, alerts) {
           <tbody>${alertRows}</tbody>
         </table>
         <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 12px; margin: 16px 0; border-radius: 4px;">
-          <p style="margin: 0; font-size: 13px;"><strong>⚠️ Apoio Preventivo IA:</strong> Estes dados são suporte preventivo e não constituem diagnóstico médico. Consulte seu profissional de saúde para orientações clínicas.</p>
+          <p style="margin: 0; font-size: 13px;"><strong>Apoio Preventivo IA:</strong> Estes dados são suporte preventivo e não constituem diagnóstico médico. Consulte seu profissional de saúde para orientações clínicas.</p>
         </div>
         <p>Recomendamos agendar uma consulta com seu profissional de saúde para avaliação.</p>
         <a href="https://vivas.digital/login" style="display: inline-block; background: #7B1E3C; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; margin-top: 12px;">Acessar VIVAS</a>
@@ -118,7 +118,7 @@ function buildProfessionalAlertEmail(professionalName, patientName, patientEmail
     <tr>
       <td style="padding: 8px; border-bottom: 1px solid #eee;">${a.label}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold; color: ${a.status === 'alerta' ? '#DC2626' : '#F59E0B'};">${a.value} ${a.unit}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee;">${a.status === 'alerta' ? '🔴 Alerta' : '🟡 Atenção'}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee;">${a.status === 'alerta' ? 'Alerta' : 'Atenção'}</td>
     </tr>
   `).join('');
 
@@ -142,7 +142,7 @@ function buildProfessionalAlertEmail(professionalName, patientName, patientEmail
           <tbody>${alertRows}</tbody>
         </table>
         <div style="background: #F6E7E1; border-left: 4px solid #7B1E3C; padding: 12px; margin: 16px 0; border-radius: 4px;">
-          <p style="margin: 0; font-size: 13px;"><strong>ℹ️ Ação sugerida:</strong> Considere agendar uma consulta de acompanhamento ou teleconsulta com o paciente.</p>
+          <p style="margin: 0; font-size: 13px;"><strong>Ação sugerida:</strong> Considere agendar uma consulta de acompanhamento ou teleconsulta com o paciente.</p>
         </div>
         <a href="https://vivas.digital/login" style="display: inline-block; background: #7B1E3C; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; margin-top: 12px;">Acessar VIVAS</a>
       </div>
@@ -197,7 +197,7 @@ async function checkAndNotify(patientUserId, indicators) {
   const patientHtml = buildPatientAlertEmail(patient.full_name, alerts);
   results.patient = await sendEmail(
     patient.email,
-    `⚠️ VIVAS — Indicadores de saúde requerem atenção`,
+    `VIVAS — Indicadores de saúde requerem atenção`,
     patientHtml
   );
 

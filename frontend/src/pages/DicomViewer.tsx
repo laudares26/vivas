@@ -44,14 +44,14 @@ const DEFAULT_STATE: ViewerState = {
 }
 
 const WINDOW_PRESETS = [
-  { name: 'CT Abdômen', wc: 40, ww: 400, icon: '🫁' },
-  { name: 'CT Pulmão', wc: -600, ww: 1500, icon: '🫁' },
-  { name: 'CT Osso', wc: 300, ww: 1500, icon: '🦴' },
-  { name: 'CT Cérebro', wc: 40, ww: 80, icon: '🧠' },
-  { name: 'CT Fígado', wc: 60, ww: 150, icon: '🫀' },
-  { name: 'CT Mediastino', wc: 50, ww: 350, icon: '💊' },
-  { name: 'Raio-X Tórax', wc: 1024, ww: 4096, icon: '📷' },
-  { name: 'Mamografia', wc: 2048, ww: 4096, icon: '🩺' },
+  { name: 'CT Abdômen', wc: 40, ww: 400, icon: '' },
+  { name: 'CT Pulmão', wc: -600, ww: 1500, icon: '' },
+  { name: 'CT Osso', wc: 300, ww: 1500, icon: '' },
+  { name: 'CT Cérebro', wc: 40, ww: 80, icon: '' },
+  { name: 'CT Fígado', wc: 60, ww: 150, icon: '' },
+  { name: 'CT Mediastino', wc: 50, ww: 350, icon: '' },
+  { name: 'Raio-X Tórax', wc: 1024, ww: 4096, icon: '' },
+  { name: 'Mamografia', wc: 2048, ww: 4096, icon: '' },
 ]
 
 // Generate sample DICOM data for demo

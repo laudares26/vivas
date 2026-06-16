@@ -6,7 +6,7 @@
   <title>VivaS - Cadastro de Profissionais de Saúde</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -30,7 +30,7 @@
     .main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; }
     .card { background: white; border-radius: var(--radius); box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 600px; width: 100%; padding: 40px 36px; }
     .card-header { text-align: center; margin-bottom: 8px; }
-    .card-header h1 { font-family: 'Fraunces', Georgia, serif; font-size: 26px; color: var(--wine-deep); margin-bottom: 4px; }
+    .card-header h1 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 26px; font-weight: 800; color: var(--wine-deep); margin-bottom: 4px; }
     .card-header p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
 
     /* Steps */
@@ -143,12 +143,10 @@
             <label>Tipo de profissional <span class="req">*</span></label>
             <div class="radio-group">
               <div class="radio-card selected" data-value="medico" onclick="selectType(this)">
-                <div class="rc-icon">🩺</div>
                 <div class="rc-label">Médico(a)</div>
                 <div class="rc-sub">CRM</div>
               </div>
               <div class="radio-card" data-value="psicologo" onclick="selectType(this)">
-                <div class="rc-icon">🧠</div>
                 <div class="rc-label">Psicólogo(a)</div>
                 <div class="rc-sub">CRP</div>
               </div>
@@ -264,7 +262,6 @@
             <label>Selfie para comparação <span class="req">*</span></label>
             <div class="upload-area" id="selfieUpload">
               <div class="upload-default">
-                <div class="ua-icon">🤳</div>
                 <div class="ua-text"><strong>Tire uma selfie</strong> para validação facial</div>
                 <div class="ua-text" style="margin-top:4px">Use boa iluminação e fundo neutro</div>
               </div>
@@ -320,7 +317,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
           </div>
           <div style="text-align:center">
-            <h2 style="font-family:'Fraunces',serif;font-size:22px;color:var(--wine-deep);margin-bottom:8px">Cadastro realizado com sucesso!</h2>
+            <h2 style="font-size:22px;font-weight:800;color:var(--wine-deep);margin-bottom:8px">Cadastro realizado com sucesso!</h2>
             <p style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:16px">Seu contrato assinado foi enviado para <strong id="emailConfirm"></strong>. Você já pode acessar a plataforma VivaS como profissional de saúde.</p>
             <div style="background:var(--wine-soft);border-radius:12px;padding:16px;margin-bottom:20px;text-align:left">
               <p style="font-size:13px;font-weight:600;color:var(--wine-deep);margin-bottom:6px">Próximos passos:</p>

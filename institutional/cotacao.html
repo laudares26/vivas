@@ -6,7 +6,7 @@
   <title>VivaS - Cotação de Planos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -32,7 +32,7 @@
     /* Main */
     .main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
     .card { background: white; border-radius: var(--radius); box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 520px; width: 100%; padding: 40px 36px; }
-    .card h1 { font-family: 'Fraunces', Georgia, serif; font-size: 28px; color: var(--wine-deep); margin-bottom: 6px; letter-spacing: -0.5px; }
+    .card h1 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 28px; font-weight: 800; color: var(--wine-deep); margin-bottom: 6px; letter-spacing: -0.5px; }
     .card .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
 
     /* Steps indicator */
@@ -78,7 +78,7 @@
     /* Result */
     .result-box { background: linear-gradient(135deg, var(--wine), var(--wine-deep)); border-radius: 16px; padding: 28px; color: white; margin-bottom: 20px; text-align: center; }
     .result-box .rb-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; margin-bottom: 4px; }
-    .result-box .rb-price { font-family: 'Fraunces', serif; font-size: 42px; font-weight: 700; }
+    .result-box .rb-price { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 42px; font-weight: 800; }
     .result-box .rb-price small { font-size: 16px; opacity: 0.7; font-weight: 400; }
     .result-box .rb-detail { font-size: 13px; opacity: 0.8; margin-top: 8px; }
 
@@ -92,7 +92,7 @@
     .success-icon { width: 64px; height: 64px; border-radius: 50%; background: #E4F4EC; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
     .success-icon svg { width: 32px; height: 32px; color: #2FA56B; }
     .success-text { text-align: center; }
-    .success-text h2 { font-family: 'Fraunces', serif; font-size: 22px; color: var(--wine-deep); margin-bottom: 8px; }
+    .success-text h2 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 22px; font-weight: 800; color: var(--wine-deep); margin-bottom: 8px; }
     .success-text p { color: var(--muted); font-size: 14px; line-height: 1.6; }
 
     /* Hidden */
@@ -132,12 +132,10 @@
             <label>Tipo de plano</label>
             <div class="option-cards">
               <div class="option-card" data-value="individual" onclick="selectPlan(this)">
-                <div class="oc-icon">👤</div>
                 <div class="oc-label">Individual</div>
                 <div class="oc-desc">Apenas para mim</div>
               </div>
               <div class="option-card" data-value="familia" onclick="selectPlan(this)">
-                <div class="oc-icon">👨‍👩‍👧‍👦</div>
                 <div class="oc-label">Família</div>
                 <div class="oc-desc">Titular + dependentes</div>
               </div>
@@ -166,7 +164,7 @@
 
           <div class="toggle-row" id="toggleMental" onclick="toggleOption(this)">
             <div>
-              <div class="tr-text">🧠 Saúde Mental</div>
+              <div class="tr-text">Saúde Mental</div>
               <div class="tr-sub">Psicólogos, psiquiatras e terapeutas online</div>
             </div>
             <div class="toggle-switch"></div>
@@ -174,7 +172,7 @@
 
           <div class="toggle-row" id="toggleEmpresa" onclick="toggleOption(this)">
             <div>
-              <div class="tr-text">🏢 Empresarial</div>
+              <div class="tr-text">Empresarial</div>
               <div class="tr-sub">Gestão de saúde corporativa com NR-1</div>
             </div>
             <div class="toggle-switch"></div>
