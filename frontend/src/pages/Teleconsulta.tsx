@@ -50,7 +50,7 @@ function generateSlots(): TimeSlot[] {
 export default function Teleconsulta() {
   const { user } = useAuth()
   const isPaciente = user?.role === 'paciente'
-  const isProfessional = ['medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'].includes(user?.role || '')
+  const isProfessional = ['medico', 'psicologo'].includes(user?.role || '')
 
   const [view, setView] = useState<'schedule' | 'call'>('schedule')
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null)

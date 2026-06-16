@@ -7,7 +7,6 @@ const seedData = async () => {
     // Seed default users
     const adminHash = await bcrypt.hash('admin123', 10);
     const medicoHash = await bcrypt.hash('medico123', 10);
-    const enfermeiroHash = await bcrypt.hash('enfermeiro123', 10);
     const pacienteHash = await bcrypt.hash('paciente123', 10);
     const marketingHash = await bcrypt.hash('marketing123', 10);
     const psicologoHash = await bcrypt.hash('psicologo123', 10);
@@ -17,13 +16,12 @@ const seedData = async () => {
       VALUES 
         ('admin@vivas.com', $1, 'Dr. Admin', 'admin', '#0057B8'),
         ('bruno.hodos@gmail.com', $2, 'Dr. Bruno Hodos', 'medico', '#2563EB'),
-        ('mariana@vivas.com', $3, 'Enf. Mariana Costa', 'enfermeiro', '#16A34A'),
-        ('maria@email.com', $4, 'Maria Silva Santos', 'paciente', '#EA580C'),
-        ('brunocorreafotografo@gmail.com', $4, 'Bruno Correa', 'paciente', '#F59E0B'),
-        ('marketing@vivas.com', $5, 'Ana Marketing', 'marketing_admin', '#9333EA'),
-        ('psicologa@vivas.com', $6, 'Dra. Carla Sousa', 'psicologo', '#EC4899')
+        ('maria@email.com', $3, 'Maria Silva Santos', 'paciente', '#EA580C'),
+        ('brunocorreafotografo@gmail.com', $3, 'Bruno Correa', 'paciente', '#F59E0B'),
+        ('marketing@vivas.com', $4, 'Ana Marketing', 'marketing_admin', '#9333EA'),
+        ('psicologa@vivas.com', $5, 'Dra. Carla Sousa', 'psicologo', '#EC4899')
       ON CONFLICT (email) DO NOTHING;
-    `, [adminHash, medicoHash, enfermeiroHash, pacienteHash, marketingHash, psicologoHash]);
+    `, [adminHash, medicoHash, pacienteHash, marketingHash, psicologoHash]);
 
     // Seed patients
     await pool.query(`
@@ -50,10 +48,6 @@ const seedData = async () => {
         ('Dra. Patrícia Gomes', '222.333.444-55', 'CRM-MG 23456', 'Médico', 'Cardiologia', '7891023', '(31) 98888-2222', 'dra.patricia@vivas.com', 'Seg-Qui', 145, 4.8),
         ('Dr. Antônio Almeida', '333.444.555-66', 'CRM-MG 34567', 'Médico', 'Pediatria', '7891023', '(31) 98888-3333', 'dr.antonio@vivas.com', 'Ter-Sáb', 210, 4.7),
         ('Dra. Juliana Barros', '444.555.666-77', 'CRM-MG 45678', 'Médico', 'Ginecologia', '7891023', '(31) 98888-4444', 'dra.juliana@vivas.com', 'Seg-Sex', 160, 4.9),
-        ('Enf. Mariana Costa', '555.666.777-88', 'COREN-MG 56789', 'Enfermeiro', 'Enfermagem Geral', '7891023', '(31) 98888-5555', 'enf.mariana@vivas.com', 'Seg-Sex', 0, 4.8),
-        ('Enf. Lucas Ferreira', '666.777.888-99', 'COREN-MG 67890', 'Enfermeiro', 'UTI', '7891023', '(31) 98888-6666', 'enf.lucas@vivas.com', 'Seg-Sex', 0, 4.6),
-        ('Ft. Daniela Rocha', '777.888.999-00', 'CREFITO-MG 78901', 'Fisioterapeuta', 'Ortopedia', '7891023', '(31) 98888-7777', 'ft.daniela@vivas.com', 'Seg-Sex', 0, 4.7),
-        ('Ft. Bruno Cardoso', '888.999.000-11', 'CREFITO-MG 89012', 'Fisioterapeuta', 'Respiratória', '7891023', '(31) 98888-8888', 'ft.bruno@vivas.com', 'Seg-Sex', 0, 4.5),
         ('Dra. Carla Sousa', '999.111.222-33', 'CRP-MG 12345', 'Psicólogo', 'Psicologia Clínica', '7891023', '(31) 98888-9999', 'psicologa@vivas.com', 'Seg-Sex', 120, 4.9)
       ON CONFLICT (cpf) DO NOTHING;
     `);
@@ -233,7 +227,7 @@ const seedData = async () => {
 
     // Seed professional-patient relationships for data isolation
     const profUsers = await pool.query(
-      "SELECT id, role FROM users WHERE role IN ('medico', 'enfermeiro', 'psicologo', 'fisioterapeuta') AND active = true"
+      "SELECT id, role FROM users WHERE role IN ('medico', 'psicologo') AND active = true"
     );
     const patientUsers = await pool.query(
       "SELECT id FROM users WHERE role = 'paciente' AND active = true"

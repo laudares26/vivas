@@ -6,7 +6,7 @@ const pool = require('../config/database');
 const { authenticate, authorize } = require('./auth');
 
 const router = express.Router();
-const MEDICAL_ROLES = ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'];
+const MEDICAL_ROLES = ['admin', 'medico', 'psicologo'];
 
 // Configure storage for DICOM files
 const DICOM_DIR = process.env.DICOM_STORAGE_PATH || path.join(__dirname, '../../dicom_storage');

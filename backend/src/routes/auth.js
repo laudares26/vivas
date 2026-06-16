@@ -54,7 +54,7 @@ router.post('/login', async (req, res) => {
 
     // Fetch data isolation relationships
     let relationships = { patients: [], professionals: [] };
-    const PROFESSIONAL_ROLES = ['medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'];
+    const PROFESSIONAL_ROLES = ['medico', 'psicologo'];
     if (PROFESSIONAL_ROLES.includes(user.role)) {
       const rel = await pool.query(
         `SELECT u.id, u.full_name FROM professional_patient_relationships ppr
@@ -174,7 +174,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-const VALID_ROLES = ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta', 'paciente', 'marketing_admin', 'rh'];
+const VALID_ROLES = ['admin', 'medico', 'psicologo', 'paciente', 'marketing_admin', 'rh'];
 
 // POST /api/auth/users (admin only — create user with any role)
 router.post('/users', authenticate, authorize('admin'), async (req, res) => {
@@ -211,7 +211,7 @@ router.get('/me', authenticate, async (req, res) => {
 
     // Include relationships for data isolation
     let relationships = { patients: [], professionals: [] };
-    const PROFESSIONAL_ROLES = ['medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'];
+    const PROFESSIONAL_ROLES = ['medico', 'psicologo'];
     if (PROFESSIONAL_ROLES.includes(user.role)) {
       const rel = await pool.query(
         `SELECT u.id, u.full_name FROM professional_patient_relationships ppr

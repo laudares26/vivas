@@ -14,8 +14,8 @@ const BREADCRUMBS: Record<string, string> = {
 }
 
 const ROLE_LABELS: Record<string, string> = {
-  admin: 'Administrador', medico: 'Médico', enfermeiro: 'Enfermeiro',
-  psicologo: 'Psicólogo', fisioterapeuta: 'Fisioterapeuta',
+  admin: 'Administrador', medico: 'Médico',
+  psicologo: 'Psicólogo',
   paciente: 'Paciente', marketing_admin: 'Marketing',
 }
 

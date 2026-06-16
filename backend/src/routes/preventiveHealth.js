@@ -71,7 +71,7 @@ router.get('/indicators', authenticate, async (req, res) => {
 router.get('/notifications', authenticate, async (req, res) => {
   try {
     const userId = req.user.id;
-    const isProfessional = ['medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'].includes(req.user.role);
+    const isProfessional = ['medico', 'psicologo'].includes(req.user.role);
 
     let result;
     if (isProfessional || req.user.role === 'admin') {
@@ -102,7 +102,7 @@ router.get('/notifications', authenticate, async (req, res) => {
 // POST /api/preventive-health/notifications/:id/read — mark notification as read
 router.post('/notifications/:id/read', authenticate, async (req, res) => {
   try {
-    const isProfessional = ['medico', 'enfermeiro', 'psicologo', 'fisioterapeuta', 'admin'].includes(req.user.role);
+    const isProfessional = ['medico', 'psicologo', 'admin'].includes(req.user.role);
     const field = isProfessional ? 'read_by_professional' : 'read_by_patient';
     await pool.query(
       `UPDATE health_notifications SET ${field} = true WHERE id = $1`,

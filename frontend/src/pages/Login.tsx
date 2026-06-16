@@ -89,8 +89,8 @@ export default function Login() {
             <p className="font-bold mb-1">Contas de demonstração:</p>
             <p>Admin: admin@vivas.com / admin123</p>
             <p>Médico: bruno.hodos@gmail.com / medico123</p>
+            <p>Psicóloga: psicologa@vivas.com / psicologo123</p>
             <p>Paciente: brunocorreafotografo@gmail.com / paciente123</p>
-            <p>Enfermeiro: mariana@vivas.com / enfermeiro123</p>
             <p>Marketing: marketing@vivas.com / marketing123</p>
             <p>RH Empresa: rh@techcorp.com.br / rh12345</p>
           </div>

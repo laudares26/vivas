@@ -72,7 +72,7 @@ export default function Dashboard() {
     : [{ name: 'Seg', atendimentos: 8 }, { name: 'Ter', atendimentos: 12 }, { name: 'Qua', atendimentos: 15 },
        { name: 'Qui', atendimentos: 10 }, { name: 'Sex', atendimentos: 18 }, { name: 'Sáb', atendimentos: 6 }]
 
-  const isProfessional = ['medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'].includes(user?.role || '')
+  const isProfessional = ['medico', 'psicologo'].includes(user?.role || '')
   const isPatient = user?.role === 'paciente'
 
   return (

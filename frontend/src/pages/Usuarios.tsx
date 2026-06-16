@@ -11,9 +11,7 @@ interface UserRecord {
 const ROLES = [
   { value: 'admin', label: 'Administrador', color: 'bg-red-100 text-red-700' },
   { value: 'medico', label: 'Médico', color: 'bg-blue-100 text-blue-700' },
-  { value: 'enfermeiro', label: 'Enfermeiro', color: 'bg-green-100 text-green-700' },
   { value: 'psicologo', label: 'Psicólogo', color: 'bg-pink-100 text-pink-700' },
-  { value: 'fisioterapeuta', label: 'Fisioterapeuta', color: 'bg-purple-100 text-purple-700' },
   { value: 'paciente', label: 'Paciente', color: 'bg-gray-100 text-gray-700' },
   { value: 'marketing_admin', label: 'Marketing', color: 'bg-amber-100 text-amber-700' },
 ]

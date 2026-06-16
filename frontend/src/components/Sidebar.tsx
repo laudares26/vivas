@@ -16,19 +16,19 @@ interface NavItem {
 
 const clinicalLinks: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/pacientes', icon: Users, label: 'Pacientes', roles: ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'] },
-  { to: '/profissionais', icon: UserCog, label: 'Profissionais', roles: ['admin', 'medico', 'enfermeiro'] },
+  { to: '/pacientes', icon: Users, label: 'Pacientes', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/profissionais', icon: UserCog, label: 'Profissionais', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/agendamentos', icon: CalendarDays, label: 'Agendamentos' },
-  { to: '/atendimento', icon: Stethoscope, label: 'Atendimento Médico', roles: ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'] },
-  { to: '/prontuario', icon: FileText, label: 'Prontuário Eletrônico', roles: ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'] },
-  { to: '/exames', icon: TestTubeDiagonal, label: 'Exames e Laudos', roles: ['admin', 'medico', 'enfermeiro'] },
-  { to: '/dicom', icon: Layers, label: 'Isis DICOM Viewer', roles: ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'] },
+  { to: '/atendimento', icon: Stethoscope, label: 'Atendimento Médico', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/prontuario', icon: FileText, label: 'Prontuário Eletrônico', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/exames', icon: TestTubeDiagonal, label: 'Exames e Laudos', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/dicom', icon: Layers, label: 'Isis DICOM Viewer', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/prescricoes', icon: ClipboardList, label: 'Receitas e Prescrições', roles: ['admin', 'medico'] },
   { to: '/teleconsulta', icon: Video, label: 'Teleconsulta' },
 ]
 
 const aiLinks: NavItem[] = [
-  { to: '/triagem', icon: Brain, label: 'Triagem Inteligente', roles: ['admin', 'medico', 'enfermeiro'] },
+  { to: '/triagem', icon: Brain, label: 'Triagem Inteligente', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/assistente', icon: Bot, label: 'Assistente IA (Apoio)', roles: ['admin', 'medico'] },
   { to: '/predicao', icon: Activity, label: 'Suporte Preventivo', roles: ['admin', 'medico'] },
   { to: '/saude-preventiva', icon: Heart, label: 'Saúde Preventiva', roles: ['paciente'] },

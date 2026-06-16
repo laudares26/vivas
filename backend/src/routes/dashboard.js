@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const pool = require('../config/database');
 
-const PROFESSIONAL_ROLES = ['medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'];
+const PROFESSIONAL_ROLES = ['medico', 'psicologo'];
 
 router.get('/', async (req, res) => {
   try {

@@ -23,6 +23,7 @@ import DicomViewer from './pages/DicomViewer'
 import SaudePreventiva from './pages/SaudePreventiva'
 import FamilyMembers from './pages/FamilyMembers'
 import EmpresaDashboard from './pages/EmpresaDashboard'
+import MentalDashboard from './pages/MentalDashboard'
 
 function PatientRoutes() {
   return (
@@ -32,6 +33,7 @@ function PatientRoutes() {
       <Route path="/teleconsulta" element={<Layout><Teleconsulta /></Layout>} />
       <Route path="/saude-preventiva" element={<Layout><SaudePreventiva /></Layout>} />
       <Route path="/familia" element={<Layout><FamilyMembers /></Layout>} />
+      <Route path="/mental" element={<MentalDashboard />} />
       <Route path="/configuracoes" element={<Layout><Configuracoes /></Layout>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -74,6 +76,7 @@ function ProfessionalRoutes() {
         <Route path="/saude-preventiva" element={<SaudePreventiva />} />
         <Route path="/familia" element={<FamilyMembers />} />
         <Route path="/empresas" element={<EmpresaDashboard />} />
+        <Route path="/mental" element={<MentalDashboard />} />
       </Routes>
     </Layout>
   )

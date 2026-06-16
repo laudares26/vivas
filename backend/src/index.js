@@ -58,6 +58,14 @@ app.use((req, res, next) => {
     if (req.path === '/empresas' || req.path === '/empresas/') {
       return res.sendFile(path.join(institutionalDir, 'empresas.html'));
     }
+    // Serve /mental page
+    if (req.path === '/mental' || req.path === '/mental/') {
+      return res.sendFile(path.join(institutionalDir, 'mental.html'));
+    }
+    // Serve /cotacao page
+    if (req.path === '/cotacao' || req.path === '/cotacao/') {
+      return res.sendFile(path.join(institutionalDir, 'cotacao.html'));
+    }
     express.static(institutionalDir)(req, res, () => {
       res.sendFile(path.join(institutionalDir, 'index.html'));
     });

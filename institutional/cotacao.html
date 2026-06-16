@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VivaS - Cotação de Planos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --wine: #7B1E3C;
+      --wine-deep: #5E1730;
+      --wine-soft: #F6E7E1;
+      --clay: #C97B63;
+      --blush: #E9C4BE;
+      --cream: #FBF5F1;
+      --ink: #1A1A2E;
+      --muted: #6B7280;
+      --radius: 16px;
+    }
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+    .page { display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* Header */
+    .header { background: var(--wine); padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; }
+    .header-logo { height: 32px; }
+    .header-link { color: white; text-decoration: none; font-size: 14px; font-weight: 600; opacity: 0.8; transition: opacity 0.2s; }
+    .header-link:hover { opacity: 1; }
+
+    /* Main */
+    .main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+    .card { background: white; border-radius: var(--radius); box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 520px; width: 100%; padding: 40px 36px; }
+    .card h1 { font-family: 'Fraunces', Georgia, serif; font-size: 28px; color: var(--wine-deep); margin-bottom: 6px; letter-spacing: -0.5px; }
+    .card .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+    /* Steps indicator */
+    .steps-bar { display: flex; gap: 6px; margin-bottom: 28px; }
+    .steps-bar .step-dot { flex: 1; height: 4px; border-radius: 2px; background: #E5E7EB; transition: background 0.3s; }
+    .steps-bar .step-dot.active { background: var(--wine); }
+    .steps-bar .step-dot.done { background: var(--clay); }
+
+    /* Form */
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-weight: 600; font-size: 13px; color: var(--ink); margin-bottom: 8px; }
+    .form-group input, .form-group select { width: 100%; padding: 14px 16px; border: 1.5px solid #E5E7EB; border-radius: 12px; font-size: 15px; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; background: var(--cream); }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--wine); box-shadow: 0 0 0 3px rgba(123,30,60,0.1); }
+    .form-group .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* Radio/option cards */
+    .option-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .option-card { border: 1.5px solid #E5E7EB; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .option-card:hover { border-color: var(--clay); }
+    .option-card.selected { border-color: var(--wine); background: var(--wine-soft); }
+    .option-card .oc-icon { font-size: 24px; margin-bottom: 6px; }
+    .option-card .oc-label { font-weight: 600; font-size: 14px; }
+    .option-card .oc-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* Toggle */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 16px; border: 1.5px solid #E5E7EB; border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
+    .toggle-row:hover { border-color: var(--clay); }
+    .toggle-row.active { border-color: var(--wine); background: var(--wine-soft); }
+    .toggle-row .tr-text { font-weight: 600; font-size: 14px; }
+    .toggle-row .tr-sub { font-size: 12px; color: var(--muted); }
+    .toggle-switch { width: 44px; height: 24px; border-radius: 12px; background: #D1D5DB; position: relative; transition: background 0.2s; flex-shrink: 0; }
+    .toggle-switch::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: transform 0.2s; }
+    .toggle-row.active .toggle-switch { background: var(--wine); }
+    .toggle-row.active .toggle-switch::after { transform: translateX(20px); }
+
+    /* Buttons */
+    .btn-primary { display: block; width: 100%; padding: 16px; background: linear-gradient(135deg, var(--wine), var(--wine-deep)); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s; font-family: inherit; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(123,30,60,0.3); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-back { background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 12px; display: block; width: 100%; text-align: center; font-family: inherit; }
+    .btn-back:hover { color: var(--wine); }
+
+    /* Result */
+    .result-box { background: linear-gradient(135deg, var(--wine), var(--wine-deep)); border-radius: 16px; padding: 28px; color: white; margin-bottom: 20px; text-align: center; }
+    .result-box .rb-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; margin-bottom: 4px; }
+    .result-box .rb-price { font-family: 'Fraunces', serif; font-size: 42px; font-weight: 700; }
+    .result-box .rb-price small { font-size: 16px; opacity: 0.7; font-weight: 400; }
+    .result-box .rb-detail { font-size: 13px; opacity: 0.8; margin-top: 8px; }
+
+    .breakdown { margin-bottom: 24px; }
+    .breakdown .bk-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px; }
+    .breakdown .bk-row:last-child { border-bottom: none; }
+    .breakdown .bk-row .bk-label { color: var(--muted); }
+    .breakdown .bk-row .bk-value { font-weight: 600; }
+
+    /* Success */
+    .success-icon { width: 64px; height: 64px; border-radius: 50%; background: #E4F4EC; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .success-icon svg { width: 32px; height: 32px; color: #2FA56B; }
+    .success-text { text-align: center; }
+    .success-text h2 { font-family: 'Fraunces', serif; font-size: 22px; color: var(--wine-deep); margin-bottom: 8px; }
+    .success-text p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+    /* Hidden */
+    .hidden { display: none !important; }
+
+    @media (max-width: 540px) {
+      .card { padding: 28px 20px; }
+      .card h1 { font-size: 22px; }
+      .option-cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <a href="https://vivasaudeinteligente.com.br">
+        <img src="/vivas-branco.svg" alt="VivaS" class="header-logo" />
+      </a>
+      <a href="https://vivas.digital/login" class="header-link">Entrar</a>
+    </header>
+
+    <main class="main">
+      <div class="card">
+        <!-- Steps bar -->
+        <div class="steps-bar">
+          <div class="step-dot active" id="dot1"></div>
+          <div class="step-dot" id="dot2"></div>
+          <div class="step-dot" id="dot3"></div>
+          <div class="step-dot" id="dot4"></div>
+        </div>
+
+        <!-- Step 1: Type -->
+        <div id="step1">
+          <h1>Sua cotação VivaS</h1>
+          <p class="subtitle">Escolha o tipo de plano que melhor se encaixa para você.</p>
+          <div class="form-group">
+            <label>Tipo de plano</label>
+            <div class="option-cards">
+              <div class="option-card" data-value="individual" onclick="selectPlan(this)">
+                <div class="oc-icon">👤</div>
+                <div class="oc-label">Individual</div>
+                <div class="oc-desc">Apenas para mim</div>
+              </div>
+              <div class="option-card" data-value="familia" onclick="selectPlan(this)">
+                <div class="oc-icon">👨‍👩‍👧‍👦</div>
+                <div class="oc-label">Família</div>
+                <div class="oc-desc">Titular + dependentes</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group hidden" id="depGroup">
+            <label>Quantos dependentes?</label>
+            <select id="dependentes">
+              <option value="1">1 dependente</option>
+              <option value="2">2 dependentes</option>
+              <option value="3">3 dependentes</option>
+              <option value="4">4 dependentes</option>
+              <option value="5">5 ou mais dependentes</option>
+            </select>
+            <p class="hint">Cônjuge, filhos ou pais sob sua responsabilidade.</p>
+          </div>
+
+          <button class="btn-primary" id="btnStep1" disabled onclick="goStep(2)">Continuar</button>
+        </div>
+
+        <!-- Step 2: Add-ons -->
+        <div id="step2" class="hidden">
+          <h1>Personalize seu plano</h1>
+          <p class="subtitle">Adicione módulos extras conforme sua necessidade.</p>
+
+          <div class="toggle-row" id="toggleMental" onclick="toggleOption(this)">
+            <div>
+              <div class="tr-text">🧠 Saúde Mental</div>
+              <div class="tr-sub">Psicólogos, psiquiatras e terapeutas online</div>
+            </div>
+            <div class="toggle-switch"></div>
+          </div>
+
+          <div class="toggle-row" id="toggleEmpresa" onclick="toggleOption(this)">
+            <div>
+              <div class="tr-text">🏢 Empresarial</div>
+              <div class="tr-sub">Gestão de saúde corporativa com NR-1</div>
+            </div>
+            <div class="toggle-switch"></div>
+          </div>
+
+          <button class="btn-primary" onclick="goStep(3)">Ver minha cotação</button>
+          <button class="btn-back" onclick="goStep(1)">← Voltar</button>
+        </div>
+
+        <!-- Step 3: Contact info -->
+        <div id="step3" class="hidden">
+          <h1>Seus dados</h1>
+          <p class="subtitle">Para enviarmos sua cotação personalizada.</p>
+
+          <div class="form-group">
+            <label>Nome completo</label>
+            <input type="text" id="nome" placeholder="Seu nome" required />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="seu@email.com" required />
+          </div>
+          <div class="form-group">
+            <label>Telefone</label>
+            <input type="tel" id="telefone" placeholder="(31) 99999-9999" />
+          </div>
+
+          <button class="btn-primary" id="btnCotacao" onclick="submitQuote()">Gerar minha cotação</button>
+          <button class="btn-back" onclick="goStep(2)">← Voltar</button>
+        </div>
+
+        <!-- Step 4: Result -->
+        <div id="step4" class="hidden">
+          <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div class="success-text">
+            <h2>Cotação enviada!</h2>
+            <p id="successMsg">Enviamos os detalhes do seu plano para <strong id="emailSent"></strong>. Verifique sua caixa de entrada e clique no link para confirmar a contratação.</p>
+          </div>
+
+          <div class="result-box" style="margin-top: 24px;">
+            <div class="rb-label">Valor mensal</div>
+            <div class="rb-price" id="totalPrice">R$ 0<small>/mês</small></div>
+            <div class="rb-detail" id="totalDetail"></div>
+          </div>
+
+          <div class="breakdown" id="breakdown"></div>
+
+          <button class="btn-primary" id="btnConfirmar" onclick="confirmPlan()">Confirmar e contratar agora</button>
+          <button class="btn-back" onclick="window.location.href='https://vivasaudeinteligente.com.br'">← Voltar ao site</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let state = { plan: '', dependentes: 0, mental: false, empresa: false, nome: '', email: '', telefone: '' };
+    const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001/api' : '/api';
+
+    function selectPlan(el) {
+      document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      state.plan = el.dataset.value;
+      document.getElementById('depGroup').classList.toggle('hidden', state.plan !== 'familia');
+      document.getElementById('btnStep1').disabled = false;
+    }
+
+    function toggleOption(el) {
+      el.classList.toggle('active');
+      if (el.id === 'toggleMental') state.mental = el.classList.contains('active');
+      if (el.id === 'toggleEmpresa') state.empresa = el.classList.contains('active');
+    }
+
+    function goStep(n) {
+      if (n === 2 && state.plan === 'familia') {
+        state.dependentes = parseInt(document.getElementById('dependentes').value);
+      }
+      for (let i = 1; i <= 4; i++) document.getElementById('step' + i).classList.toggle('hidden', i !== n);
+      for (let i = 1; i <= 4; i++) {
+        const dot = document.getElementById('dot' + i);
+        dot.classList.toggle('active', i === n);
+        dot.classList.toggle('done', i < n);
+      }
+    }
+
+    function calcPrice() {
+      let base = state.plan === 'individual' ? 49.90 : 89.90;
+      let mentalAdd = state.mental ? (state.plan === 'individual' ? 29.90 : 49.90) : 0;
+      let empresaAdd = state.empresa ? 29.90 : 0;
+      let depAdd = state.plan === 'familia' ? state.dependentes * 19.90 : 0;
+      return { base, mentalAdd, empresaAdd, depAdd, total: base + mentalAdd + empresaAdd + depAdd };
+    }
+
+    async function submitQuote() {
+      state.nome = document.getElementById('nome').value;
+      state.email = document.getElementById('email').value;
+      state.telefone = document.getElementById('telefone').value;
+
+      if (!state.nome || !state.email) { alert('Preencha nome e email.'); return; }
+
+      if (state.plan === 'familia') {
+        state.dependentes = parseInt(document.getElementById('dependentes').value);
+      }
+
+      const btn = document.getElementById('btnCotacao');
+      btn.disabled = true;
+      btn.textContent = 'Gerando cotação...';
+
+      try {
+        const res = await fetch(API_BASE + '/subscriptions/quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao gerar cotação');
+
+        const prices = calcPrice();
+        document.getElementById('emailSent').textContent = state.email;
+        document.getElementById('totalPrice').innerHTML = `R$ ${prices.total.toFixed(2).replace('.', ',')}<small>/mês</small>`;
+
+        let detail = state.plan === 'individual' ? 'Plano Individual' : `Plano Família (titular + ${state.dependentes} dep.)`;
+        if (state.mental) detail += ' + Saúde Mental';
+        if (state.empresa) detail += ' + Empresarial';
+        document.getElementById('totalDetail').textContent = detail;
+
+        let bk = '';
+        bk += `<div class="bk-row"><span class="bk-label">Plano ${state.plan === 'individual' ? 'Individual' : 'Família'}</span><span class="bk-value">R$ ${prices.base.toFixed(2).replace('.', ',')}</span></div>`;
+        if (prices.depAdd > 0) bk += `<div class="bk-row"><span class="bk-label">${state.dependentes} dependente(s)</span><span class="bk-value">+ R$ ${prices.depAdd.toFixed(2).replace('.', ',')}</span></div>`;
+        if (prices.mentalAdd > 0) bk += `<div class="bk-row"><span class="bk-label">Saúde Mental</span><span class="bk-value">+ R$ ${prices.mentalAdd.toFixed(2).replace('.', ',')}</span></div>`;
+        if (prices.empresaAdd > 0) bk += `<div class="bk-row"><span class="bk-label">Empresarial</span><span class="bk-value">+ R$ ${prices.empresaAdd.toFixed(2).replace('.', ',')}</span></div>`;
+        document.getElementById('breakdown').innerHTML = bk;
+
+        if (data.confirmUrl) {
+          document.getElementById('btnConfirmar').onclick = () => window.location.href = data.confirmUrl;
+        }
+
+        goStep(4);
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Gerar minha cotação';
+      }
+    }
+
+    function confirmPlan() {
+      window.location.href = API_BASE + '/subscriptions/confirm-quote?email=' + encodeURIComponent(state.email) + '&plan=' + state.plan + '&mental=' + state.mental + '&empresa=' + state.empresa + '&dependentes=' + state.dependentes;
+    }
+
+    // Phone mask
+    document.getElementById('telefone').addEventListener('input', function(e) {
+      let v = e.target.value.replace(/\D/g, '');
+      if (v.length > 11) v = v.slice(0, 11);
+      if (v.length > 6) v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+      else if (v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
+      e.target.value = v;
+    });
+  </script>
+</body>
+</html>
