@@ -232,6 +232,206 @@ router.get('/plans', (req, res) => {
   res.json({ plans: PLANS });
 });
 
+// Track checkout start (for abandoned cart recovery)
+router.post('/track-checkout', async (req, res) => {
+  try {
+    const { sessionId, plan, email, nome, telefone } = req.body;
+    if (!sessionId) return res.status(400).json({ error: 'sessionId required' });
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS checkout_sessions (
+        id SERIAL PRIMARY KEY,
+        stripe_session_id VARCHAR(255) UNIQUE NOT NULL,
+        plan VARCHAR(50),
+        email VARCHAR(255),
+        nome VARCHAR(255),
+        telefone VARCHAR(50),
+        status VARCHAR(50) DEFAULT 'started',
+        whatsapp_sent BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT NOW(),
+        completed_at TIMESTAMP,
+        abandoned_at TIMESTAMP
+      )
+    `);
+
+    await pool.query(
+      `INSERT INTO checkout_sessions (stripe_session_id, plan, email, nome, telefone)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (stripe_session_id) DO NOTHING`,
+      [sessionId, plan || null, email || null, nome || null, telefone || null]
+    );
+
+    res.json({ tracked: true });
+  } catch (err) {
+    console.error('Track checkout error:', err);
+    res.status(500).json({ error: 'Tracking failed' });
+  }
+});
+
+// Send WhatsApp message via WhatsApp Business Cloud API
+async function sendWhatsAppMessage(phone, message) {
+  const token = process.env.WHATSAPP_API_TOKEN;
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+  if (!token || !phoneNumberId) {
+    console.log(`[WHATSAPP] No API credentials - would send to ${phone}: ${message}`);
+
+    // Fallback: store for manual follow-up via wa.me link
+    const waNumber = '5511947382375';
+    const encodedMsg = encodeURIComponent(message);
+    console.log(`[WHATSAPP] Manual follow-up link: https://wa.me/${phone}?text=${encodedMsg}`);
+    return { sent: false, manual: true, link: `https://wa.me/${phone}` };
+  }
+
+  try {
+    const response = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: phone.replace(/\D/g, ''),
+        type: 'text',
+        text: { body: message }
+      })
+    });
+    const data = await response.json();
+    console.log(`[WHATSAPP] Message sent to ${phone}:`, data);
+    return { sent: true, data };
+  } catch (err) {
+    console.error('[WHATSAPP] Send error:', err);
+    return { sent: false, error: err.message };
+  }
+}
+
+// Check and notify abandoned checkouts (called periodically)
+async function checkAbandonedCheckouts() {
+  try {
+    // Find checkouts started more than 30 minutes ago that are still 'started'
+    const result = await pool.query(`
+      SELECT * FROM checkout_sessions
+      WHERE status = 'started'
+        AND whatsapp_sent = false
+        AND created_at < NOW() - INTERVAL '30 minutes'
+        AND created_at > NOW() - INTERVAL '24 hours'
+      LIMIT 10
+    `);
+
+    const stripe = getStripe();
+
+    for (const session of result.rows) {
+      // Verify with Stripe that the session is truly abandoned
+      let stripeSession = null;
+      if (stripe && session.stripe_session_id) {
+        try {
+          stripeSession = await stripe.checkout.sessions.retrieve(session.stripe_session_id);
+        } catch (e) {
+          console.log(`[ABANDONED] Could not retrieve Stripe session ${session.stripe_session_id}`);
+        }
+      }
+
+      // If payment was completed, mark as completed
+      if (stripeSession && stripeSession.payment_status === 'paid') {
+        await pool.query(
+          `UPDATE checkout_sessions SET status = 'completed', completed_at = NOW() WHERE id = $1`,
+          [session.id]
+        );
+        continue;
+      }
+
+      // Mark as abandoned
+      await pool.query(
+        `UPDATE checkout_sessions SET status = 'abandoned', abandoned_at = NOW() WHERE id = $1`,
+        [session.id]
+      );
+
+      // Send WhatsApp recovery message if we have a phone number
+      const phone = session.telefone;
+      const email = session.email;
+      const nome = session.nome || 'cliente';
+      const planName = PLANS[session.plan]?.name || session.plan || 'VivaS';
+
+      if (phone) {
+        const cleanPhone = phone.replace(/\D/g, '');
+        if (cleanPhone.length >= 10) {
+          const brPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+          const msg = `Oi, ${nome}! Vi que voce iniciou a contratacao do plano ${planName} na VivaS, mas o pagamento ainda nao foi finalizado. Posso te ajudar com alguma duvida ou enviar o link novamente? Estou aqui para ajudar!`;
+          const waResult = await sendWhatsAppMessage(brPhone, msg);
+          await pool.query(
+            `UPDATE checkout_sessions SET whatsapp_sent = true WHERE id = $1`,
+            [session.id]
+          );
+          console.log(`[ABANDONED] WhatsApp sent for session ${session.id} (${email}):`, waResult);
+        }
+      }
+
+      // Also send email notification about abandoned cart
+      if (email) {
+        try {
+          const nodemailer = require('nodemailer');
+          const smtpPass = process.env.SMTP_PASS;
+          if (smtpPass) {
+            const transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: { user: process.env.SMTP_USER || 'sandrolaudares@gmail.com', pass: smtpPass }
+            });
+            await transporter.sendMail({
+              from: '"VivaS Saude" <contato@vivasaudeinteligente.com.br>',
+              to: email,
+              subject: `${nome}, sua cotacao VivaS esta esperando por voce`,
+              html: `
+                <div style="font-family:'Plus Jakarta Sans',sans-serif;max-width:520px;margin:0 auto;padding:32px;">
+                  <div style="background:#7B1E3C;padding:24px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h2 style="color:white;margin:0;">VivaS Saude Inteligente</h2>
+                  </div>
+                  <div style="background:#fff;padding:32px;border:1px solid #F0E7EA;border-top:none;border-radius:0 0 12px 12px;">
+                    <p>Oi, <b>${nome}</b>!</p>
+                    <p>Notamos que voce iniciou a contratacao do plano <b>${planName}</b> mas nao finalizou o pagamento.</p>
+                    <p>Sabemos que escolher um plano de saude e uma decisao importante. Se tiver alguma duvida, estamos aqui para ajudar!</p>
+                    <div style="text-align:center;margin:28px 0;">
+                      <a href="https://vivasaudeinteligente.com.br/cotacao" style="background:#7B1E3C;color:white;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:600;">Retomar minha cotacao</a>
+                    </div>
+                    <p style="color:#6B5B62;font-size:13px;">Ou fale direto conosco pelo WhatsApp: <a href="https://wa.me/5511947382375" style="color:#25D366;">+55 11 94738-2375</a></p>
+                  </div>
+                </div>
+              `
+            });
+            console.log(`[ABANDONED] Email sent to ${email}`);
+          }
+        } catch (emailErr) {
+          console.error('[ABANDONED] Email error:', emailErr.message);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[ABANDONED] Check error:', err);
+  }
+}
+
+// Run abandoned checkout check every 15 minutes
+setInterval(checkAbandonedCheckouts, 15 * 60 * 1000);
+// Also run once 2 minutes after startup
+setTimeout(checkAbandonedCheckouts, 2 * 60 * 1000);
+
+// Get abandoned checkouts (admin endpoint)
+router.get('/abandoned', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    const result = await pool.query(`
+      SELECT * FROM checkout_sessions
+      WHERE status = 'abandoned'
+      ORDER BY created_at DESC
+      LIMIT 50
+    `);
+    res.json({ abandoned: result.rows });
+  } catch (err) {
+    console.error('Get abandoned error:', err);
+    res.status(500).json({ error: 'Erro ao buscar abandonados' });
+  }
+});
+
 // Stripe webhook
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const stripe = getStripe();
@@ -261,6 +461,34 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
       );
     } catch (err) {
       console.error('Webhook DB error:', err);
+    }
+  }
+
+  // Handle checkout session completed (mark as completed in our tracking)
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    try {
+      await pool.query(
+        `UPDATE checkout_sessions SET status = 'completed', completed_at = NOW() WHERE stripe_session_id = $1`,
+        [session.id]
+      );
+    } catch (err) {
+      console.error('Webhook checkout tracking error:', err);
+    }
+  }
+
+  // Handle checkout session expired (abandoned)
+  if (event.type === 'checkout.session.expired') {
+    const session = event.data.object;
+    try {
+      await pool.query(
+        `UPDATE checkout_sessions SET status = 'abandoned', abandoned_at = NOW() WHERE stripe_session_id = $1`,
+        [session.id]
+      );
+      // Trigger immediate abandoned cart recovery
+      checkAbandonedCheckouts();
+    } catch (err) {
+      console.error('Webhook expired tracking error:', err);
     }
   }
   
@@ -421,6 +649,33 @@ router.get('/confirm-quote', async (req, res) => {
       cancel_url: 'https://vivasaudeinteligente.com.br/cotacao',
       metadata: { plan: planType, mental: String(hasMental), empresa: String(hasEmpresa), dependentes: String(deps) }
     });
+
+    // Track this checkout for abandoned cart recovery
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS checkout_sessions (
+          id SERIAL PRIMARY KEY,
+          stripe_session_id VARCHAR(255) UNIQUE NOT NULL,
+          plan VARCHAR(50),
+          email VARCHAR(255),
+          nome VARCHAR(255),
+          telefone VARCHAR(50),
+          status VARCHAR(50) DEFAULT 'started',
+          whatsapp_sent BOOLEAN DEFAULT false,
+          created_at TIMESTAMP DEFAULT NOW(),
+          completed_at TIMESTAMP,
+          abandoned_at TIMESTAMP
+        )
+      `);
+      await pool.query(
+        `INSERT INTO checkout_sessions (stripe_session_id, plan, email, nome, telefone)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (stripe_session_id) DO NOTHING`,
+        [session.id, planType, customerEmail || null, quoteData?.nome || null, quoteData?.telefone || null]
+      );
+    } catch (trackErr) {
+      console.error('Track confirm-quote checkout error:', trackErr);
+    }
 
     res.redirect(session.url);
   } catch (err) {
