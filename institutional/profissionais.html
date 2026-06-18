@@ -7,38 +7,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
   <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --wine: #7B1E3C;
-      --wine-deep: #5E1730;
-      --wine-soft: #F6E7E1;
-      --clay: #C97B63;
-      --blush: #E9C4BE;
-      --cream: #FBF5F1;
-      --ink: #1A1A2E;
-      --muted: #6B7280;
-      --success: #2FA56B;
-      --radius: 16px;
-    }
-    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+    body { background: var(--bg); min-height: 100vh; }
     .page { display: flex; flex-direction: column; min-height: 100vh; }
-    .header { background: linear-gradient(135deg, var(--wine), var(--wine-deep)); padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; }
-    .header-logo { height: 32px; }
-    .header-link { color: white; text-decoration: none; font-size: 14px; font-weight: 600; opacity: 0.8; }
-    .header-link:hover { opacity: 1; }
     .main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; }
-    .card { background: white; border-radius: var(--radius); box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 600px; width: 100%; padding: 40px 36px; }
+    .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); max-width: 600px; width: 100%; padding: 40px 36px; border: 1px solid var(--line); }
     .card-header { text-align: center; margin-bottom: 8px; }
-    .card-header h1 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 26px; font-weight: 800; color: var(--wine-deep); margin-bottom: 4px; }
+    .card-header h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: var(--wine-deep); margin-bottom: 4px; }
     .card-header p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
 
     /* Steps */
     .steps { display: flex; justify-content: center; gap: 32px; margin-bottom: 28px; }
     .step-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .step-num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; border: 2px solid #E5E7EB; color: var(--muted); transition: all 0.3s; }
+    .step-num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; border: 2px solid var(--line); color: var(--muted); transition: all 0.3s; }
     .step-item.active .step-num { background: var(--wine); border-color: var(--wine); color: white; }
-    .step-item.done .step-num { background: var(--success); border-color: var(--success); color: white; }
+    .step-item.done .step-num { background: var(--green); border-color: var(--green); color: white; }
     .step-label { font-size: 11px; color: var(--muted); font-weight: 500; }
     .step-item.active .step-label { color: var(--wine); font-weight: 700; }
 
@@ -46,24 +30,24 @@
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-weight: 600; font-size: 13px; color: var(--ink); margin-bottom: 6px; }
     .form-group label .req { color: var(--wine); }
-    .form-group input, .form-group select { width: 100%; padding: 12px 14px; border: 1.5px solid #E5E7EB; border-radius: 10px; font-size: 14px; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; background: var(--cream); }
+    .form-group input, .form-group select { width: 100%; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; font-size: 14px; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; background: var(--bg); color: var(--ink); }
     .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--wine); box-shadow: 0 0 0 3px rgba(123,30,60,0.1); }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .form-row-3 { display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 12px; }
 
     /* Radio */
     .radio-group { display: flex; gap: 12px; }
-    .radio-card { flex: 1; border: 1.5px solid #E5E7EB; border-radius: 10px; padding: 14px; text-align: center; cursor: pointer; transition: all 0.2s; }
-    .radio-card:hover { border-color: var(--clay); }
+    .radio-card { flex: 1; border: 1.5px solid var(--line); border-radius: 10px; padding: 14px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .radio-card:hover { border-color: var(--wine-line); }
     .radio-card.selected { border-color: var(--wine); background: var(--wine-soft); }
     .radio-card .rc-icon { font-size: 22px; margin-bottom: 4px; }
     .radio-card .rc-label { font-weight: 600; font-size: 13px; }
     .radio-card .rc-sub { font-size: 11px; color: var(--muted); }
 
     /* Upload */
-    .upload-area { border: 2px dashed #D1D5DB; border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+    .upload-area { border: 2px dashed var(--line); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
     .upload-area:hover { border-color: var(--wine); background: var(--wine-soft); }
-    .upload-area.has-file { border-color: var(--success); background: #E4F4EC; }
+    .upload-area.has-file { border-color: var(--green); background: var(--green-soft); }
     .upload-area .ua-icon { font-size: 28px; margin-bottom: 6px; }
     .upload-area .ua-text { font-size: 13px; color: var(--muted); }
     .upload-area .ua-text strong { color: var(--wine); }
@@ -74,18 +58,18 @@
     .upload-preview img { max-width: 200px; max-height: 150px; border-radius: 8px; }
     .upload-preview .up-name { font-size: 12px; color: var(--success); font-weight: 600; margin-top: 6px; }
     .quality-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-top: 8px; }
-    .quality-badge.good { background: #E4F4EC; color: #2FA56B; }
+    .quality-badge.good { background: var(--green-soft); color: var(--green); }
     .quality-badge.bad { background: #FEE2E2; color: #DC2626; }
 
     /* Contract */
-    .contract-box { background: var(--cream); border: 1px solid #E5E7EB; border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; font-size: 12px; line-height: 1.7; color: var(--ink); margin-bottom: 16px; }
+    .contract-box { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; font-size: 12px; line-height: 1.7; color: var(--ink); margin-bottom: 16px; }
     .contract-box h3 { font-size: 14px; text-align: center; margin-bottom: 12px; color: var(--wine-deep); }
     .contract-box p { margin-bottom: 8px; }
     .contract-box .clause { margin-bottom: 12px; }
     .contract-box .clause strong { color: var(--wine-deep); }
 
     /* Signature */
-    .sig-area { border: 1.5px solid #E5E7EB; border-radius: 12px; height: 120px; position: relative; background: white; cursor: crosshair; margin-bottom: 12px; }
+    .sig-area { border: 1.5px solid var(--line); border-radius: 12px; height: 120px; position: relative; background: white; cursor: crosshair; margin-bottom: 12px; }
     .sig-area canvas { width: 100%; height: 100%; border-radius: 12px; }
     .sig-clear { position: absolute; top: 8px; right: 8px; background: var(--wine-soft); border: none; border-radius: 6px; padding: 4px 8px; font-size: 11px; color: var(--wine); cursor: pointer; font-weight: 600; }
     .sig-label { font-size: 12px; color: var(--muted); text-align: center; }
@@ -96,15 +80,15 @@
     .checkbox-row label { font-size: 13px; color: var(--muted); line-height: 1.4; }
 
     /* Buttons */
-    .btn-primary { display: block; width: 100%; padding: 14px; background: linear-gradient(135deg, var(--wine), var(--wine-deep)); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s; font-family: inherit; }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(123,30,60,0.3); }
+    .btn-primary { display: block; width: 100%; padding: 14px; background: var(--wine); color: white; border: none; border-radius: 50px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+    .btn-primary:hover { background: var(--wine-deep); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(123,30,60,0.3); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
     .btn-back { background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 12px; display: block; width: 100%; text-align: center; font-family: inherit; }
     .btn-back:hover { color: var(--wine); }
 
     /* Success */
-    .success-icon { width: 64px; height: 64px; border-radius: 50%; background: #E4F4EC; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
-    .success-icon svg { width: 32px; height: 32px; color: #2FA56B; }
+    .success-icon { width: 64px; height: 64px; border-radius: 50%; background: var(--green-soft); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .success-icon svg { width: 32px; height: 32px; color: var(--green); }
 
     .hidden { display: none !important; }
     @media (max-width: 540px) {
@@ -116,12 +100,16 @@
 </head>
 <body>
   <div class="page">
-    <header class="header">
-      <a href="https://vivasaudeinteligente.com.br">
-        <img src="/vivas-branco.svg" alt="VivaS" class="header-logo" />
-      </a>
-      <a href="https://vivas.digital/login" class="header-link">Entrar</a>
-    </header>
+    <nav class="navbar scrolled" style="position:relative">
+      <div class="container navbar-content">
+        <a href="/" class="logo">
+          <img src="/vivas-branco.svg" alt="VivaS" class="logo-img" style="filter: brightness(0) saturate(100%) invert(15%) sepia(50%) saturate(3000%) hue-rotate(320deg);" />
+        </a>
+        <div class="nav-actions">
+          <a href="https://vivas.digital/login" class="btn btn-ghost btn-sm">Entrar</a>
+        </div>
+      </div>
+    </nav>
 
     <main class="main">
       <div class="card">

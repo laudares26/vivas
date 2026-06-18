@@ -5,323 +5,183 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VivaS Saúde Mental | Terapia, psicologia e psiquiatria online</title>
 <meta name="description" content="Psicólogos, psiquiatras e terapeutas registrados, online, a partir de R$80 por sessão. Encontre o profissional certo em minutos com a triagem inteligente da VivaS.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css" />
 <style>
-  :root{
-    --wine:#6E1E2E;
-    --wine-deep:#491320;
-    --wine-bright:#9A2D43;
-    --blush:#E9C4BE;
-    --blush-soft:#F2DAD4;
-    --clay:#C97B63;
-    --cream:#FBF5F1;
-    --cream-2:#F4E7E0;
-    --ink:#2B1A1C;
-    --muted:#7C6A66;
-    --line:#E4D2CB;
-    --display:'Plus Jakarta Sans',system-ui,sans-serif;
-    --body:'Plus Jakarta Sans',system-ui,sans-serif;
+  /* Page-specific overrides for mental health landing */
+
+  /* Stats bar */
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .stat-item { padding: 32px 24px; text-align: center; border-right: 1px solid var(--line); }
+  .stat-item:last-child { border-right: none; }
+  .stat-item b { display: block; font-size: 1.2rem; font-weight: 800; color: var(--wine); margin-bottom: 4px; }
+  .stat-item span { color: var(--muted); font-size: 0.85rem; }
+
+  /* Steps section (numbered) */
+  .mental-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .mental-step { position: relative; }
+  .mental-step .num { font-family: 'Plus Jakarta Sans'; font-weight: 800; font-size: 3rem; color: var(--wine-line); line-height: 1; margin-bottom: 12px; }
+  .mental-step h3 { font-weight: 700; font-size: 1.1rem; margin-bottom: 8px; color: var(--ink); }
+  .mental-step p { color: var(--muted); font-size: 0.95rem; line-height: 1.7; }
+
+  /* Specialty cards */
+  .specialty-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .specialty-card {
+    background: var(--bg); border-radius: var(--radius); padding: 32px 28px;
+    border: 1px solid var(--line); transition: transform 0.3s, box-shadow 0.3s;
   }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{
-    font-family:var(--body);
-    background:var(--cream);
-    color:var(--ink);
-    line-height:1.6;
-    -webkit-font-smoothing:antialiased;
+  .specialty-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+  .specialty-card .ic { width: 48px; height: 48px; border-radius: 12px; background: var(--wine-soft); color: var(--wine); display: grid; place-items: center; margin-bottom: 20px; }
+  .specialty-card h3 { font-weight: 700; font-size: 1.05rem; margin-bottom: 8px; }
+  .specialty-card p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 16px; }
+  .specialty-card .price-tag { font-size: 0.9rem; color: var(--wine); font-weight: 600; }
+
+  /* Professional match demo */
+  .match-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+  .chip { display: inline-block; padding: 8px 18px; border-radius: 999px; font-size: 0.85rem; font-weight: 500; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.2s; }
+  .chip.active { background: var(--wine); color: white; border-color: var(--wine); }
+  .pros-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .pro-card {
+    background: var(--surface); border-radius: var(--radius); padding: 24px;
+    border: 1px solid var(--line); transition: transform 0.3s, box-shadow 0.3s;
   }
-  a{color:inherit;text-decoration:none}
-  img{max-width:100%;display:block}
-  .wrap{max-width:1140px;margin:0 auto;padding:0 24px}
+  .pro-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+  .pro-avail { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: var(--green); margin-bottom: 16px; }
+  .pro-avail .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .pro-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .pro-av { width: 44px; height: 44px; border-radius: 50%; background: var(--wine-soft); color: var(--wine); font-weight: 700; display: grid; place-items: center; font-size: 1.1rem; flex-shrink: 0; }
+  .pro-name { font-weight: 700; font-size: 0.95rem; }
+  .pro-role { color: var(--muted); font-size: 0.8rem; }
+  .pro-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .pro-tags span { font-size: 0.72rem; padding: 4px 10px; border-radius: 999px; background: var(--wine-soft); color: var(--wine); font-weight: 500; }
+  .pro-foot { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: 12px; }
+  .pro-rate { font-size: 0.8rem; color: var(--muted); }
+  .pro-rate .star { color: #F5A623; }
+  .pro-price { font-weight: 700; font-size: 0.95rem; color: var(--wine); }
+  .pro-price small { font-weight: 400; font-size: 0.75rem; color: var(--muted); }
+  .pro-note { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 24px; font-style: italic; }
 
-  /* ---------- buttons ---------- */
-  .btn{
-    display:inline-flex;align-items:center;gap:8px;
-    font-family:var(--body);font-weight:600;font-size:.97rem;
-    padding:14px 26px;border-radius:999px;border:1.5px solid transparent;
-    cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+  /* Gap/positioning section */
+  .section-gap {
+    padding: 100px 0;
+    background: var(--wine-deep); color: white;
   }
-  .btn-primary{background:var(--wine);color:#fff;box-shadow:0 10px 24px -10px rgba(110,30,46,.6)}
-  .btn-primary:hover{background:var(--wine-bright);transform:translateY(-2px);box-shadow:0 16px 30px -12px rgba(110,30,46,.7)}
-  .btn-ghost{background:transparent;color:var(--wine);border-color:var(--blush)}
-  .btn-ghost:hover{background:var(--blush-soft);border-color:var(--clay)}
-  .btn-light{background:#fff;color:var(--wine)}
-  .btn-light:hover{transform:translateY(-2px)}
+  .gap-bar { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 20px; align-items: center; margin-top: 48px; }
+  .gap-col { background: rgba(255,255,255,.06); border-radius: var(--radius); padding: 28px; border: 1px solid rgba(255,255,255,.1); text-align: center; }
+  .gap-col.mid { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.2); }
+  .gap-tag { font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.5); margin-bottom: 8px; }
+  .gap-col.mid .gap-tag { color: rgba(255,255,255,.8); }
+  .gap-price { font-weight: 800; font-size: 1.3rem; margin-bottom: 8px; }
+  .gap-desc { color: rgba(255,255,255,.6); font-size: 0.85rem; line-height: 1.5; }
+  .gap-arrow { color: rgba(255,255,255,.25); font-size: 1.8rem; font-weight: 300; }
 
-  /* ---------- nav ---------- */
-  header.nav{
-    position:sticky;top:0;z-index:50;
-    background:rgba(251,245,241,.82);backdrop-filter:blur(12px);
-    border-bottom:1px solid var(--line);
+  /* Price comparison section */
+  .price-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 800px; margin: 0 auto; }
+  .pcard {
+    background: var(--surface); border-radius: var(--radius); padding: 36px 28px;
+    border: 1px solid var(--line); text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
   }
-  .nav-in{display:flex;align-items:center;justify-content:space-between;height:72px}
-  .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:600;font-size:1.32rem;color:var(--wine);letter-spacing:-.01em}
-  .brand .dot{width:13px;height:13px;border-radius:50%;background:var(--wine);box-shadow:0 0 0 5px var(--blush-soft);display:inline-block}
-  .brand small{font-family:var(--body);font-weight:500;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:block;margin-top:-3px}
-  nav.links{display:flex;align-items:center;gap:30px}
-  nav.links a{font-size:.94rem;font-weight:500;color:var(--ink);opacity:.82;transition:opacity .15s}
-  nav.links a:hover{opacity:1;color:var(--wine)}
-  .nav-cta{display:flex;align-items:center;gap:14px}
-  .burger{display:none;background:none;border:0;cursor:pointer;flex-direction:column;gap:5px}
-  .burger span{width:24px;height:2px;background:var(--wine);border-radius:2px;display:block}
+  .pcard:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+  .pcard.featured { background: var(--wine-deep); color: white; border-color: transparent; box-shadow: 0 16px 40px rgba(94,23,48,.25); }
+  .ptag { font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--wine); margin-bottom: 12px; }
+  .pcard.featured .ptag { color: rgba(255,255,255,.6); }
+  .pcard h3 { font-weight: 800; font-size: 1.25rem; margin-bottom: 8px; }
+  .pcard .psub { color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.6; }
+  .pcard.featured .psub { color: rgba(255,255,255,.6); }
+  .pval { font-weight: 800; font-size: 1.5rem; color: var(--wine); margin-bottom: 24px; }
+  .pval small { font-weight: 400; font-size: 0.85rem; color: var(--muted); }
+  .pcard.featured .pval { color: white; }
+  .pcard.featured .pval small { color: rgba(255,255,255,.6); }
+  .plist { list-style: none; text-align: left; margin-bottom: 24px; }
+  .plist li { display: flex; align-items: center; gap: 10px; padding: 10px 0; font-size: 0.9rem; border-bottom: 1px solid var(--line); }
+  .pcard.featured .plist li { border-color: rgba(255,255,255,.1); }
+  .plist li svg { color: var(--green); flex-shrink: 0; }
+  .pcard.featured .plist li svg { color: #7BE0AE; }
 
-  /* ---------- hero ---------- */
-  .hero{position:relative;overflow:hidden}
-  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding:78px 0 90px}
-  .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:.74rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--wine-bright);background:#fff;border:1px solid var(--line);padding:7px 15px;border-radius:999px;margin-bottom:24px}
-  .eyebrow .pulse{width:8px;height:8px;border-radius:50%;background:var(--clay);animation:breathe 5.5s ease-in-out infinite}
-  h1.hero-h{font-family:var(--display);font-weight:600;font-size:clamp(2.5rem,5.2vw,3.95rem);line-height:1.04;letter-spacing:-.02em;color:var(--wine-deep)}
-  h1.hero-h em{font-style:italic;color:var(--wine-bright)}
-  .hero-sub{font-size:1.12rem;color:var(--muted);max-width:30em;margin:24px 0 32px;line-height:1.65}
-  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:26px}
-  .trust-line{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:.83rem;color:var(--muted);font-weight:500}
-  .trust-line span{display:flex;align-items:center;gap:7px}
-  .trust-line svg{flex:none}
-
-  /* breathing orb signature */
-  .orb-stage{position:relative;display:grid;place-items:center;min-height:420px}
-  .orb{position:absolute;border-radius:50%}
-  .orb-1{width:330px;height:330px;background:radial-gradient(circle at 38% 32%,var(--blush) 0%,var(--clay) 62%,var(--wine) 100%);box-shadow:0 30px 80px -22px rgba(110,30,46,.55);animation:breathe 8s ease-in-out infinite}
-  .orb-ring{border:1.5px solid var(--blush);background:transparent}
-  .orb-2{width:420px;height:420px;animation:breathe 8s ease-in-out infinite;animation-delay:.4s;opacity:.7}
-  .orb-3{width:500px;height:500px;animation:breathe 8s ease-in-out infinite;animation-delay:.8s;opacity:.4}
-  .orb-card{position:relative;z-index:3;background:rgba(255,255,255,.9);backdrop-filter:blur(6px);border:1px solid #fff;border-radius:18px;padding:18px 20px;box-shadow:0 18px 50px -20px rgba(110,30,46,.4);width:248px}
-  .orb-card .oc-top{display:flex;align-items:center;gap:11px;margin-bottom:12px}
-  .oc-av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--wine),var(--clay));display:grid;place-items:center;color:#fff;font-weight:700;font-family:var(--display)}
-  .oc-name{font-weight:600;font-size:.92rem;color:var(--ink)}
-  .oc-role{font-size:.74rem;color:var(--muted)}
-  .oc-tag{font-size:.7rem;font-weight:600;color:var(--wine);background:var(--blush-soft);padding:4px 10px;border-radius:999px;display:inline-block;margin-bottom:6px}
-  .oc-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
-  .oc-price{font-family:var(--display);font-weight:600;color:var(--wine);font-size:1.05rem}
-  .oc-price small{font-family:var(--body);font-weight:500;font-size:.7rem;color:var(--muted)}
-  .oc-go{font-size:.78rem;font-weight:600;color:#fff;background:var(--wine);padding:6px 13px;border-radius:999px}
-
-  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
-
-  /* ---------- section frame ---------- */
-  section{padding:84px 0}
-  .sec-eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:.74rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--wine-bright);margin-bottom:16px}
-  .sec-eyebrow .bd{width:7px;height:7px;border-radius:50%;background:var(--clay)}
-  h2.sec-h{font-family:var(--display);font-weight:600;font-size:clamp(1.9rem,3.6vw,2.7rem);line-height:1.1;letter-spacing:-.015em;color:var(--wine-deep);max-width:16em}
-  .sec-lead{font-size:1.06rem;color:var(--muted);max-width:34em;margin-top:16px}
-
-  /* ---------- steps ---------- */
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:54px}
-  .step{background:#fff;border:1px solid var(--line);border-radius:20px;padding:30px 26px;position:relative;transition:transform .2s,box-shadow .2s}
-  .step:hover{transform:translateY(-4px);box-shadow:0 22px 44px -26px rgba(110,30,46,.35)}
-  .step .num{font-family:var(--display);font-weight:600;font-size:1.05rem;color:#fff;background:var(--wine);width:38px;height:38px;border-radius:50%;display:grid;place-items:center;margin-bottom:18px}
-  .step h3{font-family:var(--display);font-weight:600;font-size:1.28rem;color:var(--wine-deep);margin-bottom:8px}
-  .step p{color:var(--muted);font-size:.97rem}
-
-  /* ---------- especialidades ---------- */
-  .specs-head{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap}
-  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
-  .card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:32px 28px;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s,border-color .2s}
-  .card:hover{transform:translateY(-5px);box-shadow:0 26px 50px -28px rgba(110,30,46,.4);border-color:var(--blush)}
-  .card .ic{width:52px;height:52px;border-radius:14px;background:var(--blush-soft);display:grid;place-items:center;margin-bottom:20px;color:var(--wine)}
-  .card h3{font-family:var(--display);font-weight:600;font-size:1.4rem;color:var(--wine-deep);margin-bottom:10px}
-  .card p{color:var(--muted);font-size:.96rem;margin-bottom:22px;flex:1}
-  .card .price{font-size:.82rem;color:var(--muted);margin-bottom:18px}
-  .card .price b{font-family:var(--display);font-size:1.5rem;font-weight:600;color:var(--wine);display:block;line-height:1.1}
-  .card .clink{font-weight:600;font-size:.92rem;color:var(--wine);display:inline-flex;align-items:center;gap:7px}
-  .card:hover .clink{gap:11px}
-
-  /* ---------- gap / positioning ---------- */
-  .gap-sec{background:var(--wine-deep);color:#fff;border-radius:34px;margin:0 24px;overflow:hidden;position:relative}
-  .gap-in{max-width:1100px;margin:0 auto;padding:78px 40px;position:relative;z-index:2}
-  .gap-sec .sec-eyebrow{color:var(--blush)}
-  .gap-sec h2.sec-h{color:#fff;max-width:18em}
-  .gap-sec .sec-lead{color:rgba(255,255,255,.74)}
-  .gap-bar{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:0;align-items:stretch;margin-top:50px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:20px;overflow:hidden}
-  .gap-col{padding:28px 26px}
-  .gap-col.mid{background:rgba(233,196,190,.14);border-left:1px solid rgba(255,255,255,.14);border-right:1px solid rgba(255,255,255,.14)}
-  .gap-col .gtag{font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--blush);margin-bottom:10px}
-  .gap-col.mid .gtag{color:#fff}
-  .gap-col .gprice{font-family:var(--display);font-size:1.7rem;font-weight:600;margin-bottom:4px}
-  .gap-col .gdesc{font-size:.86rem;color:rgba(255,255,255,.66);line-height:1.5}
-  .gap-col.mid .gdesc{color:rgba(255,255,255,.86)}
-  .gap-arrow{display:grid;place-items:center;color:rgba(255,255,255,.4);font-size:1.3rem}
-  .gap-orb{position:absolute;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,var(--clay) 0%,transparent 68%);opacity:.4;top:-160px;right:-140px;z-index:1}
-
-  /* ---------- pricing ---------- */
-  .price-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:48px}
-  .pcard{border-radius:24px;padding:38px 34px;border:1px solid var(--line);background:#fff}
-  .pcard.feat{background:linear-gradient(165deg,var(--wine) 0%,var(--wine-deep) 100%);color:#fff;border-color:var(--wine)}
-  .pcard .ptag{font-size:.74rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--wine-bright);margin-bottom:14px}
-  .pcard.feat .ptag{color:var(--blush)}
-  .pcard h3{font-family:var(--display);font-weight:600;font-size:1.55rem;margin-bottom:6px}
-  .pcard .psub{font-size:.95rem;color:var(--muted);margin-bottom:22px}
-  .pcard.feat .psub{color:rgba(255,255,255,.76)}
-  .pcard .pval{font-family:var(--display);font-size:2.4rem;font-weight:600;color:var(--wine);line-height:1;margin-bottom:4px}
-  .pcard.feat .pval{color:#fff}
-  .pcard .pval small{font-family:var(--body);font-size:.92rem;font-weight:500;color:var(--muted)}
-  .pcard.feat .pval small{color:rgba(255,255,255,.7)}
-  .plist{list-style:none;margin:24px 0 28px;display:flex;flex-direction:column;gap:12px}
-  .plist li{display:flex;gap:11px;align-items:flex-start;font-size:.95rem;color:var(--ink)}
-  .pcard.feat .plist li{color:rgba(255,255,255,.92)}
-  .plist svg{flex:none;margin-top:3px;color:var(--wine)}
-  .pcard.feat .plist svg{color:var(--blush)}
-  .pcard .btn{width:100%;justify-content:center}
-
-  /* ---------- testimonials ---------- */
-  .tst-sec{background:var(--cream-2)}
-  .tst-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
-  .tst{background:#fff;border:1px solid var(--line);border-radius:20px;padding:30px 28px;display:flex;flex-direction:column}
-  .tst .stars{color:var(--clay);letter-spacing:2px;margin-bottom:14px;font-size:.95rem}
-  .tst p{font-size:1rem;color:var(--ink);line-height:1.6;flex:1;margin-bottom:20px}
-  .tst .who{display:flex;align-items:center;gap:12px}
-  .tst .av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--blush),var(--clay));display:grid;place-items:center;font-family:var(--display);font-weight:600;color:var(--wine-deep)}
-  .tst .who b{font-size:.92rem;display:block;color:var(--ink)}
-  .tst .who span{font-size:.8rem;color:var(--muted)}
-
-  /* ---------- faq ---------- */
-  .faq-wrap{max-width:780px;margin:48px auto 0}
-  .faq-item{border-bottom:1px solid var(--line)}
-  .faq-q{width:100%;background:none;border:0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:24px 4px;text-align:left;font-family:var(--body);font-weight:600;font-size:1.08rem;color:var(--wine-deep)}
-  .faq-q .ico{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--blush);display:grid;place-items:center;color:var(--wine);transition:transform .25s,background .2s}
-  .faq-item.open .faq-q .ico{transform:rotate(45deg);background:var(--wine);color:#fff;border-color:var(--wine)}
-  .faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease}
-  .faq-a p{padding:0 4px 24px;color:var(--muted);font-size:.98rem;max-width:62ch}
-
-  /* ---------- final cta ---------- */
-  .final{text-align:center;padding:96px 0}
-  .final .orb-mini{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 38% 32%,var(--blush),var(--clay) 65%,var(--wine));margin:0 auto 26px;animation:breathe 6s ease-in-out infinite;box-shadow:0 16px 40px -16px rgba(110,30,46,.5)}
-  .final h2{font-family:var(--display);font-weight:600;font-size:clamp(2rem,4vw,3rem);color:var(--wine-deep);line-height:1.08;letter-spacing:-.02em;max-width:16em;margin:0 auto}
-  .final p{font-size:1.1rem;color:var(--muted);margin:20px auto 32px;max-width:34em}
-  .final .hero-actions{justify-content:center}
-
-  /* ---------- footer ---------- */
-  footer{background:var(--wine-deep);color:rgba(255,255,255,.74);padding:64px 0 30px}
-  .foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px}
-  .foot-grid .brand{color:#fff}
-  .foot-grid .brand small{color:var(--blush)}
-  .foot-about{font-size:.92rem;margin-top:16px;max-width:26em;color:rgba(255,255,255,.6)}
-  .fcol h4{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--blush);margin-bottom:16px;font-weight:600}
-  .fcol a{display:block;font-size:.92rem;margin-bottom:11px;color:rgba(255,255,255,.72);transition:color .15s}
-  .fcol a:hover{color:#fff}
-  .crisis{margin-top:48px;background:rgba(233,196,190,.12);border:1px solid rgba(233,196,190,.28);border-radius:16px;padding:20px 24px;font-size:.88rem;color:rgba(255,255,255,.82);line-height:1.55}
-  .crisis b{color:#fff}
-  .foot-base{margin-top:34px;padding-top:24px;border-top:1px solid rgba(255,255,255,.12);display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;font-size:.82rem;color:rgba(255,255,255,.5)}
-
-  /* ---------- responsive ---------- */
-  @media(max-width:960px){
-    .hero-grid{grid-template-columns:1fr;gap:24px;padding:54px 0 70px}
-    .orb-stage{min-height:360px;order:-1}
-    .orb-1{width:280px;height:280px}.orb-2{width:350px;height:350px}.orb-3{width:420px;height:420px}
-    .steps,.cards,.tst-grid{grid-template-columns:1fr}
-    .price-grid{grid-template-columns:1fr}
-    .gap-bar{grid-template-columns:1fr}
-    .gap-arrow{transform:rotate(90deg);padding:6px 0}
-    .gap-col.mid{border-left:0;border-right:0;border-top:1px solid rgba(255,255,255,.14);border-bottom:1px solid rgba(255,255,255,.14)}
-    .foot-grid{grid-template-columns:1fr 1fr}
-    nav.links{display:none}
-    nav.links.open{display:flex;position:absolute;top:72px;left:0;right:0;background:var(--cream);flex-direction:column;padding:24px;gap:18px;border-bottom:1px solid var(--line)}
-    .burger{display:flex}
-    .nav-cta .btn-ghost{display:none}
+  /* Testimonials */
+  .tst-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .tst-card {
+    background: var(--surface); border-radius: var(--radius); padding: 28px;
+    border: 1px solid var(--line);
   }
-  @media(max-width:560px){
-    .foot-grid{grid-template-columns:1fr}
-    .specs-head{flex-direction:column;align-items:flex-start}
-  }
-  @media(prefers-reduced-motion:reduce){
-    *{animation:none!important;scroll-behavior:auto!important}
+  .tst-stars { color: #F5A623; font-size: 0.9rem; margin-bottom: 14px; }
+  .tst-card p { color: var(--ink); font-size: 0.95rem; line-height: 1.7; margin-bottom: 18px; font-style: italic; }
+  .tst-who { display: flex; align-items: center; gap: 12px; }
+  .tst-who .av { width: 36px; height: 36px; border-radius: 50%; background: var(--wine-soft); color: var(--wine); font-weight: 700; display: grid; place-items: center; font-size: 0.9rem; }
+  .tst-who b { font-size: 0.9rem; display: block; }
+  .tst-who span { color: var(--muted); font-size: 0.8rem; }
+
+  /* Crisis notice */
+  .crisis-notice {
+    background: var(--wine-soft); border-radius: var(--radius); padding: 20px 28px;
+    font-size: 0.85rem; color: var(--ink); line-height: 1.7;
+    margin-bottom: 28px; text-align: center;
   }
 
-  /* ---------- stats strip ---------- */
-  .stats{background:var(--wine-deep)}
-  .stats .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;padding:38px 24px}
-  .stat{text-align:center;position:relative}
-  .stat:not(:last-child)::after{content:"";position:absolute;right:-12px;top:50%;transform:translateY(-50%);height:38px;width:1px;background:rgba(233,196,190,.22)}
-  .stat b{display:block;font-family:var(--display);font-weight:600;font-size:1.9rem;color:#fff;line-height:1}
-  .stat span{font-size:.84rem;color:var(--blush);margin-top:8px;display:block}
-
-  /* ---------- match + professionals ---------- */
-  .match-filters{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
-  .chipf{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-size:.88rem;font-weight:500;color:var(--ink);cursor:default}
-  .chipf.on{background:var(--wine);color:#fff;border-color:var(--wine)}
-  .pros{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:34px}
-  .pro{background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px;transition:transform .2s,box-shadow .2s,border-color .2s}
-  .pro:hover{transform:translateY(-4px);box-shadow:0 24px 46px -28px rgba(110,30,46,.4);border-color:var(--blush)}
-  .pro-avail{display:inline-flex;align-items:center;gap:7px;font-size:.74rem;font-weight:600;color:#2FA56B;background:#E4F4EC;padding:4px 11px;border-radius:999px;margin-bottom:16px}
-  .pro-avail .liv{width:7px;height:7px;border-radius:50%;background:#2FA56B;display:inline-block}
-  .pro-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-  .pro-av{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--clay),var(--wine));color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:600;font-size:1.3rem;flex:none}
-  .pro-name{font-weight:700;font-size:1.05rem;color:var(--wine-deep)}
-  .pro-role{font-size:.82rem;color:var(--muted)}
-  .pro-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
-  .pro-tags span{font-size:.74rem;color:var(--wine);background:var(--blush-soft);padding:4px 10px;border-radius:999px}
-  .pro-foot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:15px}
-  .pro-rate{font-size:.86rem;font-weight:500;color:var(--muted)}
-  .pro-rate b{color:var(--ink)}
-  .pro-rate .star{color:var(--clay)}
-  .pro-price{font-family:var(--display);font-weight:600;color:var(--wine);font-size:1.1rem}
-  .pro-price small{font-family:var(--body);font-size:.7rem;font-weight:500;color:var(--muted)}
-  .pro-note{font-size:.8rem;color:var(--muted);margin-top:22px}
-  @media(max-width:960px){
-    .stats .wrap{grid-template-columns:repeat(2,1fr);gap:30px 24px}
-    .stat:nth-child(2)::after{display:none}
-    .pros{grid-template-columns:1fr}
+  @media (max-width: 768px) {
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .stat-item:nth-child(2) { border-right: none; }
+    .mental-steps { grid-template-columns: 1fr; }
+    .specialty-grid { grid-template-columns: 1fr; }
+    .pros-grid { grid-template-columns: 1fr; }
+    .gap-bar { grid-template-columns: 1fr; }
+    .gap-arrow { display: none; }
+    .price-grid { grid-template-columns: 1fr; }
+    .tst-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<header class="nav">
-  <div class="wrap nav-in">
-    <a href="#" class="brand"><span class="dot"></span><span>VivaS<small>Saúde Mental</small></span></a>
-    <nav class="links" id="navlinks">
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar-content">
+    <a href="/" class="logo">
+      <img src="/vivas-branco.svg" alt="VivaS" class="logo-img" />
+    </a>
+    <div class="nav-links" id="navLinks">
       <a href="#como">Como funciona</a>
       <a href="#especialidades">Especialidades</a>
       <a href="#precos">Preços</a>
       <a href="#duvidas">Dúvidas</a>
-    </nav>
-    <div class="nav-cta">
-      <a href="https://vivas.digital/login" class="btn btn-ghost">Entrar</a>
-      <a href="https://vivas.digital/mental" class="btn btn-primary">Agendar sessão</a>
-      <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
     </div>
+    <div class="nav-actions">
+      <a href="https://vivas.digital/login" class="btn btn-ghost btn-sm">Entrar</a>
+      <a href="https://vivas.digital/mental" class="btn btn-wine btn-sm">Agendar sessão</a>
+    </div>
+    <button class="mobile-menu" id="mobileMenu" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
   </div>
-</header>
+</nav>
 
 <!-- HERO -->
-<section class="hero">
-  <div class="wrap hero-grid">
-    <div class="hero-copy">
-      <span class="eyebrow"><span class="pulse"></span>Saúde mental do ecossistema VivaS</span>
-      <h1 class="hero-h">Terapia de verdade, <em>sem fila</em> e sem plano caro.</h1>
+<section class="hero hero-centered">
+  <div class="container">
+    <div class="hero-content">
+      <span class="pill">Saúde mental do ecossistema VivaS</span>
+      <h1>Terapia de verdade,<br>sem fila e sem plano caro.</h1>
       <p class="hero-sub">Psicólogos, psiquiatras e terapeutas com registro ativo, 100% online. Conte como você está e a triagem inteligente da VivaS indica o profissional certo para você em poucos minutos.</p>
       <div class="hero-actions">
-        <a href="https://vivas.digital/mental" class="btn btn-primary">Agendar minha primeira sessão</a>
-        <a href="#como" class="btn btn-ghost">Ver como funciona</a>
+        <a href="https://vivas.digital/mental" class="btn btn-wine btn-lg">Agendar minha primeira sessão</a>
+        <a href="#como" class="btn btn-ghost btn-lg">Ver como funciona</a>
       </div>
-      <div class="trust-line">
-        <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E1E2E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Profissionais CRP e CFM ativos</span>
-        <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E1E2E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Sigilo garantido</span>
-        <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E1E2E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>Sessões por vídeo</span>
-      </div>
-    </div>
-
-    <!-- signature: breathing orb -->
-    <div class="orb-stage" aria-hidden="true">
-      <div class="orb orb-ring orb-3"></div>
-      <div class="orb orb-ring orb-2"></div>
-      <div class="orb orb-1"></div>
-      <div class="orb-card">
-        <span class="oc-tag">Match sugerido para você</span>
-        <div class="oc-top">
-          <div class="oc-av">M</div>
-          <div>
-            <div class="oc-name">Mariana Alves</div>
-            <div class="oc-role">Psicóloga · TCC · Ansiedade</div>
-          </div>
+      <div class="trust-bar">
+        <div class="trust-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          Profissionais CRP e CFM ativos
         </div>
-        <div class="oc-bottom">
-          <div class="oc-price">R$ 90 <small>/ sessão</small></div>
-          <span class="oc-go">Agendar</span>
+        <div class="trust-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          Sigilo garantido
+        </div>
+        <div class="trust-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>
+          Sessões por vídeo
         </div>
       </div>
     </div>
@@ -329,34 +189,36 @@
 </section>
 
 <!-- PROVA SOCIAL -->
-<section class="stats">
-  <div class="wrap">
-    <div class="stat"><b>CRP · CFM</b><span>Profissionais com registro ativo</span></div>
-    <div class="stat"><b>a partir de R$ 80</b><span>por sessão, sem mensalidade</span></div>
-    <div class="stat"><b>em minutos</b><span>para encontrar seu match</span></div>
-    <div class="stat"><b>100% sigiloso</b><span>sessões por vídeo, conforme a LGPD</span></div>
+<section style="padding:0">
+  <div class="container">
+    <div class="stats-bar">
+      <div class="stat-item"><b>CRP / CFM</b><span>Profissionais com registro ativo</span></div>
+      <div class="stat-item"><b>a partir de R$ 80</b><span>por sessão, sem mensalidade</span></div>
+      <div class="stat-item"><b>em minutos</b><span>para encontrar seu match</span></div>
+      <div class="stat-item"><b>100% sigiloso</b><span>sessões por vídeo, conforme a LGPD</span></div>
+    </div>
   </div>
 </section>
 
 <!-- COMO FUNCIONA -->
-<section id="como">
-  <div class="wrap">
-    <span class="sec-eyebrow"><span class="bd"></span>Como funciona</span>
-    <h2 class="sec-h">Três passos entre você e o cuidado certo.</h2>
-    <p class="sec-lead">Sem encaminhamento, sem burocracia e sem ficar perdido escolhendo entre centenas de perfis. A gente entende o que você precisa e mostra o caminho.</p>
-    <div class="steps">
-      <div class="step">
-        <div class="num">1</div>
+<section class="section-steps" id="como">
+  <div class="container">
+    <span class="section-tag">COMO FUNCIONA</span>
+    <h2>Três passos entre você e o cuidado certo.</h2>
+    <p class="section-intro">Sem encaminhamento, sem burocracia e sem ficar perdido escolhendo entre centenas de perfis. A gente entende o que você precisa e mostra o caminho.</p>
+    <div class="steps-grid">
+      <div class="step-card">
+        <span class="step-num">01</span>
         <h3>Conte como você está</h3>
         <p>Uma conversa rápida e acolhedora. A triagem da VivaS entende o seu momento, sua queixa e sua preferência de abordagem.</p>
       </div>
-      <div class="step">
-        <div class="num">2</div>
+      <div class="step-card featured">
+        <span class="step-num">02</span>
         <h3>Receba os profissionais certos</h3>
         <p>Indicamos especialistas por especialidade, abordagem terapêutica, horário disponível e faixa de preço. Você escolhe quem combina com você.</p>
       </div>
-      <div class="step">
-        <div class="num">3</div>
+      <div class="step-card">
+        <span class="step-num">03</span>
         <h3>Comece quando quiser</h3>
         <p>Agende a sessão por vídeo no horário que cabe na sua rotina. Quer trocar de profissional depois? É só pedir, sem custo.</p>
       </div>
@@ -365,60 +227,52 @@
 </section>
 
 <!-- ESPECIALIDADES -->
-<section id="especialidades" class="tst-sec">
-  <div class="wrap">
-    <div class="specs-head">
-      <div>
-        <span class="sec-eyebrow"><span class="bd"></span>Especialidades</span>
-        <h2 class="sec-h">Cuidado para cada momento da sua mente.</h2>
-      </div>
-      <a href="#precos" class="btn btn-ghost">Ver todos os profissionais</a>
-    </div>
-    <div class="cards">
-      <div class="card">
-        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+<section class="section-features" id="especialidades">
+  <div class="container">
+    <span class="section-tag">ESPECIALIDADES</span>
+    <h2>Cuidado para cada momento da sua mente.</h2>
+    <div class="specialty-grid">
+      <div class="specialty-card">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
         <h3>Psicologia e Terapia</h3>
         <p>Acompanhamento contínuo para ansiedade, autoconhecimento, relacionamentos, luto e mais. TCC, psicanálise, ACT e outras abordagens.</p>
-        <div class="price">a partir de <b>R$ 80<small style="font-size:.6em;font-weight:500"> /sessão</small></b></div>
-        <a href="#precos" class="clink">Encontrar psicólogo <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <span class="price-tag">a partir de R$ 80 /sessão</span>
       </div>
-      <div class="card">
-        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.5-1.6 3-3.5 3-5.5A3.5 3.5 0 0 0 12 5 3.5 3.5 0 0 0 2 8.5C2 10.5 3.5 12.4 5 14l7 7z"/></svg></div>
+      <div class="specialty-card">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.5-1.6 3-3.5 3-5.5A3.5 3.5 0 0 0 12 5 3.5 3.5 0 0 0 2 8.5C2 10.5 3.5 12.4 5 14l7 7z"/></svg></div>
         <h3>Psiquiatria</h3>
         <p>Avaliação clínica, diagnóstico e tratamento medicamentoso quando indicado. Receita digital válida em todo o Brasil, emitida na consulta.</p>
-        <div class="price">a partir de <b>R$ 150<small style="font-size:.6em;font-weight:500"> /consulta</small></b></div>
-        <a href="#precos" class="clink">Encontrar psiquiatra <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <span class="price-tag">a partir de R$ 150 /consulta</span>
       </div>
-      <div class="card">
-        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1"/></svg></div>
+      <div class="specialty-card">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1"/></svg></div>
         <h3>Terapias especializadas</h3>
         <p>Terapia de casal, atendimento infantil e adolescente, orientação parental e apoio em momentos de transição de vida.</p>
-        <div class="price">a partir de <b>R$ 120<small style="font-size:.6em;font-weight:500"> /sessão</small></b></div>
-        <a href="#precos" class="clink">Ver especialidades <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <span class="price-tag">a partir de R$ 120 /sessão</span>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ENCONTRE O PROFISSIONAL -->
-<section id="profissionais">
-  <div class="wrap">
-    <span class="sec-eyebrow"><span class="bd"></span>Encontre seu profissional</span>
-    <h2 class="sec-h">Filtre por tema, abordagem e preço. O match é seu.</h2>
-    <p class="sec-lead">Diga o que você precisa e a triagem inteligente mostra os profissionais certos. Você compara perfil, abordagem, avaliação e horário antes de agendar. Sem sintonia? Troca de profissional quando quiser, sem custo.</p>
+<section class="section-features" id="profissionais" style="background:var(--bg)">
+  <div class="container">
+    <span class="section-tag">ENCONTRE SEU PROFISSIONAL</span>
+    <h2>Filtre por tema, abordagem e preço. O match é seu.</h2>
+    <p class="section-intro" style="margin-bottom:32px">Diga o que você precisa e a triagem inteligente mostra os profissionais certos. Você compara perfil, abordagem, avaliação e horário antes de agendar. Sem sintonia? Troca de profissional quando quiser, sem custo.</p>
 
     <div class="match-filters">
-      <span class="chipf on">Ansiedade</span>
-      <span class="chipf">TCC</span>
-      <span class="chipf">Disponível hoje</span>
-      <span class="chipf">Até R$ 100</span>
-      <span class="chipf">Período da noite</span>
-      <span class="chipf">Mais filtros</span>
+      <span class="chip active">Ansiedade</span>
+      <span class="chip">TCC</span>
+      <span class="chip">Disponível hoje</span>
+      <span class="chip">Até R$ 100</span>
+      <span class="chip">Período da noite</span>
+      <span class="chip">Mais filtros</span>
     </div>
 
-    <div class="pros">
-      <div class="pro">
-        <span class="pro-avail"><span class="liv"></span>Disponível hoje</span>
+    <div class="pros-grid">
+      <div class="pro-card">
+        <div class="pro-avail"><span class="dot"></span>Disponível hoje</div>
         <div class="pro-top">
           <div class="pro-av">C</div>
           <div><div class="pro-name">Camila Rocha</div><div class="pro-role">Psicóloga · CRP ativo</div></div>
@@ -429,8 +283,8 @@
           <div class="pro-price">R$ 90 <small>/sessão</small></div>
         </div>
       </div>
-      <div class="pro">
-        <span class="pro-avail"><span class="liv"></span>Disponível amanhã</span>
+      <div class="pro-card">
+        <div class="pro-avail"><span class="dot"></span>Disponível amanhã</div>
         <div class="pro-top">
           <div class="pro-av">P</div>
           <div><div class="pro-name">Paulo Mendes</div><div class="pro-role">Psiquiatra · CRM ativo</div></div>
@@ -441,8 +295,8 @@
           <div class="pro-price">R$ 180 <small>/consulta</small></div>
         </div>
       </div>
-      <div class="pro">
-        <span class="pro-avail"><span class="liv"></span>Disponível hoje</span>
+      <div class="pro-card">
+        <div class="pro-avail"><span class="dot"></span>Disponível hoje</div>
         <div class="pro-top">
           <div class="pro-av">J</div>
           <div><div class="pro-name">Júlia Santos</div><div class="pro-role">Psicóloga · CRP ativo</div></div>
@@ -458,43 +312,40 @@
   </div>
 </section>
 
-<!-- GAP / POSICIONAMENTO -->
-<section style="padding-left:0;padding-right:0">
-  <div class="gap-sec">
-    <div class="gap-orb" aria-hidden="true"></div>
-    <div class="gap-in">
-      <span class="sec-eyebrow"><span class="bd" style="background:var(--blush)"></span>Por que a VivaS</span>
-      <h2 class="sec-h">No meio do caminho entre a fila do SUS e o plano de R$ 300.</h2>
-      <p class="sec-lead">A maioria dos brasileiros fica sem opção: ou enfrenta meses de espera, ou paga caro por um plano que mal usa. A VivaS Saúde Mental é o cuidado de qualidade que cabe no seu orçamento.</p>
-      <div class="gap-bar">
-        <div class="gap-col">
-          <div class="gtag">Esperando o SUS</div>
-          <div class="gprice">Meses de fila</div>
-          <div class="gdesc">Cuidado público importante, mas com espera longa para saúde mental.</div>
-        </div>
-        <div class="gap-arrow">→</div>
-        <div class="gap-col mid">
-          <div class="gtag">VivaS Saúde Mental</div>
-          <div class="gprice">A partir de R$ 80</div>
-          <div class="gdesc">Profissional certo em minutos, sessão por vídeo quando você precisar.</div>
-        </div>
-        <div class="gap-arrow">→</div>
-        <div class="gap-col">
-          <div class="gtag">Plano tradicional</div>
-          <div class="gprice">R$ 300+ /mês</div>
-          <div class="gdesc">Mensalidade alta e rede limitada, mesmo quando você não usa.</div>
-        </div>
+<!-- POR QUE A VIVAS -->
+<section class="section-gap">
+  <div class="container">
+    <span class="section-tag section-tag-light">POR QUE A VIVAS</span>
+    <h2 style="font-family:'Plus Jakarta Sans';font-weight:800;font-size:clamp(1.6rem,3vw,2.4rem);margin-bottom:16px;letter-spacing:-0.5px;line-height:1.2">No meio do caminho entre a fila do SUS e o plano de R$ 300.</h2>
+    <p style="color:rgba(255,255,255,.7);font-size:1.05rem;max-width:680px;line-height:1.8">A maioria dos brasileiros fica sem opção: ou enfrenta meses de espera, ou paga caro por um plano que mal usa. A VivaS Saúde Mental é o cuidado de qualidade que cabe no seu orçamento.</p>
+    <div class="gap-bar">
+      <div class="gap-col">
+        <div class="gap-tag">Esperando o SUS</div>
+        <div class="gap-price">Meses de fila</div>
+        <div class="gap-desc">Cuidado público importante, mas com espera longa para saúde mental.</div>
+      </div>
+      <div class="gap-arrow">&rarr;</div>
+      <div class="gap-col mid">
+        <div class="gap-tag">VivaS Saúde Mental</div>
+        <div class="gap-price">A partir de R$ 80</div>
+        <div class="gap-desc">Profissional certo em minutos, sessão por vídeo quando você precisar.</div>
+      </div>
+      <div class="gap-arrow">&rarr;</div>
+      <div class="gap-col">
+        <div class="gap-tag">Plano tradicional</div>
+        <div class="gap-price">R$ 300+ /mês</div>
+        <div class="gap-desc">Mensalidade alta e rede limitada, mesmo quando você não usa.</div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- PREÇOS -->
-<section id="precos">
-  <div class="wrap">
-    <span class="sec-eyebrow"><span class="bd"></span>Preços transparentes</span>
-    <h2 class="sec-h">Pague por sessão ou economize como membro VivaS.</h2>
-    <p class="sec-lead">Sem fidelidade e sem letra miúda. Você vê o valor de cada profissional antes de agendar.</p>
+<section class="section-plans" id="precos">
+  <div class="container">
+    <span class="section-tag">PREÇOS</span>
+    <h2>Pague por sessão ou economize como membro VivaS.</h2>
+    <p class="section-intro">Sem fidelidade e sem letra miúda. Você vê o valor de cada profissional antes de agendar.</p>
     <div class="price-grid">
       <div class="pcard">
         <div class="ptag">Sessão avulsa</div>
@@ -502,156 +353,166 @@
         <p class="psub">Ideal para começar no seu ritmo, sem compromisso mensal.</p>
         <div class="pval">R$ 80<small> a R$ 350 / sessão</small></div>
         <ul class="plist">
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Valor visível antes de agendar</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Escolha livre do profissional</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Troca de especialista sem custo</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>Valor visível antes de agendar</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>Escolha livre do profissional</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>Troca de especialista sem custo</li>
         </ul>
-        <a href="https://vivas.digital/mental" class="btn btn-ghost">Agendar avulsa</a>
+        <a href="https://vivas.digital/mental" class="btn btn-outline-wine" style="width:100%;justify-content:center">Agendar avulsa</a>
       </div>
-      <div class="pcard feat">
+      <div class="pcard featured">
         <div class="ptag">Membro VivaS</div>
         <h3>Saúde mental no seu plano</h3>
         <p class="psub">A partir de R$ 49,90/mês no plano VivaS, com triagem por IA e desconto nas sessões.</p>
         <div class="pval">Descontos<small> + triagem inteligente incluída</small></div>
         <ul class="plist">
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Preço reduzido em todas as sessões</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Histórico clínico integrado à VivaS</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Cuidado preventivo + saúde mental juntos</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>Preço reduzido em todas as sessões</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>Histórico clínico integrado à VivaS</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>Cuidado preventivo + saúde mental juntos</li>
         </ul>
-        <a href="https://vivasaudeinteligente.com.br/#planos" class="btn btn-light">Conhecer planos VivaS</a>
+        <a href="https://vivasaudeinteligente.com.br/#planos" class="btn btn-white" style="width:100%;justify-content:center">Conhecer planos VivaS</a>
       </div>
     </div>
   </div>
 </section>
 
 <!-- DEPOIMENTOS -->
-<section class="tst-sec">
-  <div class="wrap">
-    <span class="sec-eyebrow"><span class="bd"></span>Quem já cuida com a gente</span>
-    <h2 class="sec-h">Histórias de quem deu o primeiro passo.</h2>
-    <div class="tst-grid">
-      <div class="tst">
-        <div class="stars">★★★★★</div>
-        <p>“Sempre adiei terapia por causa do preço. Achei minha psicóloga em um dia e pago por sessão, sem peso no orçamento.”</p>
-        <div class="who"><div class="av">C</div><div><b>Camila R.</b><span>Belo Horizonte, MG</span></div></div>
+<section class="section-features">
+  <div class="container">
+    <span class="section-tag">DEPOIMENTOS</span>
+    <h2>Histórias de quem deu o primeiro passo.</h2>
+    <div class="tst-grid" style="margin-top:48px">
+      <div class="tst-card">
+        <div class="tst-stars">★★★★★</div>
+        <p>"Sempre adiei terapia por causa do preço. Achei minha psicóloga em um dia e pago por sessão, sem peso no orçamento."</p>
+        <div class="tst-who"><div class="av">C</div><div><b>Camila R.</b><span>Belo Horizonte, MG</span></div></div>
       </div>
-      <div class="tst">
-        <div class="stars">★★★★★</div>
-        <p>“A triagem entendeu exatamente o que eu precisava. Me indicou um psiquiatra que cabia no meu horário de trabalho.”</p>
-        <div class="who"><div class="av">R</div><div><b>Rafael M.</b><span>São Paulo, SP</span></div></div>
+      <div class="tst-card">
+        <div class="tst-stars">★★★★★</div>
+        <p>"A triagem entendeu exatamente o que eu precisava. Me indicou um psiquiatra que cabia no meu horário de trabalho."</p>
+        <div class="tst-who"><div class="av">R</div><div><b>Rafael M.</b><span>São Paulo, SP</span></div></div>
       </div>
-      <div class="tst">
-        <div class="stars">★★★★★</div>
-        <p>“Tenho o plano VivaS pela família toda e usar a parte de saúde mental com desconto fez total diferença pra nós.”</p>
-        <div class="who"><div class="av">J</div><div><b>Juliana T.</b><span>Curitiba, PR</span></div></div>
+      <div class="tst-card">
+        <div class="tst-stars">★★★★★</div>
+        <p>"Tenho o plano VivaS pela família toda e usar a parte de saúde mental com desconto fez total diferença pra nós."</p>
+        <div class="tst-who"><div class="av">J</div><div><b>Juliana T.</b><span>Curitiba, PR</span></div></div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- FAQ -->
-<section id="duvidas">
-  <div class="wrap">
-    <span class="sec-eyebrow" style="justify-content:center;width:100%"><span class="bd"></span>Dúvidas frequentes</span>
-    <h2 class="sec-h" style="margin:0 auto;text-align:center">Tudo o que você precisa saber.</h2>
-    <div class="faq-wrap">
-      <div class="faq-item">
-        <button class="faq-q">Os profissionais são realmente registrados?<span class="ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="faq-a"><p>Sim. Todos os psicólogos têm registro ativo no CRP e todos os psiquiatras no CRM/CFM. A verificação é feita antes de qualquer profissional entrar na plataforma.</p></div>
+<section class="section-faq" id="duvidas">
+  <div class="container">
+    <div class="faq-layout">
+      <div class="faq-heading">
+        <span class="section-tag">FAQ</span>
+        <h2>Tudo o que você precisa saber.</h2>
       </div>
-      <div class="faq-item">
-        <button class="faq-q">Preciso ter o plano VivaS para usar?<span class="ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="faq-a"><p>Não. Você pode pagar por sessão avulsa, sem mensalidade. Ser membro VivaS dá acesso a descontos nas sessões e integra seu cuidado de saúde mental ao seu histórico clínico.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">As sessões são sigilosas?<span class="ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="faq-a"><p>Totalmente. As sessões por vídeo são privadas e o conteúdo é protegido pelo sigilo profissional e pela LGPD. Ninguém além de você e do seu profissional tem acesso ao que é conversado.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">Como funciona a receita do psiquiatra?<span class="ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="faq-a"><p>Quando indicado, o psiquiatra emite receita digital com assinatura eletrônica válida em qualquer farmácia do Brasil, enviada direto para você ao final da consulta.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">Recebo recibo para reembolso?<span class="ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="faq-a"><p>Sim. Depois de cada sessão você recebe o recibo com os dados do profissional, que pode ser usado para solicitar reembolso junto ao seu plano de saúde, quando o plano oferecer essa cobertura.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">Posso trocar de profissional?<span class="ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="faq-a"><p>Sim, quando quiser e sem custo. A relação com o profissional certo é o que faz a terapia funcionar. Se não houver conexão, é só buscar outro match.</p></div>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>Os profissionais são realmente registrados?</summary>
+          <p>Sim. Todos os psicólogos têm registro ativo no CRP e todos os psiquiatras no CRM/CFM. A verificação é feita antes de qualquer profissional entrar na plataforma.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Preciso ter o plano VivaS para usar?</summary>
+          <p>Não. Você pode pagar por sessão avulsa, sem mensalidade. Ser membro VivaS dá acesso a descontos nas sessões e integra seu cuidado de saúde mental ao seu histórico clínico.</p>
+        </details>
+        <details class="faq-item">
+          <summary>As sessões são sigilosas?</summary>
+          <p>Totalmente. As sessões por vídeo são privadas e o conteúdo é protegido pelo sigilo profissional e pela LGPD. Ninguém além de você e do seu profissional tem acesso ao que é conversado.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Como funciona a receita do psiquiatra?</summary>
+          <p>Quando indicado, o psiquiatra emite receita digital com assinatura eletrônica válida em qualquer farmácia do Brasil, enviada direto para você ao final da consulta.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Recebo recibo para reembolso?</summary>
+          <p>Sim. Depois de cada sessão você recebe o recibo com os dados do profissional, que pode ser usado para solicitar reembolso junto ao seu plano de saúde, quando o plano oferecer essa cobertura.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Posso trocar de profissional?</summary>
+          <p>Sim, quando quiser e sem custo. A relação com o profissional certo é o que faz a terapia funcionar. Se não houver conexão, é só buscar outro match.</p>
+        </details>
       </div>
     </div>
   </div>
 </section>
 
-<!-- FINAL CTA -->
-<section class="final">
-  <div class="wrap">
-    <div class="orb-mini" aria-hidden="true"></div>
+<!-- CTA FINAL -->
+<section class="section-cta-final">
+  <div class="container">
     <h2>O cuidado que você adia hoje pode mudar o seu amanhã.</h2>
     <p>Comece agora. Em poucos minutos você encontra o profissional certo e dá o primeiro passo.</p>
-    <div class="hero-actions">
-      <a href="https://vivas.digital/mental" class="btn btn-primary">Agendar minha primeira sessão</a>
-      <a href="https://vivasaudeinteligente.com.br" class="btn btn-ghost">Falar com a VivaS</a>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+      <a href="https://vivas.digital/mental" class="btn btn-white btn-lg">Agendar minha primeira sessão</a>
+      <a href="https://vivasaudeinteligente.com.br" class="btn btn-ghost btn-lg" style="color:white;border-color:rgba(255,255,255,.3)">Falar com a VivaS</a>
     </div>
   </div>
 </section>
 
 <!-- FOOTER -->
-<footer>
-  <div class="wrap">
-    <div class="foot-grid">
-      <div>
-        <a href="#" class="brand"><span class="dot" style="box-shadow:0 0 0 5px rgba(233,196,190,.25)"></span><span>VivaS<small>Saúde Mental</small></span></a>
-        <p class="foot-about">A camada de saúde mental do ecossistema VivaS de saúde preventiva. Cuidado acessível, humano e baseado em evidências para todo brasileiro.</p>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <img src="/vivas-branco.svg" alt="VivaS" class="footer-logo" />
+        <p>A camada de saúde mental do ecossistema VivaS de saúde preventiva. Cuidado acessível, humano e baseado em evidências para todo brasileiro.</p>
       </div>
-      <div class="fcol">
+      <div class="footer-col">
         <h4>Saúde Mental</h4>
         <a href="#como">Como funciona</a>
         <a href="#especialidades">Especialidades</a>
         <a href="#precos">Preços</a>
         <a href="#duvidas">Dúvidas</a>
       </div>
-      <div class="fcol">
+      <div class="footer-col">
         <h4>Para profissionais</h4>
-        <a href="#">Seja um especialista</a>
-        <a href="#">Como funciona o repasse</a>
+        <a href="/profissionais">Seja um especialista</a>
         <a href="#">Central de ajuda</a>
       </div>
-      <div class="fcol">
+      <div class="footer-col">
         <h4>VivaS</h4>
-        <a href="#">Ecossistema VivaS</a>
-        <a href="#">Planos</a>
+        <a href="/">Ecossistema VivaS</a>
+        <a href="/#planos">Planos</a>
         <a href="#">Privacidade e LGPD</a>
         <a href="#">Termos de uso</a>
       </div>
     </div>
-
-    <div class="crisis">
+    <div class="crisis-notice">
       <b>Atenção:</b> este site não oferece atendimento de emergência ou apoio imediato em situações de crise. Se você está passando por sofrimento intenso ou pensando em se machucar, ligue para o <b>CVV 188</b> (24h, gratuito) ou acesse <b>cvv.org.br</b>. Em emergência, procure o hospital mais próximo.
     </div>
-
-    <div class="foot-base">
-      <span>© 2026 VivaS Saúde Mental. Todos os direitos reservados.</span>
+    <div class="footer-bottom">
+      <span>&copy; 2026 VivaS Saúde Mental. Todos os direitos reservados.</span>
       <span>Cuidado com registro no CRP e CFM · LGPD</span>
     </div>
   </div>
 </footer>
 
 <script>
-  // mobile nav
-  const burger=document.getElementById('burger');
-  const navlinks=document.getElementById('navlinks');
-  burger.addEventListener('click',()=>navlinks.classList.toggle('open'));
-  navlinks.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>navlinks.classList.remove('open')));
-
-  // faq accordion
-  document.querySelectorAll('.faq-q').forEach(q=>{
-    q.addEventListener('click',()=>{
-      const item=q.parentElement;
-      const a=item.querySelector('.faq-a');
-      const open=item.classList.contains('open');
-      document.querySelectorAll('.faq-item').forEach(i=>{i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=null;});
-      if(!open){item.classList.add('open');a.style.maxHeight=a.scrollHeight+'px';}
+  // Mobile menu toggle
+  const mobileMenu = document.getElementById('mobileMenu');
+  const navLinks = document.getElementById('navLinks');
+  if (mobileMenu) {
+    mobileMenu.addEventListener('click', () => {
+      navLinks.classList.toggle('active');
+      mobileMenu.classList.toggle('active');
+    });
+  }
+  // Sticky navbar
+  window.addEventListener('scroll', () => {
+    const nav = document.getElementById('navbar');
+    if (window.scrollY > 50) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+  });
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href');
+      if (id && id !== '#') {
+        e.preventDefault();
+        document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' });
+        navLinks.classList.remove('active');
+      }
     });
   });
 </script>
