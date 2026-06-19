@@ -12,6 +12,7 @@ export default function PatientDashboard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadResult, setUploadResult] = useState<ExamUploadResult | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [showCarteirinha, setShowCarteirinha] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { user } = useAuth()
 
@@ -25,6 +26,15 @@ export default function PatientDashboard() {
     setSelectedFile(file)
     setUploadError(null)
     setUploadResult(null)
+
+    // PDFs cannot be analyzed as images — skip quality check
+    if (file.type === 'application/pdf') {
+      setCapturedImage(null)
+      setImageQuality('good')
+      setUploadState('done')
+      return
+    }
+
     const reader = new FileReader()
     reader.onload = (ev) => {
       setCapturedImage(ev.target?.result as string)
@@ -267,17 +277,23 @@ export default function PatientDashboard() {
                 <p className="text-sm text-wine font-medium">Analisando qualidade...</p>
               </div>
             )}
-            {uploadState === 'done' && capturedImage && (
+            {uploadState === 'done' && (capturedImage || selectedFile) && (
               <div className="space-y-3">
                 <div className="flex items-start gap-4">
-                  <img src={capturedImage} alt="Exame" className="w-20 h-20 object-cover rounded-xl border border-line" />
+                  {capturedImage ? (
+                    <img src={capturedImage} alt="Exame" className="w-20 h-20 object-cover rounded-xl border border-line" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-xl border border-line bg-wine-soft flex items-center justify-center">
+                      <FileText className="w-8 h-8 text-wine" />
+                    </div>
+                  )}
                   <div className="flex-1">
                     {imageQuality === 'good' ? (
                       <div className="flex items-center gap-2 text-success bg-success-soft p-3 rounded-xl">
                         <CheckCircle className="w-5 h-5" />
                         <div>
-                          <p className="font-semibold text-sm">Imagem com boa qualidade!</p>
-                          <p className="text-xs opacity-80">Pronta para enviar.</p>
+                          <p className="font-semibold text-sm">{capturedImage ? 'Imagem com boa qualidade!' : `PDF pronto: ${selectedFile?.name}`}</p>
+                          <p className="text-xs opacity-80">Pronto para enviar.</p>
                         </div>
                       </div>
                     ) : (
@@ -351,14 +367,14 @@ export default function PatientDashboard() {
           </div>
           <div className="grid grid-cols-3 gap-2.5">
             {[
-              { icon: Calendar, label: 'Agendar consulta' },
-              { icon: Video, label: 'Teleconsulta agora' },
-              { icon: FileText, label: 'Meus exames' },
-              { icon: Heart, label: 'Saúde mental' },
-              { icon: CreditCard, label: 'Meu plano' },
-              { icon: Home, label: 'Farmácia' },
+              { icon: Calendar, label: 'Agendar consulta', action: undefined },
+              { icon: Video, label: 'Teleconsulta agora', action: undefined },
+              { icon: FileText, label: 'Meus exames', action: undefined },
+              { icon: Heart, label: 'Saúde mental', action: undefined },
+              { icon: CreditCard, label: 'Carteirinha', action: () => setShowCarteirinha(true) },
+              { icon: Home, label: 'Farmácia', action: undefined },
             ].map((item, i) => (
-              <button key={i} className="bg-white rounded-2xl shadow-card p-3.5 text-center border border-transparent hover:border-wine-line hover:-translate-y-0.5 transition-all">
+              <button key={i} onClick={item.action} className="bg-white rounded-2xl shadow-card p-3.5 text-center border border-transparent hover:border-wine-line hover:-translate-y-0.5 transition-all">
                 <span className="w-10 h-10 rounded-xl bg-wine-soft text-wine flex items-center justify-center mx-auto mb-2">
                   <item.icon className="w-5 h-5" />
                 </span>
@@ -416,13 +432,83 @@ export default function PatientDashboard() {
               <div><p className="text-xs text-white/60">Próxima cobrança</p><p className="text-sm font-semibold mt-0.5">10/07/2026</p></div>
               <div><p className="text-xs text-white/60">Teleconsultas</p><p className="text-sm font-semibold mt-0.5">Ilimitadas</p></div>
             </div>
-            <button className="mt-4 w-full bg-white/10 border border-white/15 text-white rounded-xl py-3 flex items-center justify-center gap-2 font-display font-bold text-sm">
+            <button onClick={() => setShowCarteirinha(true)} className="mt-4 w-full bg-white/10 border border-white/15 text-white rounded-xl py-3 flex items-center justify-center gap-2 font-display font-bold text-sm">
               <CreditCard className="w-4 h-4" />
               Carteirinha digital
             </button>
           </div>
         </section>
       </div>
+
+      {/* CARTEIRINHA DIGITAL MODAL */}
+      {showCarteirinha && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setShowCarteirinha(false)}>
+          <div className="w-full max-w-sm" onClick={e => e.stopPropagation()}>
+            {/* Titular */}
+            <div className="bg-gradient-to-br from-[#3A1020] to-wine-deep text-white rounded-2xl p-6 shadow-2xl mb-4">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Carteirinha Digital</p>
+                  <p className="font-display font-extrabold text-lg mt-1">VivaS Saude</p>
+                </div>
+                <Heart className="w-8 h-8 text-white/30" />
+              </div>
+              <div className="space-y-2 mb-4">
+                <div>
+                  <p className="text-[10px] uppercase text-white/50">Titular</p>
+                  <p className="font-display font-bold text-base">{user?.full_name || 'Paciente'}</p>
+                </div>
+                <div className="flex gap-4">
+                  <div>
+                    <p className="text-[10px] uppercase text-white/50">Email</p>
+                    <p className="text-sm font-medium">{user?.email || ''}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase text-white/50">Plano</p>
+                    <p className="text-sm font-medium">Familia</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div>
+                    <p className="text-[10px] uppercase text-white/50">N. Carteirinha</p>
+                    <p className="text-sm font-mono font-medium">{user?.id?.slice(0, 8).toUpperCase() || '00000000'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase text-white/50">Validade</p>
+                    <p className="text-sm font-medium">12/2027</p>
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-white/10 pt-3 flex justify-between items-center">
+                <p className="text-[10px] text-white/40">vivas.digital</p>
+                <span className="bg-green-400/20 text-green-300 text-[10px] font-bold px-2 py-0.5 rounded-full">Ativo</span>
+              </div>
+            </div>
+
+            {/* Dependentes */}
+            {data?.dependentes && data.dependentes.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-white/80 text-center">Dependentes</p>
+                {data.dependentes.map((dep: {name: string; cpf?: string}, idx: number) => (
+                  <div key={idx} className="bg-gradient-to-br from-[#4A1F30] to-wine text-white rounded-xl p-4 shadow-lg">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-[10px] uppercase text-white/50">Dependente</p>
+                        <p className="font-display font-bold text-sm">{dep.name}</p>
+                      </div>
+                      <span className="bg-green-400/20 text-green-300 text-[10px] font-bold px-2 py-0.5 rounded-full">Ativo</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button onClick={() => setShowCarteirinha(false)} className="mt-4 w-full bg-white text-wine rounded-xl py-3 font-display font-bold text-sm">
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* BOTTOM NAV */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-line flex justify-around py-3 pb-safe z-50" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>

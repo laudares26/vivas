@@ -208,6 +208,7 @@ export interface DashboardData {
   weeklyStats: { day: string; count: number; }[];
   healthAlerts: { total: number; unread: number; recent: HealthAlert[]; };
   personalStats: { totalConsultations: number; lastConsultation: string | null; };
+  dependentes?: Array<{ name: string; cpf?: string; }>;
 }
 
 export interface Coupon {

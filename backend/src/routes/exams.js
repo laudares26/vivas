@@ -107,21 +107,22 @@ router.post('/upload', examUpload.single('file'), async (req, res) => {
     let extractedText = '';
 
     if (fileMimeType === 'application/pdf') {
-      // For PDFs we try to extract raw text bytes
-      const bufStr = fileBuffer.toString('utf-8');
-      // Extract readable text segments from PDF
-      const textMatches = bufStr.match(/\(([^)]+)\)/g);
-      if (textMatches) {
-        extractedText = textMatches.map(m => m.slice(1, -1)).join(' ');
-      }
-      // Also try stream content
-      const streamMatches = bufStr.match(/BT[\s\S]*?ET/g);
-      if (streamMatches) {
-        extractedText += ' ' + streamMatches.join(' ');
+      try {
+        const pdfParse = require('pdf-parse');
+        const pdfData = await pdfParse(fileBuffer);
+        extractedText = pdfData.text || '';
+        console.log(`[EXAM UPLOAD] PDF text extracted: ${extractedText.length} chars`);
+      } catch (pdfErr) {
+        console.warn('[EXAM UPLOAD] pdf-parse failed, falling back to raw extraction:', pdfErr.message);
+        // Fallback: try raw text extraction
+        const bufStr = fileBuffer.toString('utf-8');
+        const textMatches = bufStr.match(/\(([^)]+)\)/g);
+        if (textMatches) {
+          extractedText = textMatches.map(m => m.slice(1, -1)).join(' ');
+        }
       }
     } else {
-      // For images, we can't do OCR without external service,
-      // but we include the filename which may contain useful info
+      // For images, include the filename which may contain useful info
       extractedText = fileName;
     }
 
@@ -135,10 +136,6 @@ router.post('/upload', examUpload.single('file'), async (req, res) => {
 
     // Generate AI analysis text
     const aiAnalysis = generateAiAnalysis(indicators);
-
-    // Store the file data as base64 in the exam record
-    const fileBase64 = fileBuffer.toString('base64');
-    const fileDataUri = `data:${fileMimeType};base64,${fileBase64.substring(0, 100)}...`;
 
     // Ensure exam table has file columns
     await pool.query(`
@@ -178,6 +175,37 @@ router.post('/upload', examUpload.single('file'), async (req, res) => {
 
       // Trigger notifications if any indicator is abnormal
       notificationResult = await checkAndNotify(userId, indicators);
+
+      // Update triage if there are alerts
+      const hasAlerts = indicators.some(ind => classifyIndicator(ind.name, ind.value) === 'alerta');
+      if (hasAlerts) {
+        const alertIndicators = indicators.filter(ind => classifyIndicator(ind.name, ind.value) !== 'normal');
+        const triageColor = hasAlerts ? 'amarelo' : 'verde';
+        const symptomsSummary = alertIndicators.map(ind => {
+          const t = THRESHOLDS[ind.name];
+          return `${t ? t.label : ind.name}: ${ind.value} ${t ? t.unit : ''}`;
+        }).join('; ');
+
+        // Check if patient has existing triage record
+        const existingTriage = await pool.query(
+          `SELECT id FROM triage WHERE patient_id = $1 ORDER BY created_at DESC LIMIT 1`,
+          [patientId || userId]
+        );
+
+        if (existingTriage.rows.length > 0) {
+          await pool.query(
+            `UPDATE triage SET manchester_color = $1, symptoms = $2, ai_assessment = $3, status = 'em_analise', updated_at = NOW() WHERE id = $4`,
+            [triageColor, symptomsSummary, aiAnalysis, existingTriage.rows[0].id]
+          );
+        } else {
+          await pool.query(
+            `INSERT INTO triage (patient_id, manchester_color, symptoms, ai_assessment, priority_score, status)
+             VALUES ($1, $2, $3, $4, $5, 'aguardando')
+             ON CONFLICT DO NOTHING`,
+            [patientId || userId, triageColor, symptomsSummary, aiAnalysis, hasAlerts ? 7 : 4]
+          ).catch(() => {});
+        }
+      }
     }
 
     res.json({
