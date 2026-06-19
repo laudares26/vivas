@@ -25,6 +25,7 @@ import SaudePreventiva from './pages/SaudePreventiva'
 import FamilyMembers from './pages/FamilyMembers'
 import EmpresaDashboard from './pages/EmpresaDashboard'
 import MentalDashboard from './pages/MentalDashboard'
+import ViviChat from './pages/ViviChat'
 
 function PatientRoutes() {
   return (
@@ -35,6 +36,7 @@ function PatientRoutes() {
       <Route path="/saude-preventiva" element={<Layout><SaudePreventiva /></Layout>} />
       <Route path="/familia" element={<Layout><FamilyMembers /></Layout>} />
       <Route path="/mental" element={<MentalDashboard />} />
+      <Route path="/vivi" element={<ViviChat />} />
       <Route path="/configuracoes" element={<Layout><Configuracoes /></Layout>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

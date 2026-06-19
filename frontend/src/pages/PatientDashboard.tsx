@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
-import { Home, Calendar, FileText, User, Bell, Camera, Upload, ChevronRight, TrendingUp, Heart, Video, CreditCard, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Home, Calendar, FileText, User, Bell, Camera, Upload, ChevronRight, TrendingUp, Heart, Video, CreditCard, CheckCircle, XCircle, Loader2, MessageCircle } from 'lucide-react'
 import { api, type DashboardData, type ExamUploadResult } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -15,6 +16,7 @@ export default function PatientDashboard() {
   const [showCarteirinha, setShowCarteirinha] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
     api.getDashboard().then(setData).catch(console.error).finally(() => setLoading(false))
@@ -207,7 +209,7 @@ export default function PatientDashboard() {
                 <p className="font-semibold text-sm text-ink">Teleconsulta com Dr. Bruno Hodos</p>
                 <p className="text-xs text-muted mt-0.5">Hoje, 14:30 &middot; Clínica Geral</p>
               </div>
-              <button className="bg-wine text-white text-xs font-display font-bold px-3.5 py-2 rounded-xl whitespace-nowrap">Entrar</button>
+              <button onClick={() => navigate('/teleconsulta')} className="bg-wine text-white text-xs font-display font-bold px-3.5 py-2 rounded-xl whitespace-nowrap">Entrar</button>
             </div>
 
             <div className="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3.5">
@@ -220,7 +222,7 @@ export default function PatientDashboard() {
                 </p>
                 <p className="text-xs text-muted mt-0.5">Interpretação explicada em linguagem simples</p>
               </div>
-              <button className="bg-wine-soft text-wine text-xs font-display font-bold px-3.5 py-2 rounded-xl whitespace-nowrap">Ver</button>
+              <button onClick={() => navigate('/saude-preventiva')} className="bg-wine-soft text-wine text-xs font-display font-bold px-3.5 py-2 rounded-xl whitespace-nowrap">Ver</button>
             </div>
 
             <div className="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3.5">
@@ -231,7 +233,7 @@ export default function PatientDashboard() {
                 <p className="font-semibold text-sm text-ink">Check-up preventivo anual</p>
                 <p className="text-xs text-muted mt-0.5">Recomendado há 11 meses &middot; gratuito no seu plano</p>
               </div>
-              <button className="bg-wine-soft text-wine text-xs font-display font-bold px-3.5 py-2 rounded-xl whitespace-nowrap">Agendar</button>
+              <button onClick={() => navigate('/agendamentos')} className="bg-wine-soft text-wine text-xs font-display font-bold px-3.5 py-2 rounded-xl whitespace-nowrap">Agendar</button>
             </div>
           </div>
         </section>
@@ -367,12 +369,12 @@ export default function PatientDashboard() {
           </div>
           <div className="grid grid-cols-3 gap-2.5">
             {[
-              { icon: Calendar, label: 'Agendar consulta', action: undefined },
-              { icon: Video, label: 'Teleconsulta agora', action: undefined },
-              { icon: FileText, label: 'Meus exames', action: undefined },
-              { icon: Heart, label: 'Saúde mental', action: undefined },
+              { icon: Calendar, label: 'Agendar consulta', action: () => navigate('/agendamentos') },
+              { icon: Video, label: 'Teleconsulta', action: () => navigate('/teleconsulta') },
+              { icon: FileText, label: 'Meus exames', action: () => navigate('/saude-preventiva') },
+              { icon: Heart, label: 'Saúde mental', action: () => navigate('/mental') },
               { icon: CreditCard, label: 'Carteirinha', action: () => setShowCarteirinha(true) },
-              { icon: Home, label: 'Farmácia', action: undefined },
+              { icon: MessageCircle, label: 'Vivi', action: () => navigate('/vivi') },
             ].map((item, i) => (
               <button key={i} onClick={item.action} className="bg-white rounded-2xl shadow-card p-3.5 text-center border border-transparent hover:border-wine-line hover:-translate-y-0.5 transition-all">
                 <span className="w-10 h-10 rounded-xl bg-wine-soft text-wine flex items-center justify-center mx-auto mb-2">
@@ -513,13 +515,13 @@ export default function PatientDashboard() {
       {/* BOTTOM NAV */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-line flex justify-around py-3 pb-safe z-50" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
         {[
-          { icon: Home, label: 'Início', active: true },
-          { icon: Calendar, label: 'Agenda', active: false },
-          { icon: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2"/></svg>, label: 'Vivi', active: false },
-          { icon: FileText, label: 'Saúde', active: false },
-          { icon: User, label: 'Perfil', active: false },
+          { icon: Home, label: 'Início', path: '/' },
+          { icon: Calendar, label: 'Agenda', path: '/agendamentos' },
+          { icon: MessageCircle, label: 'Vivi', path: '/vivi' },
+          { icon: FileText, label: 'Saúde', path: '/saude-preventiva' },
+          { icon: User, label: 'Perfil', path: '/configuracoes' },
         ].map((item, i) => (
-          <button key={i} className={`flex flex-col items-center gap-1 text-xs font-semibold ${item.active ? 'text-wine' : 'text-muted'}`}>
+          <button key={i} onClick={() => navigate(item.path)} className={`flex flex-col items-center gap-1 text-xs font-semibold ${item.path === '/' ? 'text-wine' : 'text-muted'}`}>
             <item.icon className="w-5 h-5" />
             {item.label}
           </button>
