@@ -180,35 +180,52 @@ router.post('/upload', examUpload.single('file'), async (req, res) => {
       // Trigger notifications if any indicator is abnormal
       notificationResult = await checkAndNotify(userId, indicators);
 
-      // Update triage if there are alerts
-      const hasAlerts = indicators.some(ind => classifyIndicator(ind.name, ind.value) === 'alerta');
-      if (hasAlerts) {
-        const alertIndicators = indicators.filter(ind => classifyIndicator(ind.name, ind.value) !== 'normal');
-        const triageColor = hasAlerts ? 'amarelo' : 'verde';
-        const symptomsSummary = alertIndicators.map(ind => {
-          const t = THRESHOLDS[ind.name];
-          return `${t ? t.label : ind.name}: ${ind.value} ${t ? t.unit : ''}`;
-        }).join('; ');
+      // Update triage if there are alerts (non-blocking — don't fail the upload)
+      try {
+        const hasAlerts = indicators.some(ind => classifyIndicator(ind.name, ind.value) === 'alerta');
+        if (hasAlerts) {
+          const alertIndicators = indicators.filter(ind => classifyIndicator(ind.name, ind.value) !== 'normal');
+          const triageColor = 'amarelo';
+          const symptomsSummary = alertIndicators.map(ind => {
+            const t = THRESHOLDS[ind.name];
+            return `${t ? t.label : ind.name}: ${ind.value} ${t ? t.unit : ''}`;
+          }).join('; ');
 
-        // Check if patient has existing triage record
-        const existingTriage = await pool.query(
-          `SELECT id FROM triage WHERE patient_id = $1 ORDER BY created_at DESC LIMIT 1`,
-          [patientId || userId]
-        );
+          // Ensure triage table exists
+          await pool.query(`
+            CREATE TABLE IF NOT EXISTS triage (
+              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+              patient_id UUID,
+              manchester_color VARCHAR(20),
+              symptoms TEXT,
+              ai_assessment TEXT,
+              priority_score INTEGER DEFAULT 5,
+              status VARCHAR(30) DEFAULT 'aguardando',
+              created_at TIMESTAMP DEFAULT NOW(),
+              updated_at TIMESTAMP DEFAULT NOW()
+            )
+          `);
 
-        if (existingTriage.rows.length > 0) {
-          await pool.query(
-            `UPDATE triage SET manchester_color = $1, symptoms = $2, ai_assessment = $3, status = 'em_analise', updated_at = NOW() WHERE id = $4`,
-            [triageColor, symptomsSummary, aiAnalysis, existingTriage.rows[0].id]
+          const existingTriage = await pool.query(
+            `SELECT id FROM triage WHERE patient_id = $1 ORDER BY created_at DESC LIMIT 1`,
+            [patientId || userId]
           );
-        } else {
-          await pool.query(
-            `INSERT INTO triage (patient_id, manchester_color, symptoms, ai_assessment, priority_score, status)
-             VALUES ($1, $2, $3, $4, $5, 'aguardando')
-             ON CONFLICT DO NOTHING`,
-            [patientId || userId, triageColor, symptomsSummary, aiAnalysis, hasAlerts ? 7 : 4]
-          ).catch(() => {});
+
+          if (existingTriage.rows.length > 0) {
+            await pool.query(
+              `UPDATE triage SET manchester_color = $1, symptoms = $2, ai_assessment = $3, status = 'em_analise', updated_at = NOW() WHERE id = $4`,
+              [triageColor, symptomsSummary, aiAnalysis, existingTriage.rows[0].id]
+            );
+          } else {
+            await pool.query(
+              `INSERT INTO triage (patient_id, manchester_color, symptoms, ai_assessment, priority_score, status)
+               VALUES ($1, $2, $3, $4, $5, 'aguardando')`,
+              [patientId || userId, triageColor, symptomsSummary, aiAnalysis, 7]
+            );
+          }
         }
+      } catch (triageErr) {
+        console.warn('[EXAM UPLOAD] Triage update failed (non-blocking):', triageErr.message);
       }
     }
 
