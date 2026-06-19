@@ -4,35 +4,50 @@ import { useToast } from '../components/Toast'
 
 const TABS = [
   { key: 'geral', label: 'Geral', icon: Building },
-  { key: 'notificacoes', label: 'Notificações', icon: Bell },
-  { key: 'seguranca', label: 'Segurança', icon: Shield },
-  { key: 'aparencia', label: 'Aparência', icon: Palette },
-  { key: 'integracao', label: 'Integrações', icon: Globe },
+  { key: 'notificacoes', label: 'Notificacoes', icon: Bell },
+  { key: 'seguranca', label: 'Seguranca', icon: Shield },
+  { key: 'aparencia', label: 'Aparencia', icon: Palette },
+  { key: 'integracao', label: 'Integracoes', icon: Globe },
 ]
 
 export default function Configuracoes() {
   const [activeTab, setActiveTab] = useState('geral')
   const { addToast } = useToast()
 
-  const handleSave = () => addToast('success', 'Configurações salvas com sucesso')
+  const handleSave = () => addToast('success', 'Configuracoes salvas com sucesso')
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Settings className="w-7 h-7 text-vivas-blue" />
-          Configurações do Sistema
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <Settings className="w-6 h-6 sm:w-7 sm:h-7 text-wine" />
+          Configuracoes
         </h1>
-        <p className="text-gray-500 text-sm mt-1">Gerencie as configurações da plataforma VIVAS</p>
+        <p className="text-gray-500 text-xs sm:text-sm mt-1">Gerencie suas configuracoes</p>
+      </div>
+
+      {/* Mobile: horizontal scroll tabs */}
+      <div className="sm:hidden overflow-x-auto -mx-4 px-4">
+        <div className="flex gap-2 min-w-max pb-2">
+          {TABS.map(tab => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                activeTab === tab.key ? 'bg-wine text-white' : 'bg-gray-100 text-gray-600'
+              }`}>
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex gap-6">
-        {/* Sidebar tabs */}
-        <div className="w-56 space-y-1 flex-shrink-0">
+        {/* Desktop: sidebar tabs */}
+        <div className="hidden sm:block w-56 space-y-1 flex-shrink-0">
           {TABS.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                activeTab === tab.key ? 'bg-vivas-blue text-white' : 'text-gray-600 hover:bg-gray-100'
+                activeTab === tab.key ? 'bg-wine text-white' : 'text-gray-600 hover:bg-gray-100'
               }`}>
               <tab.icon className="w-5 h-5" />
               {tab.label}
@@ -45,10 +60,10 @@ export default function Configuracoes() {
           {activeTab === 'geral' && (
             <div className="space-y-6">
               <h2 className="text-lg font-semibold text-gray-900">Informações da Unidade</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Unidade</label>
-                  <input className="input-field" defaultValue="VIVAS Saúde - Unidade Central" />
+                  <input className="input-field" defaultValue="VIVAS Saude - Unidade Central" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">CNES</label>
@@ -67,17 +82,17 @@ export default function Configuracoes() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
                 <input className="input-field" defaultValue="Av. Augusto de Lima, 1715, Barro Preto, Belo Horizonte/MG" />
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Horário de Funcionamento</label>
-                  <input className="input-field" defaultValue="07:00 às 22:00" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Horario de Funcionamento</label>
+                  <input className="input-field" defaultValue="07:00 as 22:00" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Dias de Funcionamento</label>
-                  <input className="input-field" defaultValue="Segunda a Sábado" />
+                  <input className="input-field" defaultValue="Segunda a Sabado" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fuso Horário</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fuso Horario</label>
                   <select className="input-field">
                     <option>America/Sao_Paulo (BRT)</option>
                   </select>
