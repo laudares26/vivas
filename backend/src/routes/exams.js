@@ -108,13 +108,17 @@ router.post('/upload', examUpload.single('file'), async (req, res) => {
 
     if (fileMimeType === 'application/pdf') {
       try {
-        const pdfParse = require('pdf-parse');
-        const pdfData = await pdfParse(fileBuffer);
-        extractedText = pdfData.text || '';
+        const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+        const uint8 = new Uint8Array(fileBuffer);
+        const doc = await pdfjsLib.getDocument({ data: uint8 }).promise;
+        for (let i = 1; i <= doc.numPages; i++) {
+          const page = await doc.getPage(i);
+          const content = await page.getTextContent();
+          extractedText += content.items.map(item => item.str).join(' ') + '\n';
+        }
         console.log(`[EXAM UPLOAD] PDF text extracted: ${extractedText.length} chars`);
       } catch (pdfErr) {
-        console.warn('[EXAM UPLOAD] pdf-parse failed, falling back to raw extraction:', pdfErr.message);
-        // Fallback: try raw text extraction
+        console.warn('[EXAM UPLOAD] pdfjs failed, falling back to raw extraction:', pdfErr.message);
         const bufStr = fileBuffer.toString('utf-8');
         const textMatches = bufStr.match(/\(([^)]+)\)/g);
         if (textMatches) {
