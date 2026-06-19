@@ -129,7 +129,7 @@ img { max-width: 100%; display: block; }
 .hero-visual {
   position: relative;
   width: 100%;
-  height: 480px;
+  height: 520px;
 }
 .hero-visual .shape {
   position: absolute;
@@ -155,6 +155,16 @@ img { max-width: 100%; display: block; }
   bottom: 20px; right: 5%;
   border-radius: 50%;
   background: rgba(255,255,255,.08);
+}
+.hero-visual .shape-4 {
+  width: 200px; height: 200px;
+  top: 10px; left: 5%;
+  border-radius: 50%;
+}
+.hero-visual .shape-5 {
+  width: 150px; height: 150px;
+  top: 60px; right: 2%;
+  border-radius: 24px;
 }
 .hero-visual .accent-circle {
   position: absolute;

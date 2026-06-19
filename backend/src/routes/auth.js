@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
+const { generatePacienteTerms } = require('../services/contracts');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || (() => {
@@ -162,6 +163,33 @@ router.post('/register', async (req, res) => {
        ON CONFLICT DO NOTHING`,
       [full_name, 'auto-' + user.id.substring(0, 8), email, user.id]
     );
+
+    // Send patient terms/contract email (non-blocking)
+    const smtpPass = process.env.SMTP_PASS;
+    if (smtpPass) {
+      const nodemailer = require('nodemailer');
+      const smtpUser = process.env.SMTP_USER || 'sandrolaudares@gmail.com';
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: smtpUser, pass: smtpPass }
+      });
+      const termsHtml = generatePacienteTerms({
+        fullName: full_name,
+        cpf: null,
+        email,
+        plan: validPlan || 'individual'
+      });
+      transporter.sendMail({
+        from: `"VivaS Saude" <${smtpUser}>`,
+        to: email,
+        subject: 'VivaS - Termos e Condicoes de Uso',
+        html: termsHtml
+      }).then(info => {
+        console.log(`[REGISTER] Terms email sent to ${email} - ${info.response}`);
+      }).catch(err => {
+        console.error(`[REGISTER] Terms email failed for ${email}:`, err.message);
+      });
+    }
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, full_name: user.full_name, avatar_color: user.avatar_color },

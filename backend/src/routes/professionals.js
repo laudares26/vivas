@@ -84,6 +84,7 @@ router.delete('/:id', async (req, res) => {
 
 // Professional onboarding - public (no auth required)
 const bcrypt = require('bcryptjs');
+const { generateMedicoContract, generatePsicologoContract } = require('../services/contracts');
 
 async function onboardingHandler(req, res) {
   try {
@@ -144,7 +145,7 @@ async function onboardingHandler(req, res) {
       [fullName, cpf, `${regLabel}-${registroUf} ${registro}`, category, especialidade || 'Geral', celular || '', email]
     );
 
-    // Send contract email
+    // Send contract email using full template
     const nodemailer = require('nodemailer');
     const smtpUser = process.env.SMTP_USER || 'sandrolaudares@gmail.com';
     const smtpPass = process.env.SMTP_PASS;
@@ -155,50 +156,16 @@ async function onboardingHandler(req, res) {
         auth: { user: smtpUser, pass: smtpPass }
       });
 
-      const contractDate = new Date().toLocaleDateString('pt-BR');
-      const html = `
-        <div style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;max-width:600px;margin:0 auto;padding:32px 20px">
-          <div style="text-align:center;margin-bottom:24px">
-            <h1 style="color:#7B1E3C;font-size:28px;margin:0">VivaS</h1>
-            <p style="color:#6B7280;font-size:14px;margin-top:4px">Contrato de Prestação de Serviços</p>
-          </div>
-          <p style="font-size:15px;color:#1A1A2E">Olá, <strong>${fullName}</strong>!</p>
-          <p style="font-size:14px;color:#6B7280;line-height:1.6">Seu cadastro como profissional de saúde na VivaS foi realizado com sucesso. Segue abaixo seu contrato assinado eletronicamente:</p>
+      const contractData = { fullName, cpf, registro, registroUf, especialidade, email, tempPassword };
+      const html = type === 'medico'
+        ? generateMedicoContract(contractData)
+        : generatePsicologoContract(contractData);
 
-          <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:24px;margin:20px 0;font-size:12px;line-height:1.8;color:#1A1A2E">
-            <h3 style="text-align:center;color:#5E1730;margin-bottom:12px">CONTRATO DE PRESTAÇÃO DE SERVIÇOS PROFISSIONAIS</h3>
-            <p><strong>CONTRATANTE:</strong> CROSSGEO LTDA, CNPJ 56.195.515/0001-49, R. da Patagonia, 404, Apt. 301, Sion, Belo Horizonte/MG, CEP 30.320-135, representando a plataforma VivaS Saúde Inteligente.</p>
-            <p><strong>CONTRATADO(A):</strong> ${fullName}, CPF ${cpf}, ${regLabel} ${registro}/${registroUf}, Especialidade: ${especialidade || 'Geral'}.</p>
-            <p><strong>CLÁUSULA 1 - DO OBJETO:</strong> Prestação de serviços profissionais de saúde via plataforma VivaS, incluindo teleconsultas, acompanhamento preventivo e suporte a pacientes.</p>
-            <p><strong>CLÁUSULA 2 - DAS OBRIGAÇÕES:</strong> Manter dados atualizados, prestar atendimento ético, cumprir horários, manter sigilo LGPD.</p>
-            <p><strong>CLÁUSULA 3 - DA REMUNERAÇÃO:</strong> Repasse por consulta realizada, conforme tabela vigente, via transferência bancária mensal.</p>
-            <p><strong>CLÁUSULA 4 - DA VIGÊNCIA:</strong> 12 meses, renovável automaticamente.</p>
-            <p><strong>CLÁUSULA 5 - DA RESCISÃO:</strong> Sem ônus, mediante aviso de 30 dias.</p>
-            <p><strong>CLÁUSULA 6 - DO FORO:</strong> Comarca de Belo Horizonte/MG.</p>
-            <p style="text-align:center;margin-top:16px;font-style:italic">Assinado eletronicamente em ${contractDate}</p>
-          </div>
-
-          <div style="background:#E4F4EC;border-radius:10px;padding:16px;margin:16px 0">
-            <p style="font-size:13px;font-weight:600;color:#166534;margin-bottom:4px">&#10004; Assinatura eletrônica válida</p>
-            <p style="font-size:12px;color:#6B7280">Contrato assinado digitalmente conforme MP 2.200-2/2001 e Lei 14.063/2020. Representante VivaS: Crossgeo LTDA (CNPJ 56.195.515/0001-49)</p>
-          </div>
-
-          <div style="background:var(--wine-soft,#F6E7E1);border-radius:10px;padding:16px;margin:16px 0">
-            <p style="font-size:13px;font-weight:600;color:#7B1E3C;margin-bottom:4px">Seus dados de acesso:</p>
-            <p style="font-size:13px;color:#6B7280">Email: ${email}</p>
-            <p style="font-size:13px;color:#6B7280">Senha temporária: <strong>${tempPassword}</strong></p>
-            <p style="font-size:12px;color:#6B7280;margin-top:6px">Acesse <a href="https://vivas.digital/login" style="color:#7B1E3C">vivas.digital</a> e altere sua senha no primeiro acesso.</p>
-          </div>
-
-          <hr style="border:none;border-top:1px solid #F3F4F6;margin:24px 0">
-          <p style="font-size:11px;color:#9CA3AF;text-align:center">VivaS Saúde Inteligente | Crossgeo LTDA - CNPJ 56.195.515/0001-49 | suporte@crossgeo.com.br</p>
-        </div>
-      `;
-
+      const subjectType = type === 'medico' ? 'Medico' : 'Psicologo';
       const info = await transporter.sendMail({
-        from: `"VivaS Saúde" <${smtpUser}>`,
+        from: `"VivaS Saude" <${smtpUser}>`,
         to: email,
-        subject: 'VivaS - Contrato assinado e acesso à plataforma',
+        subject: `VivaS - Contrato de Credenciamento ${subjectType} assinado`,
         html
       });
       console.log(`[ONBOARDING] Contract email sent to ${email} - Response: ${info.response}`);
