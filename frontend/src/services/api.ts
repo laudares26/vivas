@@ -55,6 +55,22 @@ export const api = {
   getExams: (params?: string) => request<Exam[]>(`/exams${params ? `?${params}` : ''}`),
   createExam: (data: Partial<Exam>) => request<Exam>('/exams', { method: 'POST', body: JSON.stringify(data) }),
   updateExam: (id: string, data: Partial<Exam>) => request<Exam>(`/exams/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  uploadExam: async (file: File, examName?: string, examText?: string): Promise<ExamUploadResult> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (examName) formData.append('exam_name', examName);
+    if (examText) formData.append('exam_text', examText);
+    const res = await fetch(`${API_BASE}/exams/upload`, {
+      method: 'POST',
+      headers: { ...getAuthHeaders() },
+      body: formData
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Erro de rede' }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  },
 
   // EHR
   getEHR: (patientId: string) => request<EHREntry[]>(`/ehr/${patientId}`),
@@ -151,6 +167,15 @@ export interface Exam {
   loinc_code: string; exam_name: string; category: string; status: string; result: string;
   result_date: string; ai_analysis: string; notes: string; patient_name: string;
   professional_name: string; created_at: string; updated_at: string;
+}
+
+export interface ExamUploadResult {
+  success: boolean;
+  exam: Exam;
+  indicators_found: number;
+  indicators: Array<{ name: string; value: number }>;
+  ai_analysis: string;
+  notifications: { notified: boolean; alerts?: Array<{ label: string; value: number; unit: string; status: string }>; } | null;
 }
 
 export interface EHREntry {

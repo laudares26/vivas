@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Upload, FileText, Activity, Heart, Droplets, TrendingUp, AlertCircle, CheckCircle2, Clock, Bell, Send } from 'lucide-react'
+import { Upload, FileText, Activity, Heart, Droplets, TrendingUp, AlertCircle, CheckCircle2, Clock, Bell, Send, Loader2 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../contexts/AuthContext'
+import { api, type ExamUploadResult } from '../services/api'
 
 interface HealthExam {
   id: number
@@ -70,11 +71,30 @@ export default function SaudePreventiva() {
   const { addToast } = useToast()
   const { token } = useAuth()
 
-  const handleUpload = () => {
+  const [uploading, setUploading] = useState(false)
+  const [uploadResult, setUploadResult] = useState<ExamUploadResult | null>(null)
+
+  const handleUpload = async () => {
     if (!uploadFile) return
-    addToast('success', `Exame "${uploadFile.name}" enviado com sucesso! A IA irá analisar em breve.`)
-    setUploadFile(null)
-    setActiveTab('exams')
+    setUploading(true)
+    setUploadResult(null)
+    try {
+      const result = await api.uploadExam(uploadFile)
+      setUploadResult(result)
+      if (result.indicators_found > 0) {
+        addToast('success', `Exame analisado! ${result.indicators_found} indicador(es) extraido(s).`)
+      } else {
+        addToast('info', 'Exame enviado. Nao foi possivel extrair indicadores automaticamente.')
+      }
+      if (result.notifications?.notified) {
+        addToast('success', 'Alertas enviados por email para voce e seus profissionais de saude.')
+      }
+      setUploadFile(null)
+    } catch (err) {
+      addToast('error', err instanceof Error ? err.message : 'Erro ao enviar exame')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const handleSimulateAlert = async () => {
@@ -420,7 +440,7 @@ export default function SaudePreventiva() {
               </label>
             </div>
 
-            {uploadFile && (
+            {uploadFile && !uploading && (
               <div className="mt-4 p-3 bg-blue-50 rounded-lg flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-vivas-blue" />
@@ -435,10 +455,43 @@ export default function SaudePreventiva() {
               </div>
             )}
 
+            {uploading && (
+              <div className="mt-4 flex items-center justify-center gap-3 p-4 bg-blue-50 rounded-lg">
+                <Loader2 className="w-5 h-5 text-vivas-blue animate-spin" />
+                <span className="text-sm font-medium text-vivas-blue">Enviando e analisando exame...</span>
+              </div>
+            )}
+
+            {uploadResult && (
+              <div className="mt-4 space-y-3">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="font-semibold text-sm text-green-800">Exame analisado com sucesso!</p>
+                  <p className="text-xs text-green-700 mt-1">{uploadResult.indicators_found} indicador(es) extraido(s)</p>
+                </div>
+                {uploadResult.ai_analysis && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="font-semibold text-sm text-gray-900 mb-2">Analise preventiva:</p>
+                    <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{uploadResult.ai_analysis}</p>
+                  </div>
+                )}
+                {uploadResult.notifications?.notified && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-xs text-amber-800 font-medium">Alertas enviados por email para voce e seus profissionais de saude.</p>
+                  </div>
+                )}
+                <button
+                  onClick={() => setUploadResult(null)}
+                  className="w-full px-4 py-2 bg-vivas-blue text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Enviar outro exame
+                </button>
+              </div>
+            )}
+
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
               <p className="text-xs text-gray-500">
-                <strong>Importante:</strong> A análise por IA é utilizada exclusivamente como suporte preventivo e apoio ao monitoramento da sua saúde.
-                Não constitui diagnóstico médico. Consulte sempre seu profissional de saúde para orientações clínicas.
+                <strong>Importante:</strong> A analise por IA e utilizada exclusivamente como suporte preventivo e apoio ao monitoramento da sua saude.
+                Nao constitui diagnostico medico. Consulte sempre seu profissional de saude para orientacoes clinicas.
               </p>
             </div>
           </div>

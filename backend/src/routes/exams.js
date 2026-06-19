@@ -1,5 +1,198 @@
 const router = require('express').Router();
 const pool = require('../config/database');
+const multer = require('multer');
+const { checkAndNotify, THRESHOLDS, classifyIndicator } = require('../services/notifications');
+
+const examUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    cb(null, allowed.includes(file.mimetype));
+  }
+});
+
+// Pattern-based indicator extraction from exam text/filename
+// In production this would use OCR + NLP; here we use regex patterns
+// commonly found in Brazilian lab reports
+const INDICATOR_PATTERNS = [
+  { name: 'glicemia_jejum', patterns: [/glic[eê]mia[\s\S]{0,30}?(\d{2,3}[.,]?\d*)\s*mg/i, /glicose[\s\S]{0,30}?(\d{2,3}[.,]?\d*)\s*mg/i] },
+  { name: 'colesterol_ldl', patterns: [/ldl[\s\S]{0,30}?(\d{2,3}[.,]?\d*)\s*mg/i, /colesterol\s*ldl[\s\S]{0,30}?(\d{2,3}[.,]?\d*)/i] },
+  { name: 'pressao_sistolica', patterns: [/press[aã]o[\s\S]{0,20}?(\d{2,3})\s*[x\/]\s*\d{2,3}/i, /sist[oó]lica[\s\S]{0,20}?(\d{2,3})/i] },
+  { name: 'pressao_diastolica', patterns: [/press[aã]o[\s\S]{0,20}?\d{2,3}\s*[x\/]\s*(\d{2,3})/i, /diast[oó]lica[\s\S]{0,20}?(\d{2,3})/i] },
+  { name: 'hemoglobina_glicada', patterns: [/hemoglobina\s*glicada[\s\S]{0,30}?(\d{1,2}[.,]\d{1,2})\s*%/i, /hba1c[\s\S]{0,20}?(\d{1,2}[.,]\d{1,2})/i] },
+  { name: 'triglicerideos', patterns: [/triglic[eé]r[ií]d[eo]s?[\s\S]{0,30}?(\d{2,4}[.,]?\d*)\s*mg/i] },
+  { name: 'creatinina', patterns: [/creatinina[\s\S]{0,30}?(\d{1,2}[.,]\d{1,2})\s*mg/i] },
+  { name: 'imc', patterns: [/imc[\s\S]{0,20}?(\d{2}[.,]\d{1,2})/i] },
+];
+
+function extractIndicatorsFromText(text) {
+  const indicators = [];
+  for (const def of INDICATOR_PATTERNS) {
+    for (const pattern of def.patterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const value = parseFloat(match[1].replace(',', '.'));
+        if (!isNaN(value) && value > 0) {
+          indicators.push({ name: def.name, value });
+          break;
+        }
+      }
+    }
+  }
+  return indicators;
+}
+
+function generateAiAnalysis(indicators) {
+  if (indicators.length === 0) {
+    return 'Exame recebido com sucesso. Nao foi possivel extrair indicadores automaticamente deste documento. ' +
+      'Os dados serao revisados manualmente pelo profissional de saude responsavel.';
+  }
+
+  const lines = ['Analise preventiva automatica dos indicadores extraidos:'];
+  const alerts = [];
+  const normals = [];
+
+  for (const ind of indicators) {
+    const threshold = THRESHOLDS[ind.name];
+    if (!threshold) continue;
+    const status = classifyIndicator(ind.name, ind.value);
+    const item = `${threshold.label}: ${ind.value} ${threshold.unit}`;
+    if (status === 'alerta') {
+      alerts.push(`${item} - ALERTA (acima do limite de ${threshold.atencao[1]} ${threshold.unit})`);
+    } else if (status === 'atencao') {
+      alerts.push(`${item} - ATENCAO (proximo do limite)`);
+    } else {
+      normals.push(`${item} - Normal`);
+    }
+  }
+
+  if (alerts.length > 0) {
+    lines.push('');
+    lines.push('Indicadores que requerem atencao:');
+    alerts.forEach(a => lines.push(`  - ${a}`));
+  }
+  if (normals.length > 0) {
+    lines.push('');
+    lines.push('Indicadores dentro da normalidade:');
+    normals.forEach(n => lines.push(`  - ${n}`));
+  }
+
+  lines.push('');
+  lines.push('IMPORTANTE: Esta analise e um suporte preventivo baseado em IA e nao constitui diagnostico medico. ' +
+    'Consulte seu profissional de saude para orientacoes clinicas.');
+
+  return lines.join('\n');
+}
+
+// POST /api/exams/upload — patient uploads exam file for AI analysis
+router.post('/upload', examUpload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Arquivo e obrigatorio' });
+    }
+
+    const userId = req.user.id;
+    const fileName = req.body.exam_name || req.file.originalname || 'Exame enviado';
+    const fileBuffer = req.file.buffer;
+    const fileMimeType = req.file.mimetype;
+
+    // Get patient record for this user
+    const patientResult = await pool.query(
+      'SELECT id FROM patients WHERE user_id = $1 LIMIT 1', [userId]
+    );
+    const patientId = patientResult.rows.length > 0 ? patientResult.rows[0].id : null;
+
+    // Try to extract text from the file for analysis
+    let extractedText = '';
+
+    if (fileMimeType === 'application/pdf') {
+      // For PDFs we try to extract raw text bytes
+      const bufStr = fileBuffer.toString('utf-8');
+      // Extract readable text segments from PDF
+      const textMatches = bufStr.match(/\(([^)]+)\)/g);
+      if (textMatches) {
+        extractedText = textMatches.map(m => m.slice(1, -1)).join(' ');
+      }
+      // Also try stream content
+      const streamMatches = bufStr.match(/BT[\s\S]*?ET/g);
+      if (streamMatches) {
+        extractedText += ' ' + streamMatches.join(' ');
+      }
+    } else {
+      // For images, we can't do OCR without external service,
+      // but we include the filename which may contain useful info
+      extractedText = fileName;
+    }
+
+    // Also check if user provided exam_text (manual entry option)
+    if (req.body.exam_text) {
+      extractedText += ' ' + req.body.exam_text;
+    }
+
+    // Extract indicators from the text
+    const indicators = extractIndicatorsFromText(extractedText);
+
+    // Generate AI analysis text
+    const aiAnalysis = generateAiAnalysis(indicators);
+
+    // Store the file data as base64 in the exam record
+    const fileBase64 = fileBuffer.toString('base64');
+    const fileDataUri = `data:${fileMimeType};base64,${fileBase64.substring(0, 100)}...`;
+
+    // Ensure exam table has file columns
+    await pool.query(`
+      ALTER TABLE exams ADD COLUMN IF NOT EXISTS uploaded_by UUID REFERENCES users(id);
+      ALTER TABLE exams ADD COLUMN IF NOT EXISTS file_name VARCHAR(255);
+      ALTER TABLE exams ADD COLUMN IF NOT EXISTS file_type VARCHAR(50);
+      ALTER TABLE exams ADD COLUMN IF NOT EXISTS file_size INTEGER;
+      ALTER TABLE exams ADD COLUMN IF NOT EXISTS source VARCHAR(30) DEFAULT 'manual';
+    `);
+
+    // Create exam record
+    const examResult = await pool.query(
+      `INSERT INTO exams (patient_id, exam_name, category, status, result, ai_analysis, result_date, uploaded_by, file_name, file_type, file_size, source, notes)
+       VALUES ($1, $2, 'laboratorial', 'concluido', $3, $4, NOW(), $5, $6, $7, $8, 'upload_paciente', $9) RETURNING *`,
+      [
+        patientId, fileName,
+        indicators.length > 0 ? JSON.stringify(indicators) : null,
+        aiAnalysis, userId,
+        req.file.originalname, fileMimeType, req.file.size,
+        req.body.notes || null
+      ]
+    );
+    const exam = examResult.rows[0];
+
+    // If indicators were found, store them and trigger notifications
+    let notificationResult = null;
+    if (indicators.length > 0) {
+      // Store each indicator
+      for (const ind of indicators) {
+        const threshold = THRESHOLDS[ind.name];
+        await pool.query(
+          `INSERT INTO health_indicators (patient_user_id, indicator_name, value, unit, recorded_at, source)
+           VALUES ($1, $2, $3, $4, NOW(), 'exam_upload')`,
+          [userId, ind.name, ind.value, threshold ? threshold.unit : '']
+        );
+      }
+
+      // Trigger notifications if any indicator is abnormal
+      notificationResult = await checkAndNotify(userId, indicators);
+    }
+
+    res.json({
+      success: true,
+      exam,
+      indicators_found: indicators.length,
+      indicators,
+      ai_analysis: aiAnalysis,
+      notifications: notificationResult
+    });
+  } catch (err) {
+    console.error('[EXAM UPLOAD] Error:', err);
+    res.status(500).json({ error: 'Erro ao processar exame: ' + err.message });
+  }
+});
 
 router.get('/', async (req, res) => {
   try {

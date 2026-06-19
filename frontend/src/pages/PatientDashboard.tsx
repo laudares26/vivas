@@ -1,14 +1,17 @@
 import { useEffect, useState, useRef } from 'react'
-import { Home, Calendar, FileText, User, Bell, Camera, Upload, ChevronRight, TrendingUp, Heart, Video, CreditCard, CheckCircle, XCircle } from 'lucide-react'
-import { api, type DashboardData } from '../services/api'
+import { Home, Calendar, FileText, User, Bell, Camera, Upload, ChevronRight, TrendingUp, Heart, Video, CreditCard, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { api, type DashboardData, type ExamUploadResult } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function PatientDashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [uploadState, setUploadState] = useState<'idle' | 'preview' | 'analyzing' | 'done'>('idle')
+  const [uploadState, setUploadState] = useState<'idle' | 'preview' | 'analyzing' | 'done' | 'uploading' | 'result'>('idle')
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [imageQuality, setImageQuality] = useState<'good' | 'bad' | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [uploadResult, setUploadResult] = useState<ExamUploadResult | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { user } = useAuth()
 
@@ -19,6 +22,9 @@ export default function PatientDashboard() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    setSelectedFile(file)
+    setUploadError(null)
+    setUploadResult(null)
     const reader = new FileReader()
     reader.onload = (ev) => {
       setCapturedImage(ev.target?.result as string)
@@ -26,6 +32,20 @@ export default function PatientDashboard() {
       analyzeImageQuality(ev.target?.result as string)
     }
     reader.readAsDataURL(file)
+  }
+
+  const handleSendExam = async () => {
+    if (!selectedFile) return
+    setUploadState('uploading')
+    setUploadError(null)
+    try {
+      const result = await api.uploadExam(selectedFile)
+      setUploadResult(result)
+      setUploadState('result')
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Erro ao enviar exame')
+      setUploadState('done')
+    }
   }
 
   const analyzeImageQuality = (dataUrl: string) => {
@@ -58,6 +78,9 @@ export default function PatientDashboard() {
     setUploadState('idle')
     setCapturedImage(null)
     setImageQuality(null)
+    setSelectedFile(null)
+    setUploadResult(null)
+    setUploadError(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -268,16 +291,54 @@ export default function PatientDashboard() {
                     )}
                   </div>
                 </div>
+                {uploadError && (
+                  <div className="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-xl mt-2">
+                    <XCircle className="w-5 h-5" />
+                    <p className="text-sm">{uploadError}</p>
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <button onClick={resetUpload} className="flex-1 px-4 py-2.5 bg-wine-soft text-wine rounded-xl font-display font-bold text-sm">
                     {imageQuality === 'bad' ? 'Tentar novamente' : 'Nova foto'}
                   </button>
                   {imageQuality === 'good' && (
-                    <button className="flex-1 px-4 py-2.5 bg-wine text-white rounded-xl font-display font-bold text-sm">
+                    <button onClick={handleSendExam} className="flex-1 px-4 py-2.5 bg-wine text-white rounded-xl font-display font-bold text-sm">
                       Enviar exame
                     </button>
                   )}
                 </div>
+              </div>
+            )}
+            {uploadState === 'uploading' && (
+              <div className="flex flex-col items-center gap-3 p-6">
+                <Loader2 className="w-8 h-8 text-wine animate-spin" />
+                <p className="text-sm text-wine font-semibold">Enviando e analisando seu exame...</p>
+                <p className="text-xs text-muted">A IA esta extraindo indicadores do seu exame</p>
+              </div>
+            )}
+            {uploadState === 'result' && uploadResult && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-success bg-success-soft p-3 rounded-xl">
+                  <CheckCircle className="w-5 h-5" />
+                  <div>
+                    <p className="font-semibold text-sm">Exame enviado e analisado!</p>
+                    <p className="text-xs opacity-80">{uploadResult.indicators_found} indicador(es) extraido(s)</p>
+                  </div>
+                </div>
+                {uploadResult.ai_analysis && (
+                  <div className="bg-wine-soft p-4 rounded-xl">
+                    <p className="font-semibold text-sm text-wine mb-2">Analise preventiva:</p>
+                    <p className="text-xs text-ink whitespace-pre-line leading-relaxed">{uploadResult.ai_analysis}</p>
+                  </div>
+                )}
+                {uploadResult.notifications?.notified && (
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl">
+                    <p className="text-xs text-amber-800 font-medium">Notificacoes enviadas para voce e seu(s) profissional(is) de saude por email.</p>
+                  </div>
+                )}
+                <button onClick={resetUpload} className="w-full px-4 py-2.5 bg-wine text-white rounded-xl font-display font-bold text-sm">
+                  Enviar outro exame
+                </button>
               </div>
             )}
           </div>
