@@ -19,19 +19,21 @@ const clinicalLinks: NavItem[] = [
   { to: '/pacientes', icon: Users, label: 'Pacientes', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/profissionais', icon: UserCog, label: 'Profissionais', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/agendamentos', icon: CalendarDays, label: 'Agendamentos' },
-  { to: '/atendimento', icon: Stethoscope, label: 'Atendimento Médico', roles: ['admin', 'medico', 'psicologo'] },
-  { to: '/prontuario', icon: FileText, label: 'Prontuário Eletrônico', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/atendimento', icon: Stethoscope, label: 'Atendimento Medico', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/prontuario', icon: FileText, label: 'Prontuario Eletronico', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/exames', icon: TestTubeDiagonal, label: 'Exames e Laudos', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/dicom', icon: Layers, label: 'Isis DICOM Viewer', roles: ['admin', 'medico', 'psicologo'] },
-  { to: '/prescricoes', icon: ClipboardList, label: 'Receitas e Prescrições', roles: ['admin', 'medico'] },
+  { to: '/prescricoes', icon: ClipboardList, label: 'Receitas e Prescricoes', roles: ['admin', 'medico'] },
   { to: '/teleconsulta', icon: Video, label: 'Teleconsulta' },
+  { to: '/vivi', icon: Bot, label: 'Vivi', roles: ['paciente'] },
+  { to: '/mental', icon: Heart, label: 'Saude Mental', roles: ['paciente'] },
 ]
 
 const aiLinks: NavItem[] = [
   { to: '/triagem', icon: Brain, label: 'Triagem Inteligente', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/assistente', icon: Bot, label: 'Assistente IA (Apoio)', roles: ['admin', 'medico'] },
   { to: '/predicao', icon: Activity, label: 'Suporte Preventivo', roles: ['admin', 'medico'] },
-  { to: '/saude-preventiva', icon: Heart, label: 'Saúde Preventiva', roles: ['paciente'] },
+  { to: '/saude-preventiva', icon: Heart, label: 'Saude Preventiva' },
 ]
 
 const rhLinks: NavItem[] = [
@@ -120,14 +122,19 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
     )
   }
 
+  const isPatient = role === 'paciente'
+  const bgGradient = isPatient
+    ? 'linear-gradient(180deg, #5E1730 0%, #3D0F20 50%, #2A0A16 100%)'
+    : 'linear-gradient(180deg, #0057B8 0%, #003D82 50%, #002D61 100%)'
+  const textMuted = isPatient ? 'text-pink-200' : 'text-blue-200'
+  const textSection = isPatient ? 'text-pink-300' : 'text-blue-300'
+
   return (
     <aside
       className={`fixed left-0 top-0 h-full z-40 flex flex-col transition-all duration-300 ${
         collapsed ? 'w-[72px]' : 'w-[260px]'
       } ${mobileHidden ? '-translate-x-full' : 'translate-x-0'}`}
-      style={{
-        background: 'linear-gradient(180deg, #0057B8 0%, #003D82 50%, #002D61 100%)',
-      }}
+      style={{ background: bgGradient }}
     >
       <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
         <div className={`flex items-center justify-center flex-shrink-0 ${collapsed ? 'p-1' : 'px-1 py-1'}`}>
@@ -135,19 +142,19 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <p className="text-blue-200 text-[10px] leading-tight">Saúde Inteligente</p>
+            <p className={`${textMuted} text-[10px] leading-tight`}>Saude Inteligente</p>
           </div>
         )}
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-2">
-        {!collapsed && <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">Principal</p>}
+        {!collapsed && <p className={`${textSection} text-[10px] font-semibold uppercase tracking-wider px-3 mb-2`}>Principal</p>}
         {renderLink(filteredClinical[0])}
 
         {filteredClinical.length > 1 && (
           <>
             <div className="my-2" />
-            {!collapsed && <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">Clínico</p>}
+            {!collapsed && <p className={`${textSection} text-[10px] font-semibold uppercase tracking-wider px-3 mb-2`}>{isPatient ? 'Menu' : 'Clinico'}</p>}
             {filteredClinical.slice(1).map(renderLink)}
           </>
         )}
@@ -155,7 +162,7 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
         {filteredAI.length > 0 && (
           <>
             <div className="my-3 mx-3 border-t border-white/10" />
-            {!collapsed && <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">IA - Suporte e Apoio</p>}
+            {!collapsed && <p className={`${textSection} text-[10px] font-semibold uppercase tracking-wider px-3 mb-2`}>IA - Suporte e Apoio</p>}
             {filteredAI.map(renderLink)}
           </>
         )}
@@ -163,7 +170,7 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
         {filteredAdmin.length > 0 && (
           <>
             <div className="my-3 mx-3 border-t border-white/10" />
-            {!collapsed && <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">Administrativo</p>}
+            {!collapsed && <p className={`${textSection} text-[10px] font-semibold uppercase tracking-wider px-3 mb-2`}>Administrativo</p>}
             {filteredAdmin.map(renderLink)}
           </>
         )}
@@ -172,14 +179,14 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
       <div className="border-t border-white/10">
         <button
           onClick={logout}
-          className="flex items-center gap-3 px-5 py-3 text-blue-200 hover:text-white hover:bg-white/10 transition-colors w-full"
+          className={`flex items-center gap-3 px-5 py-3 ${textMuted} hover:text-white hover:bg-white/10 transition-colors w-full`}
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="text-sm font-medium">Sair</span>}
         </button>
         <button
           onClick={onToggle}
-          className="flex items-center justify-center h-10 border-t border-white/10 text-blue-200 hover:text-white hover:bg-white/10 transition-colors w-full"
+          className={`flex items-center justify-center h-10 border-t border-white/10 ${textMuted} hover:text-white hover:bg-white/10 transition-colors w-full`}
         >
           {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
         </button>

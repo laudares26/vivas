@@ -28,14 +28,14 @@ interface ScheduledConsult {
 const MY_PROFESSIONALS: Professional[] = [
   { id: 1, name: 'Dr. Ricardo Oliveira', specialty: 'Cardiologista', avatar_color: '#0057B8' },
   { id: 2, name: 'Dra. Ana Psicóloga', specialty: 'Psicóloga', avatar_color: '#7C3AED' },
-  { id: 3, name: 'Dr. Carlos Fisio', specialty: 'Fisioterapeuta', avatar_color: '#16A34A' },
-  { id: 4, name: 'Enf. Mariana Costa', specialty: 'Enfermeira', avatar_color: '#EA580C' },
+  { id: 3, name: 'Dr. Bruno Hodos', specialty: 'Clínica Geral', avatar_color: '#16A34A' },
+  { id: 4, name: 'Dra. Carla Sousa', specialty: 'Psicóloga', avatar_color: '#EA580C' },
 ]
 
 const SCHEDULED_CONSULTS: ScheduledConsult[] = [
   { id: 1, professional: 'Dr. Ricardo Oliveira', patient: 'Maria Silva', date: '2026-06-16', hour: '09:00', status: 'agendada' },
   { id: 2, professional: 'Dra. Ana Psicóloga', patient: 'Maria Silva', date: '2026-06-17', hour: '14:00', status: 'agendada' },
-  { id: 3, professional: 'Dr. Carlos Fisio', patient: 'Maria Silva', date: '2026-06-18', hour: '10:00', status: 'agendada' },
+  { id: 3, professional: 'Dr. Bruno Hodos', patient: 'Maria Silva', date: '2026-06-18', hour: '10:00', status: 'agendada' },
 ]
 
 function generateSlots(): TimeSlot[] {

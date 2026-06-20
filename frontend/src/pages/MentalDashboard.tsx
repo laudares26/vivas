@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Video, Plus, Calendar, Heart, MessageCircle, Moon, BookOpen, Activity } from 'lucide-react'
 
 const moods = [
@@ -11,6 +12,7 @@ const moods = [
 
 export default function MentalDashboard() {
   const [selectedMood, setSelectedMood] = useState(2)
+  const navigate = useNavigate()
 
   return (
     <div className="min-h-screen" style={{ background: '#F3EFEC', fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
@@ -67,7 +69,7 @@ export default function MentalDashboard() {
                 <div className="text-sm opacity-80 mt-0.5">Psicóloga · TCC · Hoje, 18h30</div>
               </div>
             </div>
-            <button className="mt-4 w-full bg-white rounded-lg py-3 text-sm font-bold flex items-center justify-center gap-2" style={{ color: '#6E1E2E' }}>
+            <button onClick={() => navigate('/teleconsulta')} className="mt-4 w-full bg-white rounded-lg py-3 text-sm font-bold flex items-center justify-center gap-2" style={{ color: '#6E1E2E' }}>
               <Video className="w-4 h-4" /> Entrar na sala
             </button>
           </div>
@@ -131,7 +133,7 @@ export default function MentalDashboard() {
                   <div className="font-semibold text-[13px]">Respiração 4-7-8</div>
                   <div className="text-[11.5px]" style={{ color: '#857470' }}>5 min · ansiedade</div>
                 </div>
-                <a href="#" className="text-xs font-bold" style={{ color: '#6E1E2E' }}>Iniciar</a>
+                <button onClick={() => navigate('/vivi')} className="text-xs font-bold" style={{ color: '#6E1E2E' }}>Iniciar</button>
               </div>
               <div className="flex items-center gap-3 p-3 border rounded-xl" style={{ borderColor: '#ECE3DE' }}>
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: '#F6E7E1', color: '#6E1E2E' }}>
@@ -141,17 +143,17 @@ export default function MentalDashboard() {
                   <div className="font-semibold text-[13px]">Higiene do sono</div>
                   <div className="text-[11.5px]" style={{ color: '#857470' }}>guia · 7 dias</div>
                 </div>
-                <a href="#" className="text-xs font-bold" style={{ color: '#6E1E2E' }}>Abrir</a>
+                <button onClick={() => navigate('/vivi')} className="text-xs font-bold" style={{ color: '#6E1E2E' }}>Abrir</button>
               </div>
               <div className="flex items-center gap-3 p-3 border rounded-xl" style={{ borderColor: '#ECE3DE' }}>
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: '#F6E7E1', color: '#6E1E2E' }}>
                   <BookOpen className="w-4 h-4" />
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold text-[13px]">Diário de gratidão</div>
+                  <div className="font-semibold text-[13px]">Diario de gratidao</div>
                   <div className="text-[11.5px]" style={{ color: '#857470' }}>2 min por dia</div>
                 </div>
-                <a href="#" className="text-xs font-bold" style={{ color: '#6E1E2E' }}>Escrever</a>
+                <button onClick={() => navigate('/vivi')} className="text-xs font-bold" style={{ color: '#6E1E2E' }}>Escrever</button>
               </div>
             </div>
           </div>
@@ -159,11 +161,11 @@ export default function MentalDashboard() {
 
         {/* Action buttons */}
         <div className="flex gap-3 flex-wrap">
-          <button className="inline-flex items-center gap-2 text-white rounded-lg py-3 px-5 text-sm font-semibold" style={{ background: '#6E1E2E' }}>
-            <Plus className="w-4 h-4" /> Agendar nova sessão
+          <button onClick={() => navigate('/agendamentos')} className="inline-flex items-center gap-2 text-white rounded-lg py-3 px-5 text-sm font-semibold" style={{ background: '#6E1E2E' }}>
+            <Plus className="w-4 h-4" /> Agendar nova sessao
           </button>
-          <button className="inline-flex items-center gap-2 rounded-lg py-3 px-4 text-sm font-semibold border" style={{ color: '#6E1E2E', borderColor: '#E9C4BE', background: 'transparent' }}>
-            Ver meu histórico
+          <button onClick={() => navigate('/saude-preventiva')} className="inline-flex items-center gap-2 rounded-lg py-3 px-4 text-sm font-semibold border" style={{ color: '#6E1E2E', borderColor: '#E9C4BE', background: 'transparent' }}>
+            Ver meu historico
           </button>
         </div>
       </main>

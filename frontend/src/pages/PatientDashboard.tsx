@@ -122,15 +122,15 @@ export default function PatientDashboard() {
             <span className="font-display font-extrabold text-lg">VivaS</span>
           </div>
           <div className="flex items-center gap-3">
-            <button className="relative" aria-label="Notificações">
+            <button onClick={() => navigate('/saude-preventiva')} className="relative" aria-label="Notificacoes">
               <Bell className="w-5 h-5 text-white/90" />
               {(data?.healthAlerts?.unread || 0) > 0 && (
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-400 rounded-full border-2 border-wine" />
               )}
             </button>
-            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold">
+            <button onClick={() => navigate('/configuracoes')} className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold">
               {firstName.substring(0, 2).toUpperCase()}
-            </div>
+            </button>
           </div>
         </div>
         <div>
@@ -148,7 +148,7 @@ export default function PatientDashboard() {
         <div className="bg-white rounded-2xl shadow-card p-5">
           <h2 className="font-display font-extrabold text-lg text-ink">Como você está hoje?</h2>
           <p className="text-sm text-muted mt-1">Conte o que sente e a Vivi (nossa IA) te orienta em segundos.</p>
-          <button className="mt-4 w-full bg-gradient-to-r from-wine to-wine-deep text-white rounded-2xl px-5 py-4 flex items-center justify-between transition-transform hover:scale-[1.01]">
+          <button onClick={() => navigate('/vivi')} className="mt-4 w-full bg-gradient-to-r from-wine to-wine-deep text-white rounded-2xl px-5 py-4 flex items-center justify-between transition-transform hover:scale-[1.01]">
             <span className="flex items-center gap-3">
               <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
@@ -168,7 +168,7 @@ export default function PatientDashboard() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-display font-extrabold text-base text-ink">Seu índice de saúde</h3>
-            <a href="#" className="text-wine text-sm font-semibold">Detalhes</a>
+            <button onClick={() => navigate('/saude-preventiva')} className="text-wine text-sm font-semibold">Detalhes</button>
           </div>
           <div className="bg-white rounded-2xl shadow-card p-5 flex items-center gap-5">
             <div className="relative flex-shrink-0">
@@ -198,7 +198,7 @@ export default function PatientDashboard() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-display font-extrabold text-base text-ink">Precisa da sua atenção</h3>
-            <a href="#" className="text-wine text-sm font-semibold">Ver tudo (3)</a>
+            <button onClick={() => navigate('/saude-preventiva')} className="text-wine text-sm font-semibold">Ver tudo</button>
           </div>
           <div className="space-y-3">
             <div className="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3.5">
@@ -390,7 +390,7 @@ export default function PatientDashboard() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-display font-extrabold text-base text-ink">Sua linha do tempo</h3>
-            <a href="#" className="text-wine text-sm font-semibold">Ver completa</a>
+            <button onClick={() => navigate('/saude-preventiva')} className="text-wine text-sm font-semibold">Ver completa</button>
           </div>
           <div className="bg-white rounded-2xl shadow-card px-4 py-1">
             {[
