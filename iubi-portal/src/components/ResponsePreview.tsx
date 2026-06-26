@@ -490,14 +490,37 @@ const ResponsePreview: React.FC<ResponsePreviewProps> = ({ response, exampleId, 
     )
   }
 
-  if (response.includes('Erro na requisição')) {
+  const isNetworkError = response.includes('Erro na requisição')
+  const isHttpError = /\/\/ Status: [45]\d{2}/.test(response)
+
+  if (isNetworkError || isHttpError) {
+    const errorMsg = isNetworkError
+      ? 'Servidor indisponível'
+      : 'Erro na resposta da API'
+
+    let errorDetail = ''
+    if (isHttpError) {
+      const statusMatch = response.match(/\/\/ Status: (\d+ .+)/)
+      const parsed = parseResponseData(response)
+      if (parsed && typeof parsed === 'object' && 'message' in (parsed as Record<string, unknown>)) {
+        errorDetail = String((parsed as Record<string, unknown>).message)
+      } else if (statusMatch) {
+        errorDetail = `Status: ${statusMatch[1]}`
+      }
+    }
+
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center max-w-md">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-400 mx-auto mb-4">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
-          <p className="text-amber-400 font-semibold mb-2">Servidor indisponível</p>
+          <p className="text-amber-400 font-semibold mb-2">{errorMsg}</p>
+          {errorDetail && (
+            <p className="text-gray-400 text-sm mb-3 font-mono bg-gray-800/50 px-3 py-2 rounded">
+              {errorDetail}
+            </p>
+          )}
           <p className="text-gray-400 text-sm">
             Substitua os parâmetros <code className="px-1 py-0.5 bg-gray-700 rounded text-xs font-mono text-iubi-light">{'{connection_id}'}</code> por valores reais.
             Use "Listar Conexões" primeiro para obter IDs válidos.
