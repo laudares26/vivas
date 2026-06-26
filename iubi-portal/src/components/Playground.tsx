@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { examples } from '../data/examples'
 import { CodeIcon } from './GeoIcons'
 import ResponsePreview from './ResponsePreview'
@@ -32,12 +32,23 @@ const Playground: React.FC = () => {
   const [url, setUrl] = useState(activeExample.requestConfig.url)
   const [method, setMethod] = useState(activeExample.requestConfig.method)
   const [body, setBody] = useState(activeExample.requestConfig.body || '')
+  const blobUrlRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current)
+    }
+  }, [])
 
   const handleSelectExample = (ex: typeof examples[0]) => {
     setActiveExample(ex)
     setUrl(ex.requestConfig.url)
     setMethod(ex.requestConfig.method)
     setBody(ex.requestConfig.body || '')
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current)
+      blobUrlRef.current = null
+    }
     setResponse('')
     setActiveTab('code')
   }
@@ -58,8 +69,10 @@ const Playground: React.FC = () => {
       const contentType = res.headers.get('content-type') || ''
 
       if (contentType.startsWith('image/')) {
+        if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current)
         const blob = await res.blob()
         const imgUrl = URL.createObjectURL(blob)
+        blobUrlRef.current = imgUrl
         setResponse(`// Status: ${res.status} ${res.statusText}\n// Content-Type: ${contentType}\n// WMS-Image-URL: ${imgUrl}\n\n// Imagem WMS recebida com sucesso (${(blob.size / 1024).toFixed(1)} KB)\n// A imagem está sendo exibida na aba Visualização.`)
       } else if (contentType.includes('json')) {
         const json = await res.json()
