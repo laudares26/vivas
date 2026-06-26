@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { examples } from '../data/examples'
 import { CodeIcon } from './GeoIcons'
+import ResponsePreview from './ResponsePreview'
 
 const difficultyColors: Record<string, string> = {
   iniciante: 'bg-emerald-100 text-emerald-700',
@@ -25,7 +26,7 @@ const Playground: React.FC = () => {
   const [activeExample, setActiveExample] = useState(examples[0])
   const [response, setResponse] = useState<string>('')
   const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'code' | 'request' | 'response'>('code')
+  const [activeTab, setActiveTab] = useState<'code' | 'request' | 'response' | 'preview'>('code')
   const [url, setUrl] = useState(activeExample.requestConfig.url)
   const [method, setMethod] = useState(activeExample.requestConfig.method)
   const [body, setBody] = useState(activeExample.requestConfig.body || '')
@@ -41,7 +42,7 @@ const Playground: React.FC = () => {
 
   const handleSendRequest = async () => {
     setLoading(true)
-    setActiveTab('response')
+    setActiveTab('preview')
     try {
       const opts: RequestInit = {
         method,
@@ -123,7 +124,7 @@ const Playground: React.FC = () => {
             <div className="rounded-2xl overflow-hidden border border-gray-700 bg-gray-800">
               {/* Tabs */}
               <div className="flex items-center border-b border-gray-700">
-                {(['code', 'request', 'response'] as const).map(tab => (
+                {(['code', 'request', 'response', 'preview'] as const).map(tab => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -133,7 +134,7 @@ const Playground: React.FC = () => {
                         : 'text-gray-500 hover:text-gray-300'
                     }`}
                   >
-                    {tab === 'code' ? 'Código' : tab === 'request' ? 'Requisição' : 'Resposta'}
+                    {tab === 'code' ? 'Código' : tab === 'request' ? 'Requisição' : tab === 'response' ? 'Resposta' : 'Visualização'}
                   </button>
                 ))}
                 <div className="flex-1" />
@@ -245,6 +246,16 @@ const Playground: React.FC = () => {
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {activeTab === 'preview' && (
+                  <div className="min-h-[400px]">
+                    <ResponsePreview
+                      response={response}
+                      exampleId={activeExample.id}
+                      loading={loading}
+                    />
                   </div>
                 )}
               </div>
