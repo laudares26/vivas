@@ -490,6 +490,41 @@ const ResponsePreview: React.FC<ResponsePreviewProps> = ({ response, exampleId, 
     )
   }
 
+  const wmsImageMatch = response.match(/\/\/ WMS-Image-URL: (.+)/)
+  if (wmsImageMatch) {
+    const imgUrl = wmsImageMatch[1].trim()
+    const sizeMatch = response.match(/\((\d+\.\d+) KB\)/)
+    const sizeKB = sizeMatch ? sizeMatch[1] : '?'
+    const ctMatch = response.match(/\/\/ Content-Type: (.+)/)
+    const contentType = ctMatch ? ctMatch[1].trim() : 'image/png'
+    return (
+      <div className="p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284c7" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-white">Mapa WMS Renderizado</h3>
+            <p className="text-xs text-gray-400">{contentType} &middot; {sizeKB} KB</p>
+          </div>
+        </div>
+        <div className="rounded-xl overflow-hidden border border-gray-600 bg-gray-900">
+          <img
+            src={imgUrl}
+            alt="Mapa WMS"
+            className="w-full h-auto"
+            style={{ maxHeight: '500px', objectFit: 'contain' }}
+          />
+        </div>
+        <p className="text-xs text-gray-500 mt-3 text-center">
+          Imagem gerada pelo GeoServer via protocolo OGC WMS (Web Map Service)
+        </p>
+      </div>
+    )
+  }
+
   const isNetworkError = response.includes('Erro na requisição')
   const isHttpError = /\/\/ Status: [45]\d{2}/.test(response)
 

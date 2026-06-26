@@ -15,10 +15,337 @@ export interface PlaygroundExample {
 }
 
 export const examples: PlaygroundExample[] = [
+  // ── WMS Examples (External GeoServers) ──────────────────────────────
+  {
+    id: 'wms-vegetacao-brasil',
+    title: 'WMS – Vegetação do Brasil',
+    description: 'Mapa contínuo de vegetação do Brasil via serviço WMS do IBGE (GeoServiços). Escala dinâmica.',
+    service: 'wms',
+    icon: 'globe',
+    difficulty: 'iniciante',
+    code: `// WMS GetMap – Base Contínua de Vegetação do Brasil (IBGE)
+// Servidor: https://geoservicos.ibge.gov.br/geoserver
+// Camada: BDIA:gpc_vege
+
+const params = new URLSearchParams({
+  SERVICE: 'WMS',
+  VERSION: '1.1.1',
+  REQUEST: 'GetMap',
+  LAYERS: 'BDIA:gpc_vege',
+  STYLES: '',
+  BBOX: '-74,-34,-35,6',
+  WIDTH: '800',
+  HEIGHT: '600',
+  SRS: 'EPSG:4326',
+  FORMAT: 'image/png'
+});
+
+const wmsUrl =
+  \`https://geoservicos.ibge.gov.br/geoserver/BDIA/wms?\${params}\`;
+
+// Usar diretamente como src de <img>
+document.getElementById('map').src = wmsUrl;
+
+// Ou integrar com OpenLayers como TileWMS
+import TileLayer from 'ol/layer/Tile';
+import TileWMS  from 'ol/source/TileWMS';
+
+const wmsLayer = new TileLayer({
+  source: new TileWMS({
+    url: 'https://geoservicos.ibge.gov.br/geoserver/BDIA/wms',
+    params: { LAYERS: 'BDIA:gpc_vege', TILED: true },
+    serverType: 'geoserver'
+  })
+});`,
+    requestConfig: {
+      method: 'GET',
+      url: 'https://geoservicos.ibge.gov.br/geoserver/BDIA/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=BDIA:gpc_vege&STYLES=&BBOX=-74,-34,-35,6&WIDTH=800&HEIGHT=600&SRS=EPSG:4326&FORMAT=image/png',
+    },
+  },
+  {
+    id: 'wms-estados-brasil',
+    title: 'WMS – Estados do Brasil',
+    description: 'Limites estaduais com nomes das UFs via WMS do IBGE. Mapa temático do PBQG 2022.',
+    service: 'wms',
+    icon: 'map',
+    difficulty: 'iniciante',
+    code: `// WMS GetMap – Estados do Brasil com Nomes (IBGE / CGMAT)
+// Servidor: https://geoservicos.ibge.gov.br/geoserver
+// Camada: CGMAT:pbqg22_02_Estado_NomUF
+
+const params = new URLSearchParams({
+  SERVICE: 'WMS',
+  VERSION: '1.1.1',
+  REQUEST: 'GetMap',
+  LAYERS: 'CGMAT:pbqg22_02_Estado_NomUF',
+  STYLES: '',
+  BBOX: '-74,-34,-35,6',
+  WIDTH: '800',
+  HEIGHT: '600',
+  SRS: 'EPSG:4326',
+  FORMAT: 'image/png'
+});
+
+const wmsUrl =
+  \`https://geoservicos.ibge.gov.br/geoserver/CGMAT/wms?\${params}\`;
+
+// Exemplo com Leaflet
+const wmsLayer = L.tileLayer.wms(
+  'https://geoservicos.ibge.gov.br/geoserver/CGMAT/wms',
+  {
+    layers: 'CGMAT:pbqg22_02_Estado_NomUF',
+    format: 'image/png',
+    transparent: true,
+    attribution: '© IBGE'
+  }
+);
+wmsLayer.addTo(map);`,
+    requestConfig: {
+      method: 'GET',
+      url: 'https://geoservicos.ibge.gov.br/geoserver/CGMAT/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=CGMAT:pbqg22_02_Estado_NomUF&STYLES=&BBOX=-74,-34,-35,6&WIDTH=800&HEIGHT=600&SRS=EPSG:4326&FORMAT=image/png',
+    },
+  },
+  {
+    id: 'wms-geologia-brasil',
+    title: 'WMS – Geologia do Brasil',
+    description: 'Mapa geológico contínuo do Brasil via WMS do IBGE. Legenda dinâmica por escala.',
+    service: 'wms',
+    icon: 'hexagon',
+    difficulty: 'intermediario',
+    code: `// WMS GetMap – Base Contínua de Geologia do Brasil (IBGE)
+// Servidor: https://geoservicos.ibge.gov.br/geoserver
+// Camada: BDIA:gpc_geol
+
+const params = new URLSearchParams({
+  SERVICE: 'WMS',
+  VERSION: '1.1.1',
+  REQUEST: 'GetMap',
+  LAYERS: 'BDIA:gpc_geol',
+  STYLES: '',
+  BBOX: '-74,-34,-35,6',
+  WIDTH: '800',
+  HEIGHT: '600',
+  SRS: 'EPSG:4326',
+  FORMAT: 'image/png'
+});
+
+const wmsUrl =
+  \`https://geoservicos.ibge.gov.br/geoserver/BDIA/wms?\${params}\`;
+
+// Integrar com OpenLayers como TileWMS
+import TileLayer from 'ol/layer/Tile';
+import TileWMS  from 'ol/source/TileWMS';
+
+const geologiaLayer = new TileLayer({
+  source: new TileWMS({
+    url: 'https://geoservicos.ibge.gov.br/geoserver/BDIA/wms',
+    params: { LAYERS: 'BDIA:gpc_geol', TILED: true },
+    serverType: 'geoserver'
+  })
+});
+
+// Adicionar GetFeatureInfo para consulta interativa
+map.on('singleclick', async (evt) => {
+  const viewResolution = map.getView().getResolution();
+  const infoUrl = geologiaLayer.getSource().getFeatureInfoUrl(
+    evt.coordinate, viewResolution, 'EPSG:3857',
+    { INFO_FORMAT: 'application/json' }
+  );
+  if (infoUrl) {
+    const res = await fetch(infoUrl);
+    const info = await res.json();
+    console.log('Geologia:', info);
+  }
+});`,
+    requestConfig: {
+      method: 'GET',
+      url: 'https://geoservicos.ibge.gov.br/geoserver/BDIA/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=BDIA:gpc_geol&STYLES=&BBOX=-74,-34,-35,6&WIDTH=800&HEIGHT=600&SRS=EPSG:4326&FORMAT=image/png',
+    },
+  },
+  {
+    id: 'wms-bem-tombado-sp',
+    title: 'WMS – Bens Tombados de São Paulo',
+    description: 'Patrimônio cultural tombado pelo Condephaat no Estado de SP via WMS do IDESP-SP.',
+    service: 'wms',
+    icon: 'map',
+    difficulty: 'iniciante',
+    code: `// WMS GetMap – Bens Tombados pelo Condephaat (IDESP-SP)
+// Servidor: https://www.idesp.sp.gov.br/geoserver
+// Camada: idesp_acervo:bem_tomb_a_2025_01_v0
+
+const params = new URLSearchParams({
+  SERVICE: 'WMS',
+  VERSION: '1.1.1',
+  REQUEST: 'GetMap',
+  LAYERS: 'idesp_acervo:bem_tomb_a_2025_01_v0',
+  STYLES: '',
+  BBOX: '-53.1,-25.3,-44.2,-19.8',
+  WIDTH: '800',
+  HEIGHT: '600',
+  SRS: 'EPSG:4326',
+  FORMAT: 'image/png'
+});
+
+const wmsUrl =
+  \`https://www.idesp.sp.gov.br/geoserver/wms?\${params}\`;
+
+// Usar como TileWMS no OpenLayers
+import TileLayer from 'ol/layer/Tile';
+import TileWMS  from 'ol/source/TileWMS';
+
+const bensLayer = new TileLayer({
+  source: new TileWMS({
+    url: 'https://www.idesp.sp.gov.br/geoserver/wms',
+    params: {
+      LAYERS: 'idesp_acervo:bem_tomb_a_2025_01_v0',
+      TILED: true
+    },
+    serverType: 'geoserver'
+  })
+});`,
+    requestConfig: {
+      method: 'GET',
+      url: 'https://www.idesp.sp.gov.br/geoserver/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=idesp_acervo:bem_tomb_a_2025_01_v0&STYLES=&BBOX=-53.1,-25.3,-44.2,-19.8&WIDTH=800&HEIGHT=600&SRS=EPSG:4326&FORMAT=image/png',
+    },
+  },
+  {
+    id: 'wms-planos-municipais-sp',
+    title: 'WMS – Planos Municipais de São Paulo',
+    description: 'Mapa dos planos municipais do Estado de SP via WMS do IDESP-SP. Visualização por região.',
+    service: 'wms',
+    icon: 'map',
+    difficulty: 'iniciante',
+    code: `// WMS GetMap – Planos Municipais do Estado de São Paulo (IDESP-SP)
+// Servidor: https://www.idesp.sp.gov.br/geoserver
+// Camada: planos_municipais:planos_municipais_view
+
+const params = new URLSearchParams({
+  SERVICE: 'WMS',
+  VERSION: '1.1.1',
+  REQUEST: 'GetMap',
+  LAYERS: 'planos_municipais:planos_municipais_view',
+  STYLES: '',
+  BBOX: '-53.1,-25.3,-44.2,-19.8',
+  WIDTH: '800',
+  HEIGHT: '600',
+  SRS: 'EPSG:4326',
+  FORMAT: 'image/png'
+});
+
+const wmsUrl =
+  \`https://www.idesp.sp.gov.br/geoserver/wms?\${params}\`;
+
+// Exemplo com Leaflet
+const planosLayer = L.tileLayer.wms(
+  'https://www.idesp.sp.gov.br/geoserver/wms',
+  {
+    layers: 'planos_municipais:planos_municipais_view',
+    format: 'image/png',
+    transparent: true,
+    attribution: '© IDESP-SP'
+  }
+);
+planosLayer.addTo(map);`,
+    requestConfig: {
+      method: 'GET',
+      url: 'https://www.idesp.sp.gov.br/geoserver/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=planos_municipais:planos_municipais_view&STYLES=&BBOX=-53.1,-25.3,-44.2,-19.8&WIDTH=800&HEIGHT=600&SRS=EPSG:4326&FORMAT=image/png',
+    },
+  },
+
+  // ── WFS Examples (External GeoServers) ──────────────────────────────
+  {
+    id: 'wfs-cidades-brasil',
+    title: 'WFS – Cidades do Brasil',
+    description: 'Consulte 245 cidades brasileiras via WFS do IBGE em formato GeoJSON com coordenadas e atributos.',
+    service: 'wfs',
+    icon: 'hexagon',
+    difficulty: 'iniciante',
+    code: `// WFS GetFeature – Cidades do Brasil (IBGE / CCAR)
+// Servidor: https://geoservicos.ibge.gov.br/geoserver
+// Camada: CCAR:BC100_Cidade_P
+// CRS: EPSG:4674 (SIRGAS 2000)
+
+const params = new URLSearchParams({
+  SERVICE: 'WFS',
+  VERSION: '2.0.0',
+  REQUEST: 'GetFeature',
+  TYPENAMES: 'CCAR:BC100_Cidade_P',
+  OUTPUTFORMAT: 'application/json',
+  COUNT: '100'
+});
+
+const response = await fetch(
+  \`https://geoservicos.ibge.gov.br/geoserver/wfs?\${params}\`
+);
+const geojson = await response.json();
+
+console.log(\`Cidades: \${geojson.totalFeatures}\`);
+geojson.features.forEach(f => {
+  const { nome } = f.properties;
+  const [lon, lat] = f.geometry.coordinates;
+  console.log(\`  \${nome} (\${lon.toFixed(2)}, \${lat.toFixed(2)})\`);
+});
+
+// Integrar com OpenLayers
+import VectorSource from 'ol/source/Vector';
+import GeoJSON from 'ol/format/GeoJSON';
+
+const source = new VectorSource({
+  features: new GeoJSON().readFeatures(geojson, {
+    dataProjection: 'EPSG:4674',
+    featureProjection: 'EPSG:3857'
+  })
+});`,
+    requestConfig: {
+      method: 'GET',
+      url: 'https://geoservicos.ibge.gov.br/geoserver/wfs?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=CCAR:BC100_Cidade_P&OUTPUTFORMAT=application/json&COUNT=100',
+    },
+  },
+  {
+    id: 'wfs-capitais-brasil',
+    title: 'WFS – Capitais Estaduais',
+    description: 'Consulte as capitais estaduais e a capital federal do Brasil via WFS do IBGE em GeoJSON.',
+    service: 'wfs',
+    icon: 'hexagon',
+    difficulty: 'iniciante',
+    code: `// WFS GetFeature – Capitais do Brasil (IBGE / CCAR)
+// Servidor: https://geoservicos.ibge.gov.br/geoserver
+// Camada: CCAR:BC100_Capital_P
+
+const params = new URLSearchParams({
+  SERVICE: 'WFS',
+  VERSION: '2.0.0',
+  REQUEST: 'GetFeature',
+  TYPENAMES: 'CCAR:BC100_Capital_P',
+  OUTPUTFORMAT: 'application/json'
+});
+
+const response = await fetch(
+  \`https://geoservicos.ibge.gov.br/geoserver/wfs?\${params}\`
+);
+const geojson = await response.json();
+
+console.log(\`Capitais: \${geojson.totalFeatures}\`);
+geojson.features.forEach(f => {
+  const { nome, tipocapital } = f.properties;
+  console.log(\`  \${nome} – \${tipocapital}\`);
+});
+
+// Filtrar por tipo de capital
+const federais = geojson.features.filter(
+  f => f.properties.tipocapital === 'Capital Federal'
+);`,
+    requestConfig: {
+      method: 'GET',
+      url: 'https://geoservicos.ibge.gov.br/geoserver/wfs?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=CCAR:BC100_Capital_P&OUTPUTFORMAT=application/json',
+    },
+  },
+
+  // ── IUBI API Examples ───────────────────────────────────────────────
   {
     id: 'list-connections',
     title: 'Listar Conexões de Dados',
-    description: 'Consulte todas as conexões de servidores de mapas e bases de dados espaciais configuradas no catálogo.',
+    description: 'Consulte todas as conexões de servidores de mapas e bases de dados espaciais configuradas no catálogo IUBI.',
     service: 'catalog',
     icon: 'database',
     difficulty: 'iniciante',
@@ -38,7 +365,7 @@ connections.forEach(conn => {
   {
     id: 'search-layers',
     title: 'Buscar Camadas no Catálogo',
-    description: 'Pesquise camadas disponíveis em uma conexão específica usando o serviço de catálogo.',
+    description: 'Pesquise camadas disponíveis em uma conexão específica usando o serviço de catálogo IUBI.',
     service: 'catalog',
     icon: 'search',
     difficulty: 'iniciante',
@@ -89,7 +416,7 @@ geojson.features.forEach(f => {
   {
     id: 'render-map',
     title: 'Renderizar Mapa WMS',
-    description: 'Gere uma imagem do mapa renderizado pelo motor de mapas com todas as camadas configuradas.',
+    description: 'Gere uma imagem do mapa renderizado pelo motor de mapas IUBI com todas as camadas configuradas.',
     service: 'map-render',
     icon: 'image',
     difficulty: 'intermediario',
@@ -112,40 +439,6 @@ document.getElementById('map-image').src = mapUrl;`,
     requestConfig: {
       method: 'GET',
       url: '/api/map-render/v1/{connection_id}/render/map',
-    },
-  },
-  {
-    id: 'wfs-query',
-    title: 'Consulta OGC WFS',
-    description: 'Execute uma consulta padronizada OGC WFS 2.0.0 com filtros CQL para interoperabilidade máxima.',
-    service: 'ogc',
-    icon: 'globe',
-    difficulty: 'avancado',
-    code: `// Consulta OGC WFS 2.0.0
-const connectionId = 'SUA_CONNECTION_ID';
-const params = new URLSearchParams({
-  SERVICE: 'WFS',
-  REQUEST: 'GetFeature',
-  VERSION: '2.0.0',
-  TYPENAMES: 'municipios',
-  CQL_FILTER: "estado = 'PA'",
-  MAXFEATURES: '100',
-  OUTPUTFORMAT: 'application/geo+json',
-  CRS: 'EPSG:4326'
-});
-
-const response = await fetch(
-  \`/api/ogc/v1/\${connectionId}/wfs?\${params}\`
-);
-const geojson = await response.json();
-
-// Integrar com OpenLayers ou Leaflet
-const vectorSource = new ol.source.Vector({
-  features: new ol.format.GeoJSON().readFeatures(geojson)
-});`,
-    requestConfig: {
-      method: 'GET',
-      url: '/api/ogc/v1/{connection_id}/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAMES=example&OUTPUTFORMAT=application/geo+json',
     },
   },
   {
@@ -202,47 +495,6 @@ console.log('Contexto criado:', created.id);`,
           zoom: 10,
           layers: []
         }
-      }, null, 2),
-    },
-  },
-  {
-    id: 'spatial-statistics',
-    title: 'Estatísticas Espaciais',
-    description: 'Calcule estatísticas (contagem, área, média) sobre atributos de camadas com filtros espaciais.',
-    service: 'map-render',
-    icon: 'bar-chart',
-    difficulty: 'avancado',
-    code: `// Calcular estatísticas espaciais de uma camada
-const connectionId = 'SUA_CONNECTION_ID';
-const layer = 'areas_desmatamento';
-
-const response = await fetch(
-  \`/api/map-render/v1/\${connectionId}/data/layers/\${layer}/statistics\`,
-  {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      attributes: ['area_ha', 'classe'],
-      operations: ['count', 'sum', 'avg', 'min', 'max'],
-      filter: {
-        cql: "ano >= 2020 AND municipio = 'Marabá'",
-        bbox: [-49.5, -6.5, -48.0, -5.0]
-      }
-    })
-  }
-);
-
-const stats = await response.json();
-console.log('Total de áreas:', stats.count);
-console.log('Soma (ha):', stats.sum);
-console.log('Média (ha):', stats.avg);`,
-    requestConfig: {
-      method: 'POST',
-      url: '/api/map-render/v1/{connection_id}/data/layers/{layer}/statistics',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        attributes: ['area_ha'],
-        operations: ['count', 'sum', 'avg']
       }, null, 2),
     },
   },

@@ -1,6 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  safelist: [
+    'border-sky-300', 'bg-sky-50', 'border-teal-300', 'bg-teal-50',
+    'text-sky-300', 'text-sky-400', 'text-teal-400', 'bg-sky-100',
+  ],
   theme: {
     extend: {
       colors: {
