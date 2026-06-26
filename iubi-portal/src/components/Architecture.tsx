@@ -1,6 +1,13 @@
 import React from 'react'
 import { MapPinIcon, DatabaseIcon, GridIcon, GlobeIcon, CodeIcon, CloudServerIcon, LayersIcon } from './GeoIcons'
 
+const frontendColorMap: Record<string, { border: string; bg: string; text: string }> = {
+  blue: { border: 'border-blue-200', bg: 'bg-blue-50/50', text: 'text-blue-600' },
+  purple: { border: 'border-purple-200', bg: 'bg-purple-50/50', text: 'text-purple-600' },
+  teal: { border: 'border-teal-200', bg: 'bg-teal-50/50', text: 'text-teal-600' },
+  gray: { border: 'border-gray-200', bg: 'bg-gray-50/50', text: 'text-gray-600' },
+}
+
 const Architecture: React.FC = () => {
   return (
     <section className="py-24 bg-white">
@@ -32,12 +39,15 @@ const Architecture: React.FC = () => {
                 { name: 'ge21-mfe-ui', desc: 'Componentes UI', color: 'purple' },
                 { name: 'ge21-mfe-utils', desc: 'Utilitários', color: 'teal' },
                 { name: '3rd-party-configs', desc: 'Configs externas', color: 'gray' },
-              ].map(item => (
-                <div key={item.name} className={`p-4 rounded-xl border-2 border-dashed border-${item.color}-200 bg-${item.color}-50/50`}>
-                  <div className={`text-xs font-mono text-${item.color}-600 mb-1`}>{item.name}</div>
+              ].map(item => {
+                const colors = frontendColorMap[item.color]
+                return (
+                <div key={item.name} className={`p-4 rounded-xl border-2 border-dashed ${colors.border} ${colors.bg}`}>
+                  <div className={`text-xs font-mono ${colors.text} mb-1`}>{item.name}</div>
                   <div className="text-sm text-gray-600">{item.desc}</div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
