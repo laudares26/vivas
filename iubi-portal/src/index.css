@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply font-sans text-gray-900 antialiased;
+  }
+}
+
+@layer components {
+  .iubi-card {
+    @apply bg-white rounded-2xl shadow-lg border border-gray-100 
+           hover:shadow-xl hover:border-iubi-200 
+           transition-all duration-300 ease-out;
+  }
+  .iubi-card:hover {
+    transform: translateY(-4px);
+  }
+  .iubi-btn-primary {
+    @apply bg-iubi-gradient text-white font-semibold px-6 py-3 rounded-xl
+           hover:opacity-90 transition-all duration-200
+           shadow-lg shadow-iubi-500/25 hover:shadow-xl hover:shadow-iubi-500/30;
+  }
+  .iubi-btn-outline {
+    @apply border-2 border-iubi-500 text-iubi-600 font-semibold px-6 py-3 rounded-xl
+           hover:bg-iubi-50 transition-all duration-200;
+  }
+  .iubi-badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+           bg-iubi-50 text-iubi-600 border border-iubi-100;
+  }
+  .iubi-section-title {
+    @apply text-3xl md:text-4xl font-bold text-gray-900 mb-4;
+  }
+  .iubi-section-subtitle {
+    @apply text-lg text-gray-600 max-w-2xl mx-auto;
+  }
+  .code-block {
+    @apply bg-gray-900 text-gray-100 rounded-xl p-4 font-mono text-sm 
+           overflow-x-auto border border-gray-700;
+  }
+  .playground-panel {
+    @apply bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden;
+  }
+  .geo-icon {
+    @apply w-12 h-12 flex items-center justify-center rounded-xl;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-iubi-gradient;
+  }
+}
+
+/* Prism theme overrides */
+pre[class*="language-"] {
+  @apply bg-gray-900 rounded-xl border border-gray-700;
+  margin: 0;
+}
+
+code[class*="language-"] {
+  @apply font-mono text-sm;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded hover:bg-gray-400;
+}
+
+/* OpenLayers map styles */
+.ol-viewport {
+  border-radius: 12px;
+}
