@@ -341,161 +341,256 @@ const federais = geojson.features.filter(
     },
   },
 
-  // ── IUBI API Examples ───────────────────────────────────────────────
+  // ── More WMS/WFS Examples ─────────────────────────────────────────
   {
-    id: 'list-connections',
-    title: 'Listar Conexões de Dados',
-    description: 'Consulte todas as conexões de servidores de mapas e bases de dados espaciais configuradas no catálogo IUBI.',
-    service: 'catalog',
-    icon: 'database',
-    difficulty: 'iniciante',
-    code: `// Listar todas as conexões configuradas
-const response = await fetch('/api/catalog/v1/connections');
-const connections = await response.json();
-
-console.log('Conexões encontradas:', connections.length);
-connections.forEach(conn => {
-  console.log(\`  - \${conn.name} (\${conn.type})\`);
-});`,
-    requestConfig: {
-      method: 'GET',
-      url: '/api/catalog/v1/connections',
-    },
-  },
-  {
-    id: 'search-layers',
-    title: 'Buscar Camadas no Catálogo',
-    description: 'Pesquise camadas disponíveis em uma conexão específica usando o serviço de catálogo IUBI.',
-    service: 'catalog',
-    icon: 'search',
-    difficulty: 'iniciante',
-    code: `// Buscar camadas em uma conexão
-const connectionId = 'SUA_CONNECTION_ID';
-const response = await fetch(
-  \`/api/catalog/v1/\${connectionId}/search?q=municipios\`
-);
-const layers = await response.json();
-
-layers.forEach(layer => {
-  console.log(\`Camada: \${layer.name}\`);
-  console.log(\`  Tipo: \${layer.type}\`);
-  console.log(\`  CRS: \${layer.crs}\`);
-});`,
-    requestConfig: {
-      method: 'GET',
-      url: '/api/catalog/v1/{connection_id}/search?q=',
-    },
-  },
-  {
-    id: 'get-features',
-    title: 'Consultar Feições GeoJSON',
-    description: 'Obtenha feições vetoriais de uma camada em formato GeoJSON, com filtros espaciais e CQL.',
-    service: 'map-render',
+    id: 'wfs-hidreletricas-brasil',
+    title: 'WFS – Hidrelétricas do Brasil',
+    description: 'Consulte 35 usinas hidrelétricas do Brasil via WFS do IBGE com nome, potência e status operacional.',
+    service: 'wfs',
     icon: 'hexagon',
-    difficulty: 'intermediario',
-    code: `// Consultar feições com filtro por bounding box
-const connectionId = 'SUA_CONNECTION_ID';
-const layer = 'municipios';
-const bbox = '-49.5,-6.5,-48.0,-5.0'; // Região de Carajás
+    difficulty: 'iniciante',
+    code: `// WFS GetFeature – Hidrelétricas do Brasil (IBGE / CCAR)
+// Servidor: https://geoservicos.ibge.gov.br/geoserver
+// Camada: CCAR:BC100_Hidreletrica_P
+// 35 usinas com dados de potência e operação
+
+const params = new URLSearchParams({
+  SERVICE: 'WFS',
+  VERSION: '2.0.0',
+  REQUEST: 'GetFeature',
+  TYPENAMES: 'CCAR:BC100_Hidreletrica_P',
+  OUTPUTFORMAT: 'application/json',
+  COUNT: '35'
+});
 
 const response = await fetch(
-  \`/api/map-render/v1/\${connectionId}/render/layers/\${layer}/features\` +
-  \`?bbox=\${bbox}&crs=EPSG:4326&limit=50\`
+  \`https://geoservicos.ibge.gov.br/geoserver/wfs?\${params}\`
 );
 const geojson = await response.json();
 
-console.log(\`Feições encontradas: \${geojson.features.length}\`);
+console.log(\`Hidrelétricas: \${geojson.totalFeatures}\`);
 geojson.features.forEach(f => {
-  console.log(\`  \${f.properties.nome}: \${f.geometry.type}\`);
+  const { nome, potenciaoutorgada, operacional } = f.properties;
+  const [lon, lat] = f.geometry.coordinates;
+  console.log(\`  \${nome} – \${potenciaoutorgada}MW (\${operacional})\`);
+});
+
+// Integrar com OpenLayers
+import VectorSource from 'ol/source/Vector';
+import GeoJSON from 'ol/format/GeoJSON';
+
+const source = new VectorSource({
+  features: new GeoJSON().readFeatures(geojson, {
+    dataProjection: 'EPSG:4674',
+    featureProjection: 'EPSG:3857'
+  })
 });`,
     requestConfig: {
       method: 'GET',
-      url: '/api/map-render/v1/{connection_id}/render/layers/{layer}/features?limit=10',
+      url: 'https://geoservicos.ibge.gov.br/geoserver/wfs?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=CCAR:BC100_Hidreletrica_P&OUTPUTFORMAT=application/json&COUNT=35',
     },
   },
   {
-    id: 'render-map',
-    title: 'Renderizar Mapa WMS',
-    description: 'Gere uma imagem do mapa renderizado pelo motor de mapas IUBI com todas as camadas configuradas.',
-    service: 'map-render',
-    icon: 'image',
+    id: 'wfs-barragens-brasil',
+    title: 'WFS – Barragens do Brasil',
+    description: 'Consulte barragens brasileiras via WFS do IBGE com material de construção, uso principal e situação.',
+    service: 'wfs',
+    icon: 'hexagon',
     difficulty: 'intermediario',
-    code: `// Renderizar mapa como imagem
-const connectionId = 'SUA_CONNECTION_ID';
+    code: `// WFS GetFeature – Barragens do Brasil (IBGE / CCAR)
+// Servidor: https://geoservicos.ibge.gov.br/geoserver
+// Camada: CCAR:hid_barragem_p
+// 478 barragens – limitando a 50 por requisição
+
+const params = new URLSearchParams({
+  SERVICE: 'WFS',
+  VERSION: '2.0.0',
+  REQUEST: 'GetFeature',
+  TYPENAMES: 'CCAR:hid_barragem_p',
+  OUTPUTFORMAT: 'application/json',
+  COUNT: '50'
+});
+
+const response = await fetch(
+  \`https://geoservicos.ibge.gov.br/geoserver/wfs?\${params}\`
+);
+const geojson = await response.json();
+
+console.log(\`Barragens: \${geojson.totalFeatures} total\`);
+console.log(\`Retornadas: \${geojson.features.length}\`);
+geojson.features.forEach(f => {
+  const { nome, usoprincip, matconstr } = f.properties;
+  console.log(\`  \${nome || 'Sem nome'} – Uso: \${usoprincip} | Material: \${matconstr}\`);
+});
+
+// Exemplo com Leaflet GeoJSON layer
+const barragensLayer = L.geoJSON(geojson, {
+  pointToLayer: (feature, latlng) =>
+    L.circleMarker(latlng, { radius: 5, color: '#e74c3c' }),
+  onEachFeature: (feature, layer) => {
+    layer.bindPopup(\`<b>\${feature.properties.nome || 'Barragem'}</b>\`);
+  }
+});
+barragensLayer.addTo(map);`,
+    requestConfig: {
+      method: 'GET',
+      url: 'https://geoservicos.ibge.gov.br/geoserver/wfs?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=CCAR:hid_barragem_p&OUTPUTFORMAT=application/json&COUNT=50',
+    },
+  },
+  {
+    id: 'wms-biomas-brasil',
+    title: 'WMS – Biomas do Brasil',
+    description: 'Mapa dos 6 biomas brasileiros (Amazônia, Cerrado, Mata Atlântica, Caatinga, Pampa, Pantanal) via WMS do IBGE.',
+    service: 'wms',
+    icon: 'globe',
+    difficulty: 'iniciante',
+    code: `// WMS GetMap – Biomas do Brasil (IBGE / CGMAT)
+// Servidor: https://geoservicos.ibge.gov.br/geoserver
+// Camada: CGMAT:pbqg22_62_Biomas_Biomas
+// 6 biomas: Amazônia, Cerrado, Mata Atlântica, Caatinga, Pampa, Pantanal
+
 const params = new URLSearchParams({
   SERVICE: 'WMS',
+  VERSION: '1.1.1',
   REQUEST: 'GetMap',
-  LAYERS: 'municipios,hidrografia',
-  BBOX: '-49.5,-6.5,-48.0,-5.0',
+  LAYERS: 'CGMAT:pbqg22_62_Biomas_Biomas',
+  STYLES: '',
+  BBOX: '-74,-34,-35,6',
   WIDTH: '800',
   HEIGHT: '600',
-  CRS: 'EPSG:4326',
+  SRS: 'EPSG:4326',
   FORMAT: 'image/png'
 });
 
-const mapUrl = \`/api/map-render/v1/\${connectionId}/render/map?\${params}\`;
-// Use como src de uma <img> ou em um canvas
-document.getElementById('map-image').src = mapUrl;`,
+const wmsUrl =
+  \`https://geoservicos.ibge.gov.br/geoserver/CGMAT/wms?\${params}\`;
+
+// Exemplo com Leaflet WMS
+const biomasLayer = L.tileLayer.wms(
+  'https://geoservicos.ibge.gov.br/geoserver/CGMAT/wms',
+  {
+    layers: 'CGMAT:pbqg22_62_Biomas_Biomas',
+    format: 'image/png',
+    transparent: true,
+    attribution: '© IBGE – Biomas do Brasil'
+  }
+);
+biomasLayer.addTo(map);`,
     requestConfig: {
       method: 'GET',
-      url: '/api/map-render/v1/{connection_id}/render/map',
+      url: 'https://geoservicos.ibge.gov.br/geoserver/CGMAT/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=CGMAT:pbqg22_62_Biomas_Biomas&STYLES=&BBOX=-74,-34,-35,6&WIDTH=800&HEIGHT=600&SRS=EPSG:4326&FORMAT=image/png',
     },
   },
   {
-    id: 'create-context',
-    title: 'Criar Contexto WebMap',
-    description: 'Crie um novo contexto de WebMap com configuração de camadas, estilo e extensão geográfica.',
-    service: 'context',
-    icon: 'plus-circle',
-    difficulty: 'avancado',
-    code: `// Criar um novo contexto de WebMap
-const webmapContext = {
-  title: 'Mapa de Uso do Solo - Carajás',
-  description: 'Visualização interativa do uso e ocupação do solo na região de Carajás',
-  color: '#0066CC',
-  context: {
-    center: [-49.0, -6.0],
-    zoom: 10,
-    crs: 'EPSG:4326',
-    layers: [
-      {
-        name: 'uso_solo_2023',
-        visible: true,
-        opacity: 0.8,
-        style: { fillColor: '#2ECC71', strokeColor: '#27AE60' }
-      },
-      {
-        name: 'hidrografia',
-        visible: true,
-        opacity: 1.0,
-        style: { strokeColor: '#3498DB', strokeWidth: 2 }
-      }
-    ],
-    basemap: 'osm'
-  }
-};
+    id: 'wms-regioes-hidrograficas',
+    title: 'WMS – Regiões Hidrográficas',
+    description: 'Macro regiões hidrográficas do Brasil via WMS do IBGE. Bacias dos principais rios brasileiros.',
+    service: 'wms',
+    icon: 'map',
+    difficulty: 'intermediario',
+    code: `// WMS GetMap – Macro Regiões Hidrográficas do Brasil (IBGE / CGMAT)
+// Servidor: https://geoservicos.ibge.gov.br/geoserver
+// Camada: CGMAT:qg_2021_840_MacroRegHidro
+// Bacias: Amazônica, Tocantins-Araguaia, São Francisco, Paraná, etc.
 
-const response = await fetch('/api/context/api/v1/contents/WEBMAP', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(webmapContext)
+const params = new URLSearchParams({
+  SERVICE: 'WMS',
+  VERSION: '1.1.1',
+  REQUEST: 'GetMap',
+  LAYERS: 'CGMAT:qg_2021_840_MacroRegHidro',
+  STYLES: '',
+  BBOX: '-74,-34,-35,6',
+  WIDTH: '800',
+  HEIGHT: '600',
+  SRS: 'EPSG:4326',
+  FORMAT: 'image/png'
 });
-const created = await response.json();
-console.log('Contexto criado:', created.id);`,
+
+const wmsUrl =
+  \`https://geoservicos.ibge.gov.br/geoserver/CGMAT/wms?\${params}\`;
+
+// Integrar com OpenLayers como TileWMS
+import TileLayer from 'ol/layer/Tile';
+import TileWMS  from 'ol/source/TileWMS';
+
+const hidroLayer = new TileLayer({
+  source: new TileWMS({
+    url: 'https://geoservicos.ibge.gov.br/geoserver/CGMAT/wms',
+    params: {
+      LAYERS: 'CGMAT:qg_2021_840_MacroRegHidro',
+      TILED: true
+    },
+    serverType: 'geoserver'
+  })
+});
+
+// Sobrepor com camada de estados para contexto
+const estadosLayer = new TileLayer({
+  source: new TileWMS({
+    url: 'https://geoservicos.ibge.gov.br/geoserver/CGMAT/wms',
+    params: {
+      LAYERS: 'CGMAT:pbqg22_02_Estado_LimUF',
+      TILED: true
+    },
+    serverType: 'geoserver'
+  })
+});`,
     requestConfig: {
-      method: 'POST',
-      url: '/api/context/api/v1/contents/WEBMAP',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: 'Mapa de Uso do Solo - Carajás',
-        description: 'Visualização interativa do uso e ocupação do solo',
-        color: '#0066CC',
-        context: {
-          center: [-49.0, -6.0],
-          zoom: 10,
-          layers: []
-        }
-      }, null, 2),
+      method: 'GET',
+      url: 'https://geoservicos.ibge.gov.br/geoserver/CGMAT/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=CGMAT:qg_2021_840_MacroRegHidro&STYLES=&BBOX=-74,-34,-35,6&WIDTH=800&HEIGHT=600&SRS=EPSG:4326&FORMAT=image/png',
+    },
+  },
+  {
+    id: 'wfs-vilas-sc',
+    title: 'WFS – Vilas de Santa Catarina',
+    description: 'Consulte 173 vilas e localidades do estado de Santa Catarina via WFS do IBGE em GeoJSON.',
+    service: 'wfs',
+    icon: 'hexagon',
+    difficulty: 'intermediario',
+    code: `// WFS GetFeature – Vilas de Santa Catarina (IBGE / CCAR)
+// Servidor: https://geoservicos.ibge.gov.br/geoserver
+// Camada: CCAR:bc25_sc_2020_Vila_P
+// Mapeamento na escala 1:25.000 – SC
+
+const params = new URLSearchParams({
+  SERVICE: 'WFS',
+  VERSION: '2.0.0',
+  REQUEST: 'GetFeature',
+  TYPENAMES: 'CCAR:bc25_sc_2020_Vila_P',
+  OUTPUTFORMAT: 'application/json',
+  COUNT: '100'
+});
+
+const response = await fetch(
+  \`https://geoservicos.ibge.gov.br/geoserver/wfs?\${params}\`
+);
+const geojson = await response.json();
+
+console.log(\`Vilas em SC: \${geojson.totalFeatures}\`);
+geojson.features.forEach(f => {
+  const { nome, geocodigo } = f.properties;
+  const [lon, lat] = f.geometry.coordinates;
+  console.log(\`  \${nome} [\${geocodigo}] (\${lon.toFixed(4)}, \${lat.toFixed(4)})\`);
+});
+
+// Integrar com Leaflet
+const vilasLayer = L.geoJSON(geojson, {
+  pointToLayer: (feature, latlng) =>
+    L.circleMarker(latlng, {
+      radius: 4,
+      color: '#8e44ad',
+      fillOpacity: 0.7
+    }),
+  onEachFeature: (feature, layer) => {
+    layer.bindPopup(
+      \`<b>\${feature.properties.nome}</b><br>Geocódigo: \${feature.properties.geocodigo}\`
+    );
+  }
+});
+vilasLayer.addTo(map);`,
+    requestConfig: {
+      method: 'GET',
+      url: 'https://geoservicos.ibge.gov.br/geoserver/wfs?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=CCAR:bc25_sc_2020_Vila_P&OUTPUTFORMAT=application/json&COUNT=100',
     },
   },
 ]
