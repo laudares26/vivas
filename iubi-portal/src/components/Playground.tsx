@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { examples } from '../data/examples'
 import { CodeIcon } from './GeoIcons'
+import ResponsePreview from './ResponsePreview'
 
 const difficultyColors: Record<string, string> = {
   iniciante: 'bg-emerald-100 text-emerald-700',
@@ -19,49 +20,70 @@ const serviceColors: Record<string, string> = {
   catalog: 'border-emerald-300 bg-emerald-50',
   context: 'border-purple-300 bg-purple-50',
   ogc: 'border-amber-300 bg-amber-50',
+  wms: 'border-sky-300 bg-sky-50',
+  wfs: 'border-teal-300 bg-teal-50',
 }
 
 const Playground: React.FC = () => {
   const [activeExample, setActiveExample] = useState(examples[0])
   const [response, setResponse] = useState<string>('')
   const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'code' | 'request' | 'response'>('code')
+  const [activeTab, setActiveTab] = useState<'code' | 'request' | 'response' | 'preview'>('code')
   const [url, setUrl] = useState(activeExample.requestConfig.url)
   const [method, setMethod] = useState(activeExample.requestConfig.method)
   const [body, setBody] = useState(activeExample.requestConfig.body || '')
+  const blobUrlRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current)
+    }
+  }, [])
 
   const handleSelectExample = (ex: typeof examples[0]) => {
     setActiveExample(ex)
     setUrl(ex.requestConfig.url)
     setMethod(ex.requestConfig.method)
     setBody(ex.requestConfig.body || '')
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current)
+      blobUrlRef.current = null
+    }
     setResponse('')
     setActiveTab('code')
   }
 
   const handleSendRequest = async () => {
     setLoading(true)
-    setActiveTab('response')
+    setActiveTab('preview')
     try {
-      const opts: RequestInit = {
-        method,
-        headers: { 'Content-Type': 'application/json' },
+      const opts: RequestInit = { method }
+      const isExternalUrl = url.startsWith('http://') || url.startsWith('https://')
+      if (!isExternalUrl) {
+        opts.headers = { 'Content-Type': 'application/json' }
       }
       if (method !== 'GET' && body) {
         opts.body = body
       }
       const res = await fetch(url, opts)
       const contentType = res.headers.get('content-type') || ''
-      let data: string
-      if (contentType.includes('json')) {
+
+      if (contentType.startsWith('image/')) {
+        if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current)
+        const blob = await res.blob()
+        const imgUrl = URL.createObjectURL(blob)
+        blobUrlRef.current = imgUrl
+        setResponse(`// Status: ${res.status} ${res.statusText}\n// Content-Type: ${contentType}\n// WMS-Image-URL: ${imgUrl}\n\n// Imagem WMS recebida com sucesso (${(blob.size / 1024).toFixed(1)} KB)\n// A imagem está sendo exibida na aba Visualização.`)
+      } else if (contentType.includes('json')) {
         const json = await res.json()
-        data = JSON.stringify(json, null, 2)
+        const data = JSON.stringify(json, null, 2)
+        setResponse(`// Status: ${res.status} ${res.statusText}\n// Content-Type: ${contentType}\n\n${data}`)
       } else {
-        data = await res.text()
+        const data = await res.text()
+        setResponse(`// Status: ${res.status} ${res.statusText}\n// Content-Type: ${contentType}\n\n${data}`)
       }
-      setResponse(`// Status: ${res.status} ${res.statusText}\n// Content-Type: ${contentType}\n\n${data}`)
     } catch (err) {
-      setResponse(`// Erro na requisição\n// ${err instanceof Error ? err.message : 'Erro desconhecido'}\n\n// Dica: Substitua {connection_id} e {layer} por valores reais.\n// Use a API de Catalog para listar conexões disponíveis:\n// GET /api/catalog/v1/connections`)
+      setResponse(`// Erro na requisição\n// ${err instanceof Error ? err.message : 'Erro desconhecido'}\n\n// Verifique se a URL está correta e acessível.\n// Para APIs IUBI, use o Catalog primeiro:\n// GET /api/catalog/v1/connections`)
     }
     setLoading(false)
   }
@@ -102,7 +124,7 @@ const Playground: React.FC = () => {
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                     activeExample.id === ex.id ? 'bg-iubi-accent/20 text-iubi-light' : 'bg-gray-700 text-gray-400'
                   }`}>
-                    <span className="text-xs font-bold">{ex.service === 'map-render' ? 'MR' : ex.service === 'catalog' ? 'CT' : ex.service === 'context' ? 'CX' : 'OG'}</span>
+                    <span className="text-xs font-bold">{ex.service === 'map-render' ? 'MR' : ex.service === 'catalog' ? 'CT' : ex.service === 'context' ? 'CX' : ex.service === 'wms' ? 'WM' : ex.service === 'wfs' ? 'WF' : 'OG'}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-white truncate">{ex.title}</div>
@@ -123,7 +145,7 @@ const Playground: React.FC = () => {
             <div className="rounded-2xl overflow-hidden border border-gray-700 bg-gray-800">
               {/* Tabs */}
               <div className="flex items-center border-b border-gray-700">
-                {(['code', 'request', 'response'] as const).map(tab => (
+                {(['code', 'request', 'response', 'preview'] as const).map(tab => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -133,7 +155,7 @@ const Playground: React.FC = () => {
                         : 'text-gray-500 hover:text-gray-300'
                     }`}
                   >
-                    {tab === 'code' ? 'Código' : tab === 'request' ? 'Requisição' : 'Resposta'}
+                    {tab === 'code' ? 'Código' : tab === 'request' ? 'Requisição' : tab === 'response' ? 'Resposta' : 'Visualização'}
                   </button>
                 ))}
                 <div className="flex-1" />
@@ -247,6 +269,16 @@ const Playground: React.FC = () => {
                     )}
                   </div>
                 )}
+
+                {activeTab === 'preview' && (
+                  <div className="min-h-[400px]">
+                    <ResponsePreview
+                      response={response}
+                      exampleId={activeExample.id}
+                      loading={loading}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -259,10 +291,10 @@ const Playground: React.FC = () => {
                   <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
                 <div className="text-sm text-gray-400">
-                  <strong className="text-gray-300">Dica:</strong> Comece listando as conexões com 
-                  <code className="mx-1 px-1.5 py-0.5 bg-gray-700 rounded text-xs font-mono text-iubi-light">GET /api/catalog/v1/connections</code>
-                  para obter um <code className="mx-1 px-1.5 py-0.5 bg-gray-700 rounded text-xs font-mono text-iubi-light">connection_id</code> válido.
-                  Depois use esse ID nos demais endpoints.
+                  <strong className="text-gray-300">Dica:</strong> Os exemplos <strong className="text-sky-400">WMS</strong> e <strong className="text-teal-400">WFS</strong> usam dados reais dos GeoServers do 
+                  <code className="mx-1 px-1.5 py-0.5 bg-gray-700 rounded text-xs font-mono text-sky-300">IBGE</code> e
+                  <code className="mx-1 px-1.5 py-0.5 bg-gray-700 rounded text-xs font-mono text-sky-300">IDESP-SP</code>.
+                  Clique em <strong className="text-iubi-light">Executar</strong> para ver o mapa renderizado diretamente.
                 </div>
               </div>
             </div>
