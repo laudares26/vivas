@@ -19,6 +19,7 @@ const dicomRouter = require('./routes/dicom');
 const preventiveHealthRouter = require('./routes/preventiveHealth');
 const subscriptionsRouter = require('./routes/subscriptions');
 const companiesRouter = require('./routes/companies');
+const viviRouter = require('./routes/vivi');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -53,6 +54,7 @@ app.use('/api/dicom', dicomRouter); // DICOM routes handle their own auth + role
 app.use('/api/preventive-health', preventiveHealthRouter); // handles own auth
 app.use('/api/subscriptions', subscriptionsRouter); // handles own auth per route
 app.use('/api/companies', companiesRouter); // handles own auth per route
+app.use('/api/vivi', authenticate, viviRouter);
 
 // Serve institutional site for vivasaudeinteligente.com.br
 const INSTITUTIONAL_HOSTS = ['vivasaudeinteligente.com.br', 'www.vivasaudeinteligente.com.br'];

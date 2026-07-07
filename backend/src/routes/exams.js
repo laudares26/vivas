@@ -2,6 +2,7 @@ const router = require('express').Router();
 const pool = require('../config/database');
 const multer = require('multer');
 const { checkAndNotify, THRESHOLDS, classifyIndicator } = require('../services/notifications');
+const groq = require('../services/groq');
 
 const examUpload = multer({
   storage: multer.memoryStorage(),
@@ -138,8 +139,26 @@ router.post('/upload', examUpload.single('file'), async (req, res) => {
     // Extract indicators from the text
     const indicators = extractIndicatorsFromText(extractedText);
 
-    // Generate AI analysis text
-    const aiAnalysis = generateAiAnalysis(indicators);
+    // Generate AI analysis text — prefer the Groq LLM for a richer preventive
+    // interpretation, falling back to the rule-based summary if unavailable.
+    let aiAnalysis = generateAiAnalysis(indicators);
+    if (groq.isConfigured()) {
+      try {
+        const enriched = indicators.map(ind => {
+          const t = THRESHOLDS[ind.name];
+          return {
+            name: ind.name,
+            label: t ? t.label : ind.name,
+            value: ind.value,
+            unit: t ? t.unit : '',
+            status: classifyIndicator(ind.name, ind.value),
+          };
+        });
+        aiAnalysis = await groq.analyzeExamIndicators(enriched, extractedText);
+      } catch (llmErr) {
+        console.warn('[EXAM UPLOAD] Groq analysis failed, using rule-based fallback:', llmErr.message);
+      }
+    }
 
     // Ensure exam table has file columns
     await pool.query(`

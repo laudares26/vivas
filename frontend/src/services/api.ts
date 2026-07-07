@@ -108,6 +108,13 @@ export const api = {
     return res.json();
   },
   getDicomFileUrl: (instanceId: string) => `${API_BASE}/dicom/file/${instanceId}`,
+  // Vivi (LLM assistant)
+  viviChat: (message: string, history: Array<{ role: 'user' | 'assistant'; content: string }>) =>
+    request<{ reply: string; source: string }>('/vivi/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, history }),
+    }),
+
   getPacsSources: () => request<PacsSource[]>('/dicom/pacs/sources'),
   createPacsSource: (data: Partial<PacsSource>) => request<PacsSource>('/dicom/pacs/sources', { method: 'POST', body: JSON.stringify(data) }),
   deletePacsSource: (id: string) => request<void>(`/dicom/pacs/sources/${id}`, { method: 'DELETE' }),
