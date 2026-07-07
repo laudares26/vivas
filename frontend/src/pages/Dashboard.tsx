@@ -90,9 +90,9 @@ export default function Dashboard() {
         <div className="card">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-wine-soft flex items-center justify-center">
-              <CalendarDays className="w-5 h-5 text-vivas-blue" />
+              <CalendarDays className="w-5 h-5 text-wine" />
             </div>
-            <div className="flex items-center gap-1 text-xs font-medium text-vivas-blue">
+            <div className="flex items-center gap-1 text-xs font-medium text-wine">
               <ArrowUpRight className="w-3.5 h-3.5" />
               total
             </div>
@@ -103,8 +103,8 @@ export default function Dashboard() {
 
         <div className="card">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-vivas-green" />
+            <div className="w-10 h-10 rounded-xl bg-wine-soft flex items-center justify-center">
+              <Clock className="w-5 h-5 text-wine" />
             </div>
           </div>
           <p className="text-lg font-bold text-gray-900">
@@ -117,8 +117,8 @@ export default function Dashboard() {
 
         <div className="card">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-purple-600" />
+            <div className="w-10 h-10 rounded-xl bg-wine-soft flex items-center justify-center">
+              <Activity className="w-5 h-5 text-wine" />
             </div>
           </div>
           <p className="text-2xl font-bold text-gray-900">{data.kpis.appointmentsToday}</p>

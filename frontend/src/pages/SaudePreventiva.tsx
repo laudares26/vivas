@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Upload, FileText, Activity, Heart, Droplets, TrendingUp, AlertCircle, CheckCircle2, Clock, Bell, Send, Loader2 } from 'lucide-react'
+import { Upload, FileText, Activity, Heart, Droplets, TrendingUp, TrendingDown, Minus, AlertCircle, CheckCircle2, Clock, Bell, Send, Loader2, X } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../contexts/AuthContext'
-import { api, type ExamUploadResult } from '../services/api'
+import { api, type ExamBatchResult } from '../services/api'
 
 interface HealthExam {
   id: number
@@ -64,7 +64,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api'
 export default function SaudePreventiva() {
   const [exams] = useState<HealthExam[]>(SAMPLE_EXAMS)
   const [selectedExam, setSelectedExam] = useState<HealthExam | null>(null)
-  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadFiles, setUploadFiles] = useState<File[]>([])
   const [activeTab, setActiveTab] = useState<'overview' | 'exams' | 'upload'>('overview')
   const [alertSending, setAlertSending] = useState(false)
   const [alertResult, setAlertResult] = useState<{ notified: boolean; alerts?: { label: string; value: number; unit: string; status: string }[]; emailsSent?: { patient: { success: boolean }; professionals: { name: string; success: boolean }[] } } | null>(null)
@@ -72,26 +72,37 @@ export default function SaudePreventiva() {
   const { token } = useAuth()
 
   const [uploading, setUploading] = useState(false)
-  const [uploadResult, setUploadResult] = useState<ExamUploadResult | null>(null)
+  const [batchResult, setBatchResult] = useState<ExamBatchResult | null>(null)
+
+  const addFiles = (files: FileList | null) => {
+    if (!files) return
+    setUploadFiles(prev => {
+      const combined = [...prev]
+      Array.from(files).forEach(f => {
+        if (!combined.some(x => x.name === f.name && x.size === f.size)) combined.push(f)
+      })
+      return combined
+    })
+  }
 
   const handleUpload = async () => {
-    if (!uploadFile) return
+    if (uploadFiles.length === 0) return
     setUploading(true)
-    setUploadResult(null)
+    setBatchResult(null)
     try {
-      const result = await api.uploadExam(uploadFile)
-      setUploadResult(result)
-      if (result.indicators_found > 0) {
-        addToast('success', `Exame analisado! ${result.indicators_found} indicador(es) extraido(s).`)
+      const result = await api.uploadExamsBatch(uploadFiles)
+      setBatchResult(result)
+      if (result.total_indicators > 0) {
+        addToast('success', `${result.files_processed} exame(s) analisado(s)! ${result.total_indicators} indicador(es) extraido(s).`)
       } else {
-        addToast('info', 'Exame enviado. Nao foi possivel extrair indicadores automaticamente.')
+        addToast('info', 'Exames enviados. Nao foi possivel extrair indicadores automaticamente.')
       }
       if (result.notifications?.notified) {
-        addToast('success', 'Alertas enviados por email para voce e seus profissionais de saude.')
+        addToast('success', 'Alertas comparativos enviados por email para voce e seus profissionais de saude.')
       }
-      setUploadFile(null)
+      setUploadFiles([])
     } catch (err) {
-      addToast('error', err instanceof Error ? err.message : 'Erro ao enviar exame')
+      addToast('error', err instanceof Error ? err.message : 'Erro ao enviar exames')
     } finally {
       setUploading(false)
     }
@@ -366,8 +377,8 @@ export default function SaudePreventiva() {
                           <FileText className="w-5 h-5 text-vivas-blue" />
                         </div>
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
-                          <Activity className="w-5 h-5 text-purple-600" />
+                        <div className="w-10 h-10 rounded-lg bg-wine-soft flex items-center justify-center">
+                          <Activity className="w-5 h-5 text-wine" />
                         </div>
                       )}
                       <div>
@@ -418,72 +429,118 @@ export default function SaudePreventiva() {
         <div className="max-w-xl mx-auto">
           <div className="card">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Upload className="w-5 h-5 text-vivas-blue" />
-              Enviar Exame para Análise Preventiva
+              <Upload className="w-5 h-5 text-wine" />
+              Enviar Exames para Análise Preventiva
             </h3>
             <p className="text-sm text-gray-500 mb-6">
-              Envie seus exames (PDF, imagens) e nossa IA fará uma análise preventiva como apoio ao seu acompanhamento de saúde.
+              Envie um ou vários exames (PDF, imagens) de uma só vez. Nossa IA faz a análise preventiva de cada um
+              e uma <strong>análise comparativa e histórica</strong> da evolução dos seus indicadores, gerando alertas
+              enviados por email para você e seu médico quando necessário.
             </p>
 
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-vivas-blue transition-colors">
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-wine transition-colors">
               <input
                 type="file"
+                multiple
                 accept=".pdf,.jpg,.jpeg,.png,.dcm"
-                onChange={e => setUploadFile(e.target.files?.[0] || null)}
+                onChange={e => { addFiles(e.target.files); e.target.value = '' }}
                 className="hidden"
                 id="exam-upload"
               />
               <label htmlFor="exam-upload" className="cursor-pointer">
                 <Upload className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-sm font-medium text-gray-700">Clique para selecionar ou arraste o arquivo</p>
-                <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG ou DICOM (máx. 25MB)</p>
+                <p className="text-sm font-medium text-gray-700">Clique para selecionar um ou mais arquivos</p>
+                <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG ou DICOM (máx. 25MB cada) — pode selecionar vários</p>
               </label>
             </div>
 
-            {uploadFile && !uploading && (
-              <div className="mt-4 p-3 bg-wine-soft rounded-lg flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-vivas-blue" />
-                  <span className="text-sm font-medium text-gray-700">{uploadFile.name}</span>
-                </div>
+            {uploadFiles.length > 0 && !uploading && (
+              <div className="mt-4 space-y-2">
+                {uploadFiles.map((f, i) => (
+                  <div key={`${f.name}-${i}`} className="p-3 bg-wine-soft rounded-lg flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-5 h-5 text-wine flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-700 truncate">{f.name}</span>
+                    </div>
+                    <button
+                      onClick={() => setUploadFiles(prev => prev.filter((_, idx) => idx !== i))}
+                      className="p-1 text-gray-400 hover:text-red-500 flex-shrink-0"
+                      aria-label="Remover"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
                 <button
                   onClick={handleUpload}
-                  className="px-4 py-1.5 bg-vivas-blue text-white rounded-lg text-sm font-medium hover:bg-wine-deep transition-colors"
+                  className="w-full px-4 py-2.5 bg-wine text-white rounded-lg text-sm font-medium hover:bg-wine-deep transition-colors"
                 >
-                  Enviar
+                  Analisar {uploadFiles.length} exame(s)
                 </button>
               </div>
             )}
 
             {uploading && (
               <div className="mt-4 flex items-center justify-center gap-3 p-4 bg-wine-soft rounded-lg">
-                <Loader2 className="w-5 h-5 text-vivas-blue animate-spin" />
-                <span className="text-sm font-medium text-vivas-blue">Enviando e analisando exame...</span>
+                <Loader2 className="w-5 h-5 text-wine animate-spin" />
+                <span className="text-sm font-medium text-wine">Enviando e analisando exames...</span>
               </div>
             )}
 
-            {uploadResult && (
+            {batchResult && (
               <div className="mt-4 space-y-3">
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="font-semibold text-sm text-green-800">Exame analisado com sucesso!</p>
-                  <p className="text-xs text-green-700 mt-1">{uploadResult.indicators_found} indicador(es) extraido(s)</p>
+                  <p className="font-semibold text-sm text-green-800">{batchResult.files_processed} exame(s) analisado(s)!</p>
+                  <p className="text-xs text-green-700 mt-1">{batchResult.total_indicators} indicador(es) extraído(s) no total</p>
                 </div>
-                {uploadResult.ai_analysis && (
+
+                {batchResult.comparative?.trends?.length > 0 && (
+                  <div className="p-4 bg-white border border-wine-line rounded-lg">
+                    <p className="font-semibold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-wine" /> Análise comparativa e histórica
+                    </p>
+                    <div className="space-y-2">
+                      {batchResult.comparative.trends.map(t => {
+                        const Icon = t.direction === 'estavel' ? Minus : (t.direction === 'subiu' ? TrendingUp : TrendingDown)
+                        const color = t.worsening ? 'text-red-600' : (t.direction === 'estavel' ? 'text-gray-400' : 'text-green-600')
+                        return (
+                          <div key={t.name} className="flex items-center justify-between text-xs border-b border-gray-100 pb-2">
+                            <span className="font-medium text-gray-700">{t.label}</span>
+                            <div className="flex items-center gap-2">
+                              {t.previous_value != null && <span className="text-gray-400">{t.previous_value}→</span>}
+                              <span className="font-semibold text-gray-900">{t.current_value} {t.unit}</span>
+                              <span className={`flex items-center gap-0.5 ${color}`}>
+                                <Icon className="w-3.5 h-3.5" />
+                                {t.delta_pct != null && t.direction !== 'estavel' ? `${t.delta_pct > 0 ? '+' : ''}${t.delta_pct}%` : ''}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {batchResult.comparative?.analysis && (
                   <div className="p-4 bg-wine-soft border border-wine-line rounded-lg">
-                    <p className="font-semibold text-sm text-gray-900 mb-2">Analise preventiva:</p>
-                    <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{uploadResult.ai_analysis}</p>
+                    <p className="font-semibold text-sm text-gray-900 mb-2">Interpretação preventiva (IA):</p>
+                    <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{batchResult.comparative.analysis}</p>
                   </div>
                 )}
-                {uploadResult.notifications?.notified && (
+
+                {batchResult.notifications?.notified && (
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-xs text-amber-800 font-medium">Alertas enviados por email para voce e seus profissionais de saude.</p>
+                    <p className="text-xs text-amber-800 font-medium">
+                      Alertas comparativos enviados por email para você{batchResult.notifications.emailsSent?.professionals?.length ? ` e ${batchResult.notifications.emailsSent.professionals.length} profissional(is) de saúde` : ''}.
+                    </p>
                   </div>
                 )}
+
                 <button
-                  onClick={() => setUploadResult(null)}
-                  className="w-full px-4 py-2 bg-vivas-blue text-white rounded-lg text-sm font-medium hover:bg-wine-deep transition-colors"
+                  onClick={() => setBatchResult(null)}
+                  className="w-full px-4 py-2 bg-wine text-white rounded-lg text-sm font-medium hover:bg-wine-deep transition-colors"
                 >
-                  Enviar outro exame
+                  Enviar outros exames
                 </button>
               </div>
             )}

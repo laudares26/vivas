@@ -115,11 +115,48 @@ REGRAS:
   return chatCompletion(messages, { temperature: 0.4, maxTokens: 800 });
 }
 
+// LLM-generated comparative/historical analysis across multiple exams over time.
+async function analyzeExamComparison(trends) {
+  const lines = (trends || []).map(t => {
+    const prev = t.previous_value != null ? `${t.previous_value} ${t.unit}` : 'sem histórico';
+    const dir = t.direction === 'estavel' ? 'estável' : (t.direction === 'subiu' ? 'subiu' : 'desceu');
+    const trendTxt = t.previous_value != null
+      ? `${dir}${t.delta_pct != null ? ` (${t.delta_pct > 0 ? '+' : ''}${t.delta_pct}%)` : ''}${t.worsening ? ', PIORA' : (t.direction !== 'estavel' ? ', melhora' : '')}`
+      : 'primeira medição';
+    return `- ${t.label}: anterior ${prev} -> atual ${t.current_value} ${t.unit} [${t.count} medição(ões), ${trendTxt}, classificação atual: ${t.current_status}]`;
+  }).join('\n');
+
+  const messages = [
+    {
+      role: 'system',
+      content: `Voce e um assistente de analise preventiva da plataforma VivaS, especializado em saude.
+Voce recebe a EVOLUCAO HISTORICA e COMPARATIVA de indicadores de exames de um paciente (varios exames ao longo do tempo).
+Gere uma analise comparativa educativa em portugues do Brasil.
+
+REGRAS:
+1. NAO forneca diagnostico medico definitivo — apenas orientacao preventiva educativa.
+2. Destaque as TENDENCIAS (melhora, piora ou estabilidade) e o que uma variacao pode significar de forma preventiva.
+3. Priorize os indicadores que pioraram ou estao fora da faixa de referencia.
+4. Sugira acoes preventivas gerais (habitos, acompanhamento) sem prescrever medicamentos ou doses.
+5. Reforce que o paciente deve confirmar com um profissional de saude (medico) pela VivaS.
+6. Seja objetivo e estruturado. Use no maximo ~280 palavras.
+7. Finalize com: "Esta analise comparativa e um suporte preventivo baseado em IA e nao substitui a avaliacao de um profissional de saude."`,
+    },
+    {
+      role: 'user',
+      content: `Evolucao dos indicadores do paciente:\n${lines || '(sem indicadores estruturados)'}\n\nGere a analise comparativa preventiva.`,
+    },
+  ];
+
+  return chatCompletion(messages, { temperature: 0.4, maxTokens: 900 });
+}
+
 module.exports = {
   isConfigured,
   chatCompletion,
   viviChat,
   analyzeExamIndicators,
+  analyzeExamComparison,
   VIVI_SYSTEM_PROMPT,
   DEFAULT_MODEL,
 };

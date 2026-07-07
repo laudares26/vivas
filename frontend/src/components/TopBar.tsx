@@ -30,7 +30,10 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   const initials = user?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'US'
 
   return (
-    <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 flex-shrink-0">
+    <header
+      className="min-h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 flex-shrink-0"
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+    >
       <div className="flex items-center gap-2 text-sm">
         {onMenuClick && (
           <button onClick={onMenuClick} className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 md:hidden">

@@ -71,6 +71,22 @@ export const api = {
     }
     return res.json();
   },
+  uploadExamsBatch: async (files: File[], notes?: string): Promise<ExamBatchResult> => {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+    if (notes) formData.append('notes', notes);
+    const res = await fetch(`${API_BASE}/exams/upload-batch`, {
+      method: 'POST',
+      headers: { ...getAuthHeaders() },
+      body: formData
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Erro de rede' }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  },
+  getExamComparative: () => request<ExamComparative>('/exams/comparative'),
 
   // EHR
   getEHR: (patientId: string) => request<EHREntry[]>(`/ehr/${patientId}`),
@@ -183,6 +199,40 @@ export interface ExamUploadResult {
   indicators: Array<{ name: string; value: number }>;
   ai_analysis: string;
   notifications: { notified: boolean; alerts?: Array<{ label: string; value: number; unit: string; status: string }>; } | null;
+}
+
+export interface ExamTrend {
+  name: string; label: string; unit: string; count: number;
+  first_value: number; first_date: string;
+  previous_value: number | null; current_value: number; current_date: string;
+  delta: number | null; delta_pct: number | null;
+  direction: 'subiu' | 'desceu' | 'estavel';
+  worsening: boolean;
+  current_status: string; previous_status: string | null;
+}
+
+export interface ExamComparative {
+  trends: ExamTrend[];
+  alerts: Array<{ label: string; value: number; unit: string; status: string; delta: number | null; direction: string; worsening: boolean }>;
+  history?: Record<string, Array<{ value: number; unit: string; recorded_at: string }>>;
+}
+
+export interface ExamBatchResult {
+  success: boolean;
+  files_processed: number;
+  exams: Array<{ file_name: string; indicators_found?: number; ai_analysis?: string; error?: string }>;
+  total_indicators: number;
+  comparative: {
+    trends: ExamTrend[];
+    alerts: ExamComparative['alerts'];
+    analysis: string | null;
+  };
+  notifications: {
+    notified: boolean;
+    reason?: string;
+    alerts?: ExamComparative['alerts'];
+    emailsSent?: { patient: { success: boolean }; professionals: Array<{ name: string; success: boolean }> };
+  } | null;
 }
 
 export interface EHREntry {

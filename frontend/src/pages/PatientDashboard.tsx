@@ -113,19 +113,10 @@ export default function PatientDashboard() {
   return (
     <div className="min-h-screen bg-bg" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* TOP BAR */}
-      <header className="relative overflow-hidden bg-gradient-to-br from-wine to-wine-deep text-white pt-12 pb-6 px-6 rounded-b-3xl">
-        {/* Floating photo circles (institutional style) */}
-        <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
-          <div className="absolute top-20 -right-5 w-24 h-24 rounded-full overflow-hidden border-[3px] border-white/20 opacity-60">
-            <img src="/images/hero-family.jpg" alt="" className="w-full h-full object-cover" />
-          </div>
-          <div className="absolute top-3 right-28 w-14 h-14 rounded-full overflow-hidden border-[3px] border-white/15 opacity-45">
-            <img src="/images/feature-telemedicine.jpg" alt="" className="w-full h-full object-cover" />
-          </div>
-          <div className="absolute bottom-1 right-24 w-16 h-16 rounded-full overflow-hidden border-[3px] border-white/15 opacity-40">
-            <img src="/images/feature-mental.jpg" alt="" className="w-full h-full object-cover" />
-          </div>
-        </div>
+      <header
+        className="relative overflow-hidden bg-gradient-to-br from-wine to-wine-deep text-white pb-6 px-6 rounded-b-3xl"
+        style={{ paddingTop: 'max(3rem, calc(env(safe-area-inset-top) + 0.75rem))' }}
+      >
         <div className="relative z-10 flex items-center justify-between mb-6">
           <div className="flex items-center gap-2.5">
             <span className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">

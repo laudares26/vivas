@@ -25,15 +25,32 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex" style={{ background: 'linear-gradient(135deg, #7B1E3C 0%, #5E1730 50%, #3A1020 100%)' }}>
-      <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center text-white p-12">
-        <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
-          <Heart className="w-12 h-12" fill="white" />
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col items-center justify-center text-white p-12">
+        {/* Floating photo circles (institutional style) */}
+        <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
+          <div className="absolute top-16 left-14 w-28 h-28 rounded-full overflow-hidden border-[3px] border-white/20 opacity-60">
+            <img src="/images/hero-family.jpg" alt="" className="w-full h-full object-cover" />
+          </div>
+          <div className="absolute bottom-20 left-24 w-20 h-20 rounded-full overflow-hidden border-[3px] border-white/15 opacity-45">
+            <img src="/images/feature-telemedicine.jpg" alt="" className="w-full h-full object-cover" />
+          </div>
+          <div className="absolute top-28 right-16 w-24 h-24 rounded-full overflow-hidden border-[3px] border-white/15 opacity-50">
+            <img src="/images/feature-mental.jpg" alt="" className="w-full h-full object-cover" />
+          </div>
+          <div className="absolute bottom-16 right-24 w-16 h-16 rounded-full overflow-hidden border-[3px] border-white/15 opacity-40">
+            <img src="/images/hero-doctor.jpg" alt="" className="w-full h-full object-cover" />
+          </div>
         </div>
-        <h1 className="font-display text-5xl font-extrabold mb-3">VivaS</h1>
-        <p className="text-xl text-white/70 mb-8">Saúde preventiva inteligente</p>
-        <div className="max-w-md text-center text-white/60 space-y-2">
-          <p>Cuide da sua saúde com inteligência artificial como suporte preventivo</p>
-          <p className="text-sm">Dashboard &middot; Exames &middot; Teleconsulta &middot; Triagem &middot; Saúde Preventiva</p>
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
+            <Heart className="w-12 h-12" fill="white" />
+          </div>
+          <h1 className="font-display text-5xl font-extrabold mb-3">VivaS</h1>
+          <p className="text-xl text-white/70 mb-8">Saúde preventiva inteligente</p>
+          <div className="max-w-md text-center text-white/60 space-y-2">
+            <p>Cuide da sua saúde com inteligência artificial como suporte preventivo</p>
+            <p className="text-sm">Dashboard &middot; Exames &middot; Teleconsulta &middot; Triagem &middot; Saúde Preventiva</p>
+          </div>
         </div>
       </div>
 

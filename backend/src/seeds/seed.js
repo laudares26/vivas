@@ -14,8 +14,8 @@ const seedData = async () => {
     await pool.query(`
       INSERT INTO users (email, password_hash, full_name, role, avatar_color)
       VALUES 
-        ('admin@vivas.com', $1, 'Dr. Admin', 'admin', '#0057B8'),
-        ('bruno.hodos@gmail.com', $2, 'Dr. Bruno Hodos', 'medico', '#2563EB'),
+        ('admin@vivas.com', $1, 'Dr. Admin', 'admin', '#7B1E3C'),
+        ('bruno.hodos@gmail.com', $2, 'Dr. Bruno Hodos', 'medico', '#7B1E3C'),
         ('maria@email.com', $3, 'Maria Silva Santos', 'paciente', '#EA580C'),
         ('brunocorreafotografo@gmail.com', $3, 'Bruno Correa', 'paciente', '#F59E0B'),
         ('marketing@vivas.com', $4, 'Ana Marketing', 'marketing_admin', '#9333EA'),

@@ -206,7 +206,7 @@ async function checkAndNotify(patientUserId, indicators) {
     const profHtml = buildProfessionalAlertEmail(prof.full_name, patient.full_name, patient.email, alerts);
     const profEmailResult = await sendEmail(
       prof.email,
-      `🔔 VIVAS — Alerta de paciente: ${patient.full_name}`,
+      `VIVAS — Alerta de paciente: ${patient.full_name}`,
       profHtml
     );
     results.professionals.push({ id: prof.id, name: prof.full_name, email: prof.email, ...profEmailResult });
@@ -229,4 +229,243 @@ async function checkAndNotify(patientUserId, indicators) {
   };
 }
 
-module.exports = { checkAndNotify, classifyIndicator, THRESHOLDS, sendEmail };
+// ---------------------------------------------------------------------------
+// Comparative / historical exam analysis
+// ---------------------------------------------------------------------------
+
+// For every tracked indicator, a rising value means a worse clinical picture.
+const HIGHER_IS_WORSE = {
+  glicemia_jejum: true, colesterol_ldl: true, pressao_sistolica: true,
+  pressao_diastolica: true, imc: true, hemoglobina_glicada: true,
+  triglicerideos: true, creatinina: true,
+};
+
+// Load the full ordered history of a patient's indicators.
+async function getIndicatorHistory(patientUserId) {
+  const { rows } = await pool.query(
+    `SELECT indicator_name, value, unit, recorded_at
+     FROM health_indicators
+     WHERE patient_user_id = $1
+     ORDER BY indicator_name, recorded_at ASC`,
+    [patientUserId]
+  );
+  const history = {};
+  for (const r of rows) {
+    if (!history[r.indicator_name]) history[r.indicator_name] = [];
+    history[r.indicator_name].push({
+      value: parseFloat(r.value),
+      unit: r.unit,
+      recorded_at: r.recorded_at,
+    });
+  }
+  return history;
+}
+
+// Build a comparative analysis (trend per indicator + list of alerts) from history.
+function computeComparativeAnalysis(history) {
+  const trends = [];
+  const alerts = [];
+  const statusRank = { normal: 0, atencao: 1, alerta: 2, desconhecido: 0 };
+
+  for (const [name, series] of Object.entries(history)) {
+    if (!series || series.length === 0) continue;
+    const threshold = THRESHOLDS[name];
+    const label = threshold ? threshold.label : name;
+    const unit = threshold ? threshold.unit : (series[series.length - 1].unit || '');
+
+    const latest = series[series.length - 1];
+    const previous = series.length >= 2 ? series[series.length - 2] : null;
+    const first = series[0];
+
+    const currentStatus = classifyIndicator(name, latest.value);
+    const previousStatus = previous ? classifyIndicator(name, previous.value) : null;
+
+    let direction = 'estavel';
+    let worsening = false;
+    let delta = null;
+    let deltaPct = null;
+    if (previous) {
+      delta = +(latest.value - previous.value).toFixed(2);
+      const base = previous.value !== 0 ? previous.value : 1;
+      deltaPct = +(((latest.value - previous.value) / base) * 100).toFixed(1);
+      const eps = Math.abs(previous.value) * 0.02; // ignore <2% noise
+      if (delta > eps) direction = 'subiu';
+      else if (delta < -eps) direction = 'desceu';
+      const higherWorse = HIGHER_IS_WORSE[name] !== false;
+      if (direction !== 'estavel') {
+        worsening = higherWorse ? delta > 0 : delta < 0;
+      }
+    }
+
+    const trend = {
+      name, label, unit,
+      count: series.length,
+      first_value: first.value, first_date: first.recorded_at,
+      previous_value: previous ? previous.value : null,
+      current_value: latest.value, current_date: latest.recorded_at,
+      delta, delta_pct: deltaPct, direction,
+      worsening,
+      current_status: currentStatus,
+      previous_status: previousStatus,
+    };
+    trends.push(trend);
+
+    // Flag as alert when the current reading is out of range, OR when the
+    // trend worsened enough to move into a worse classification.
+    const worsenedClass = previousStatus && statusRank[currentStatus] > statusRank[previousStatus];
+    if (currentStatus === 'alerta' || currentStatus === 'atencao' || (worsening && worsenedClass)) {
+      alerts.push({
+        name, label, unit,
+        value: latest.value,
+        status: currentStatus === 'normal' ? 'atencao' : currentStatus,
+        previous_value: previous ? previous.value : null,
+        delta, direction, worsening,
+      });
+    }
+  }
+
+  trends.sort((a, b) => (b.worsening === a.worsening ? 0 : b.worsening ? 1 : -1));
+  return { trends, alerts };
+}
+
+function trendArrow(direction, worsening) {
+  if (direction === 'estavel') return '→ estável';
+  const arrow = direction === 'subiu' ? '↑' : '↓';
+  return `${arrow} ${worsening ? 'piora' : 'melhora'}`;
+}
+
+function buildComparativeTable(trends) {
+  return trends.map(t => {
+    const color = t.worsening ? '#DC2626' : (t.direction === 'estavel' ? '#6b7280' : '#16A34A');
+    const prev = t.previous_value != null ? `${t.previous_value} ${t.unit}` : '—';
+    const variation = t.delta == null ? '—' : `${t.delta > 0 ? '+' : ''}${t.delta} ${t.unit} (${t.delta_pct > 0 ? '+' : ''}${t.delta_pct}%)`;
+    return `
+    <tr>
+      <td style="padding:8px;border-bottom:1px solid #eee;">${t.label}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;">${prev}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;font-weight:bold;">${t.current_value} ${t.unit}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;color:${color};font-weight:600;">${variation}<br/><span style="font-size:11px;">${trendArrow(t.direction, t.worsening)}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function buildComparativePatientEmail(patientName, trends, aiText) {
+  return `
+    <div style="font-family:'Segoe UI',sans-serif;max-width:640px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,#7B1E3C,#5E1730);padding:20px;text-align:center;">
+        <h1 style="color:white;margin:0;font-size:22px;">VIVAS Saúde Preventiva</h1>
+        <p style="color:#E9C4BE;margin:5px 0 0;">Análise Comparativa e Histórica dos seus Exames</p>
+      </div>
+      <div style="padding:24px;background:white;">
+        <p>Olá <strong>${patientName}</strong>,</p>
+        <p>Analisamos os exames que você enviou e comparamos com o seu histórico. Veja a evolução dos seus indicadores:</p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:13px;">
+          <thead><tr style="background:#f8fafc;">
+            <th style="padding:8px;text-align:left;">Indicador</th>
+            <th style="padding:8px;text-align:left;">Anterior</th>
+            <th style="padding:8px;text-align:left;">Atual</th>
+            <th style="padding:8px;text-align:left;">Variação</th>
+          </tr></thead>
+          <tbody>${buildComparativeTable(trends)}</tbody>
+        </table>
+        ${aiText ? `<div style="background:#F6E9ED;border-left:4px solid #7B1E3C;padding:12px;margin:16px 0;border-radius:4px;"><p style="margin:0;font-size:13px;white-space:pre-line;">${aiText}</p></div>` : ''}
+        <div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:12px;margin:16px 0;border-radius:4px;">
+          <p style="margin:0;font-size:13px;"><strong>Apoio Preventivo IA:</strong> Esta análise comparativa é um suporte preventivo e não constitui diagnóstico médico. Consulte seu profissional de saúde.</p>
+        </div>
+        <a href="https://vivas.digital/login" style="display:inline-block;background:#7B1E3C;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;margin-top:12px;">Acessar VIVAS</a>
+      </div>
+      <div style="padding:16px;background:#f8fafc;text-align:center;font-size:12px;color:#6b7280;"><p>VIVAS Saúde Inteligente - Suporte Preventivo</p></div>
+    </div>`;
+}
+
+function buildComparativeProfessionalEmail(professionalName, patientName, patientEmail, trends, aiText) {
+  return `
+    <div style="font-family:'Segoe UI',sans-serif;max-width:640px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,#7B1E3C,#5E1730);padding:20px;text-align:center;">
+        <h1 style="color:white;margin:0;font-size:22px;">VIVAS — Evolução de Paciente</h1>
+        <p style="color:#E9C4BE;margin:5px 0 0;">Análise Comparativa de Exames</p>
+      </div>
+      <div style="padding:24px;background:white;">
+        <p>Olá <strong>${professionalName}</strong>,</p>
+        <p>O(A) paciente <strong>${patientName}</strong> (${patientEmail}) enviou novos exames. Segue a evolução comparativa dos indicadores:</p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:13px;">
+          <thead><tr style="background:#f8fafc;">
+            <th style="padding:8px;text-align:left;">Indicador</th>
+            <th style="padding:8px;text-align:left;">Anterior</th>
+            <th style="padding:8px;text-align:left;">Atual</th>
+            <th style="padding:8px;text-align:left;">Variação</th>
+          </tr></thead>
+          <tbody>${buildComparativeTable(trends)}</tbody>
+        </table>
+        ${aiText ? `<div style="background:#F6E9ED;border-left:4px solid #7B1E3C;padding:12px;margin:16px 0;border-radius:4px;"><p style="margin:0;font-size:13px;white-space:pre-line;">${aiText}</p></div>` : ''}
+        <div style="background:#F6E7E1;border-left:4px solid #7B1E3C;padding:12px;margin:16px 0;border-radius:4px;">
+          <p style="margin:0;font-size:13px;"><strong>Ação sugerida:</strong> Avalie a tendência dos indicadores e considere agendar acompanhamento ou teleconsulta.</p>
+        </div>
+        <a href="https://vivas.digital/login" style="display:inline-block;background:#7B1E3C;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;margin-top:12px;">Acessar VIVAS</a>
+      </div>
+      <div style="padding:16px;background:#f8fafc;text-align:center;font-size:12px;color:#6b7280;"><p>VIVAS Saúde Inteligente - Notificação Profissional</p></div>
+    </div>`;
+}
+
+// Send the comparative/historical report to patient + related professionals.
+// Only emails when there is at least one alert (worsening/out-of-range) — matching
+// the existing single-exam notification behaviour.
+async function sendComparativeReport(patientUserId, comparative, aiText) {
+  const { trends, alerts } = comparative;
+  if (!alerts || alerts.length === 0) {
+    return { notified: false, reason: 'Nenhuma tendência preocupante identificada', trends };
+  }
+
+  const patientResult = await pool.query(
+    'SELECT id, email, full_name FROM users WHERE id = $1', [patientUserId]
+  );
+  if (patientResult.rows.length === 0) {
+    return { notified: false, reason: 'Paciente não encontrado', trends };
+  }
+  const patient = patientResult.rows[0];
+
+  const profResult = await pool.query(
+    `SELECT u.id, u.email, u.full_name, u.role FROM professional_patient_relationships ppr
+     JOIN users u ON u.id = ppr.professional_user_id
+     WHERE ppr.patient_user_id = $1 AND u.active = true`, [patientUserId]
+  );
+
+  const results = { patient: null, professionals: [] };
+
+  results.patient = await sendEmail(
+    patient.email,
+    'VIVAS — Análise comparativa dos seus exames',
+    buildComparativePatientEmail(patient.full_name, trends, aiText)
+  );
+
+  for (const prof of profResult.rows) {
+    const profEmailResult = await sendEmail(
+      prof.email,
+      `VIVAS — Evolução de exames do paciente: ${patient.full_name}`,
+      buildComparativeProfessionalEmail(prof.full_name, patient.full_name, patient.email, trends, aiText)
+    );
+    results.professionals.push({ id: prof.id, name: prof.full_name, email: prof.email, ...profEmailResult });
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO health_notifications (patient_user_id, alert_data, notified_professionals, created_at)
+       VALUES ($1, $2, $3, NOW())`,
+      [patientUserId, JSON.stringify({ type: 'comparativo', alerts }), JSON.stringify(results.professionals.map(p => p.id))]
+    );
+  } catch (e) {
+    console.warn('[Notifications] Failed to store comparative notification:', e.message);
+  }
+
+  return {
+    notified: true,
+    alerts,
+    trends,
+    emailsSent: { patient: results.patient, professionals: results.professionals },
+  };
+}
+
+module.exports = {
+  checkAndNotify, classifyIndicator, THRESHOLDS, sendEmail,
+  getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
+};

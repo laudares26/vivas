@@ -1,7 +1,10 @@
 const router = require('express').Router();
 const pool = require('../config/database');
 const multer = require('multer');
-const { checkAndNotify, THRESHOLDS, classifyIndicator } = require('../services/notifications');
+const {
+  checkAndNotify, THRESHOLDS, classifyIndicator,
+  getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
+} = require('../services/notifications');
 const groq = require('../services/groq');
 
 const examUpload = multer({
@@ -86,7 +89,157 @@ function generateAiAnalysis(indicators) {
   return lines.join('\n');
 }
 
-// POST /api/exams/upload — patient uploads exam file for AI analysis
+// Extract raw text from an uploaded exam file (PDF text layer or filename for images).
+async function extractTextFromFile(file, fallbackName) {
+  const fileBuffer = file.buffer;
+  const fileMimeType = file.mimetype;
+  let extractedText = '';
+
+  if (fileMimeType === 'application/pdf') {
+    try {
+      const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+      const uint8 = new Uint8Array(fileBuffer);
+      const doc = await pdfjsLib.getDocument({ data: uint8 }).promise;
+      for (let i = 1; i <= doc.numPages; i++) {
+        const page = await doc.getPage(i);
+        const content = await page.getTextContent();
+        extractedText += content.items.map(item => item.str).join(' ') + '\n';
+      }
+      console.log(`[EXAM UPLOAD] PDF text extracted: ${extractedText.length} chars`);
+    } catch (pdfErr) {
+      console.warn('[EXAM UPLOAD] pdfjs failed, falling back to raw extraction:', pdfErr.message);
+      const bufStr = fileBuffer.toString('utf-8');
+      const textMatches = bufStr.match(/\(([^)]+)\)/g);
+      if (textMatches) {
+        extractedText = textMatches.map(m => m.slice(1, -1)).join(' ');
+      }
+    }
+  } else {
+    // For images, include the filename which may contain useful info
+    extractedText = fallbackName || file.originalname || '';
+  }
+  return extractedText;
+}
+
+let examColumnsEnsured = false;
+async function ensureExamColumns() {
+  if (examColumnsEnsured) return;
+  await pool.query(`
+    ALTER TABLE exams ADD COLUMN IF NOT EXISTS uploaded_by UUID REFERENCES users(id);
+    ALTER TABLE exams ADD COLUMN IF NOT EXISTS file_name VARCHAR(255);
+    ALTER TABLE exams ADD COLUMN IF NOT EXISTS file_type VARCHAR(50);
+    ALTER TABLE exams ADD COLUMN IF NOT EXISTS file_size INTEGER;
+    ALTER TABLE exams ADD COLUMN IF NOT EXISTS source VARCHAR(30) DEFAULT 'manual';
+  `);
+  examColumnsEnsured = true;
+}
+
+// Process a single exam file: extract indicators, generate analysis, persist
+// the exam row + health_indicators. Returns { exam, indicators, aiAnalysis }.
+async function processExamFile(userId, patientId, file, opts = {}) {
+  const fileName = opts.exam_name || file.originalname || 'Exame enviado';
+  let extractedText = await extractTextFromFile(file, fileName);
+  if (opts.exam_text) extractedText += ' ' + opts.exam_text;
+
+  const indicators = extractIndicatorsFromText(extractedText);
+
+  // Prefer the Groq LLM for a richer preventive interpretation; fall back to rules.
+  let aiAnalysis = generateAiAnalysis(indicators);
+  if (groq.isConfigured()) {
+    try {
+      const enriched = indicators.map(ind => {
+        const t = THRESHOLDS[ind.name];
+        return {
+          name: ind.name,
+          label: t ? t.label : ind.name,
+          value: ind.value,
+          unit: t ? t.unit : '',
+          status: classifyIndicator(ind.name, ind.value),
+        };
+      });
+      aiAnalysis = await groq.analyzeExamIndicators(enriched, extractedText);
+    } catch (llmErr) {
+      console.warn('[EXAM UPLOAD] Groq analysis failed, using rule-based fallback:', llmErr.message);
+    }
+  }
+
+  await ensureExamColumns();
+
+  const examResult = await pool.query(
+    `INSERT INTO exams (patient_id, exam_name, category, status, result, ai_analysis, result_date, uploaded_by, file_name, file_type, file_size, source, notes)
+     VALUES ($1, $2, 'laboratorial', 'concluido', $3, $4, NOW(), $5, $6, $7, $8, 'upload_paciente', $9) RETURNING *`,
+    [
+      patientId, fileName,
+      indicators.length > 0 ? JSON.stringify(indicators) : null,
+      aiAnalysis, userId,
+      file.originalname, file.mimetype, file.size,
+      opts.notes || null
+    ]
+  );
+  const exam = examResult.rows[0];
+
+  // Store each extracted indicator in the longitudinal history table.
+  for (const ind of indicators) {
+    const threshold = THRESHOLDS[ind.name];
+    await pool.query(
+      `INSERT INTO health_indicators (patient_user_id, indicator_name, value, unit, recorded_at, source)
+       VALUES ($1, $2, $3, $4, NOW(), 'exam_upload')`,
+      [userId, ind.name, ind.value, threshold ? threshold.unit : '']
+    );
+  }
+
+  return { exam, indicators, aiAnalysis };
+}
+
+// Create/update a Manchester triage entry when indicators are in alert (non-blocking).
+async function updateTriageFromIndicators(patientId, userId, indicators, aiAnalysis) {
+  try {
+    const hasAlerts = indicators.some(ind => classifyIndicator(ind.name, ind.value) === 'alerta');
+    if (!hasAlerts) return;
+    const alertIndicators = indicators.filter(ind => classifyIndicator(ind.name, ind.value) !== 'normal');
+    const triageColor = 'amarelo';
+    const symptomsSummary = alertIndicators.map(ind => {
+      const t = THRESHOLDS[ind.name];
+      return `${t ? t.label : ind.name}: ${ind.value} ${t ? t.unit : ''}`;
+    }).join('; ');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS triage (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        patient_id UUID,
+        manchester_color VARCHAR(20),
+        symptoms TEXT,
+        ai_assessment TEXT,
+        priority_score INTEGER DEFAULT 5,
+        status VARCHAR(30) DEFAULT 'aguardando',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    const existingTriage = await pool.query(
+      `SELECT id FROM triage WHERE patient_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [patientId || userId]
+    );
+
+    if (existingTriage.rows.length > 0) {
+      await pool.query(
+        `UPDATE triage SET manchester_color = $1, symptoms = $2, ai_assessment = $3, status = 'em_analise', updated_at = NOW() WHERE id = $4`,
+        [triageColor, symptomsSummary, aiAnalysis, existingTriage.rows[0].id]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO triage (patient_id, manchester_color, symptoms, ai_assessment, priority_score, status)
+         VALUES ($1, $2, $3, $4, $5, 'aguardando')`,
+        [patientId || userId, triageColor, symptomsSummary, aiAnalysis, 7]
+      );
+    }
+  } catch (triageErr) {
+    console.warn('[EXAM UPLOAD] Triage update failed (non-blocking):', triageErr.message);
+  }
+}
+
+// POST /api/exams/upload — patient uploads a single exam file for AI analysis
 router.post('/upload', examUpload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
@@ -94,158 +247,17 @@ router.post('/upload', examUpload.single('file'), async (req, res) => {
     }
 
     const userId = req.user.id;
-    const fileName = req.body.exam_name || req.file.originalname || 'Exame enviado';
-    const fileBuffer = req.file.buffer;
-    const fileMimeType = req.file.mimetype;
-
-    // Get patient record for this user
     const patientResult = await pool.query(
       'SELECT id FROM patients WHERE user_id = $1 LIMIT 1', [userId]
     );
     const patientId = patientResult.rows.length > 0 ? patientResult.rows[0].id : null;
 
-    // Try to extract text from the file for analysis
-    let extractedText = '';
+    const { exam, indicators, aiAnalysis } = await processExamFile(userId, patientId, req.file, req.body);
 
-    if (fileMimeType === 'application/pdf') {
-      try {
-        const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
-        const uint8 = new Uint8Array(fileBuffer);
-        const doc = await pdfjsLib.getDocument({ data: uint8 }).promise;
-        for (let i = 1; i <= doc.numPages; i++) {
-          const page = await doc.getPage(i);
-          const content = await page.getTextContent();
-          extractedText += content.items.map(item => item.str).join(' ') + '\n';
-        }
-        console.log(`[EXAM UPLOAD] PDF text extracted: ${extractedText.length} chars`);
-      } catch (pdfErr) {
-        console.warn('[EXAM UPLOAD] pdfjs failed, falling back to raw extraction:', pdfErr.message);
-        const bufStr = fileBuffer.toString('utf-8');
-        const textMatches = bufStr.match(/\(([^)]+)\)/g);
-        if (textMatches) {
-          extractedText = textMatches.map(m => m.slice(1, -1)).join(' ');
-        }
-      }
-    } else {
-      // For images, include the filename which may contain useful info
-      extractedText = fileName;
-    }
-
-    // Also check if user provided exam_text (manual entry option)
-    if (req.body.exam_text) {
-      extractedText += ' ' + req.body.exam_text;
-    }
-
-    // Extract indicators from the text
-    const indicators = extractIndicatorsFromText(extractedText);
-
-    // Generate AI analysis text — prefer the Groq LLM for a richer preventive
-    // interpretation, falling back to the rule-based summary if unavailable.
-    let aiAnalysis = generateAiAnalysis(indicators);
-    if (groq.isConfigured()) {
-      try {
-        const enriched = indicators.map(ind => {
-          const t = THRESHOLDS[ind.name];
-          return {
-            name: ind.name,
-            label: t ? t.label : ind.name,
-            value: ind.value,
-            unit: t ? t.unit : '',
-            status: classifyIndicator(ind.name, ind.value),
-          };
-        });
-        aiAnalysis = await groq.analyzeExamIndicators(enriched, extractedText);
-      } catch (llmErr) {
-        console.warn('[EXAM UPLOAD] Groq analysis failed, using rule-based fallback:', llmErr.message);
-      }
-    }
-
-    // Ensure exam table has file columns
-    await pool.query(`
-      ALTER TABLE exams ADD COLUMN IF NOT EXISTS uploaded_by UUID REFERENCES users(id);
-      ALTER TABLE exams ADD COLUMN IF NOT EXISTS file_name VARCHAR(255);
-      ALTER TABLE exams ADD COLUMN IF NOT EXISTS file_type VARCHAR(50);
-      ALTER TABLE exams ADD COLUMN IF NOT EXISTS file_size INTEGER;
-      ALTER TABLE exams ADD COLUMN IF NOT EXISTS source VARCHAR(30) DEFAULT 'manual';
-    `);
-
-    // Create exam record
-    const examResult = await pool.query(
-      `INSERT INTO exams (patient_id, exam_name, category, status, result, ai_analysis, result_date, uploaded_by, file_name, file_type, file_size, source, notes)
-       VALUES ($1, $2, 'laboratorial', 'concluido', $3, $4, NOW(), $5, $6, $7, $8, 'upload_paciente', $9) RETURNING *`,
-      [
-        patientId, fileName,
-        indicators.length > 0 ? JSON.stringify(indicators) : null,
-        aiAnalysis, userId,
-        req.file.originalname, fileMimeType, req.file.size,
-        req.body.notes || null
-      ]
-    );
-    const exam = examResult.rows[0];
-
-    // If indicators were found, store them and trigger notifications
     let notificationResult = null;
     if (indicators.length > 0) {
-      // Store each indicator
-      for (const ind of indicators) {
-        const threshold = THRESHOLDS[ind.name];
-        await pool.query(
-          `INSERT INTO health_indicators (patient_user_id, indicator_name, value, unit, recorded_at, source)
-           VALUES ($1, $2, $3, $4, NOW(), 'exam_upload')`,
-          [userId, ind.name, ind.value, threshold ? threshold.unit : '']
-        );
-      }
-
-      // Trigger notifications if any indicator is abnormal
       notificationResult = await checkAndNotify(userId, indicators);
-
-      // Update triage if there are alerts (non-blocking — don't fail the upload)
-      try {
-        const hasAlerts = indicators.some(ind => classifyIndicator(ind.name, ind.value) === 'alerta');
-        if (hasAlerts) {
-          const alertIndicators = indicators.filter(ind => classifyIndicator(ind.name, ind.value) !== 'normal');
-          const triageColor = 'amarelo';
-          const symptomsSummary = alertIndicators.map(ind => {
-            const t = THRESHOLDS[ind.name];
-            return `${t ? t.label : ind.name}: ${ind.value} ${t ? t.unit : ''}`;
-          }).join('; ');
-
-          // Ensure triage table exists
-          await pool.query(`
-            CREATE TABLE IF NOT EXISTS triage (
-              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-              patient_id UUID,
-              manchester_color VARCHAR(20),
-              symptoms TEXT,
-              ai_assessment TEXT,
-              priority_score INTEGER DEFAULT 5,
-              status VARCHAR(30) DEFAULT 'aguardando',
-              created_at TIMESTAMP DEFAULT NOW(),
-              updated_at TIMESTAMP DEFAULT NOW()
-            )
-          `);
-
-          const existingTriage = await pool.query(
-            `SELECT id FROM triage WHERE patient_id = $1 ORDER BY created_at DESC LIMIT 1`,
-            [patientId || userId]
-          );
-
-          if (existingTriage.rows.length > 0) {
-            await pool.query(
-              `UPDATE triage SET manchester_color = $1, symptoms = $2, ai_assessment = $3, status = 'em_analise', updated_at = NOW() WHERE id = $4`,
-              [triageColor, symptomsSummary, aiAnalysis, existingTriage.rows[0].id]
-            );
-          } else {
-            await pool.query(
-              `INSERT INTO triage (patient_id, manchester_color, symptoms, ai_assessment, priority_score, status)
-               VALUES ($1, $2, $3, $4, $5, 'aguardando')`,
-              [patientId || userId, triageColor, symptomsSummary, aiAnalysis, 7]
-            );
-          }
-        }
-      } catch (triageErr) {
-        console.warn('[EXAM UPLOAD] Triage update failed (non-blocking):', triageErr.message);
-      }
+      await updateTriageFromIndicators(patientId, userId, indicators, aiAnalysis);
     }
 
     res.json({
@@ -259,6 +271,103 @@ router.post('/upload', examUpload.single('file'), async (req, res) => {
   } catch (err) {
     console.error('[EXAM UPLOAD] Error:', err);
     res.status(500).json({ error: 'Erro ao processar exame: ' + err.message });
+  }
+});
+
+// POST /api/exams/upload-batch — patient uploads MANY exams at once; the system
+// analyses each, then runs a comparative/historical analysis across the patient's
+// full indicator history and notifies patient + professionals when trends worsen.
+router.post('/upload-batch', examUpload.array('files', 20), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'Envie ao menos um arquivo' });
+    }
+
+    const userId = req.user.id;
+    const patientResult = await pool.query(
+      'SELECT id FROM patients WHERE user_id = $1 LIMIT 1', [userId]
+    );
+    const patientId = patientResult.rows.length > 0 ? patientResult.rows[0].id : null;
+
+    const processed = [];
+    const allIndicators = [];
+    for (const file of req.files) {
+      try {
+        const result = await processExamFile(userId, patientId, file, {
+          notes: req.body.notes || null,
+        });
+        processed.push({
+          exam: result.exam,
+          file_name: file.originalname,
+          indicators_found: result.indicators.length,
+          indicators: result.indicators,
+          ai_analysis: result.aiAnalysis,
+        });
+        allIndicators.push(...result.indicators);
+      } catch (fileErr) {
+        console.error(`[EXAM BATCH] Failed to process ${file.originalname}:`, fileErr.message);
+        processed.push({ file_name: file.originalname, error: fileErr.message });
+      }
+    }
+
+    // Update triage from the combined set of indicators found across all files.
+    if (allIndicators.length > 0) {
+      const combinedAnalysis = processed
+        .filter(p => p.ai_analysis)
+        .map(p => `${p.file_name}: ${p.ai_analysis}`)
+        .join('\n\n');
+      await updateTriageFromIndicators(patientId, userId, allIndicators, combinedAnalysis);
+    }
+
+    // Comparative / historical analysis over the full indicator history.
+    const history = await getIndicatorHistory(userId);
+    const comparative = computeComparativeAnalysis(history);
+
+    // LLM comparative narrative (optional — falls back silently).
+    let comparativeAnalysisText = null;
+    if (groq.isConfigured() && comparative.trends.length > 0) {
+      try {
+        comparativeAnalysisText = await groq.analyzeExamComparison(comparative.trends);
+      } catch (llmErr) {
+        console.warn('[EXAM BATCH] Groq comparative analysis failed:', llmErr.message);
+      }
+    }
+
+    // Notify patient + professionals when the comparative analysis found alerts.
+    const notifications = await sendComparativeReport(userId, comparative, comparativeAnalysisText);
+
+    res.json({
+      success: true,
+      files_processed: processed.length,
+      exams: processed,
+      total_indicators: allIndicators.length,
+      comparative: {
+        trends: comparative.trends,
+        alerts: comparative.alerts,
+        analysis: comparativeAnalysisText,
+      },
+      notifications,
+    });
+  } catch (err) {
+    console.error('[EXAM BATCH] Error:', err);
+    res.status(500).json({ error: 'Erro ao processar exames: ' + err.message });
+  }
+});
+
+// GET /api/exams/comparative — comparative/historical view of the patient's indicators
+router.get('/comparative', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const history = await getIndicatorHistory(userId);
+    const comparative = computeComparativeAnalysis(history);
+    res.json({
+      trends: comparative.trends,
+      alerts: comparative.alerts,
+      history,
+    });
+  } catch (err) {
+    console.error('[EXAM COMPARATIVE] Error:', err);
+    res.status(500).json({ error: 'Erro ao gerar análise comparativa' });
   }
 });
 
