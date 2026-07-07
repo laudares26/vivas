@@ -186,7 +186,7 @@ export default function Teleconsulta() {
               <p className="text-xs text-gray-500 mb-3">Selecione o profissional para verificar horários disponíveis em comum</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {MY_PROFESSIONALS.map(prof => (
-                  <button key={prof.id} onClick={() => setSelectedProfessional(prof)} className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${selectedProfessional?.id === prof.id ? 'border-vivas-blue bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                  <button key={prof.id} onClick={() => setSelectedProfessional(prof)} className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${selectedProfessional?.id === prof.id ? 'border-vivas-blue bg-wine-soft' : 'border-gray-200 hover:bg-gray-50'}`}>
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ backgroundColor: prof.avatar_color }}>{prof.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
                     <div className="min-w-0"><p className="text-sm font-medium text-gray-900 truncate">{prof.name}</p><p className="text-xs text-gray-500">{prof.specialty}</p></div>
                   </button>
@@ -200,7 +200,7 @@ export default function Teleconsulta() {
               {weekDates.map(date => {
                 const d = new Date(date + 'T12:00:00')
                 return (
-                  <button key={date} onClick={() => setSelectedDate(date)} className={`flex flex-col items-center p-1.5 sm:p-3 rounded-xl border transition-all ${selectedDate === date ? 'border-vivas-blue bg-blue-50 text-vivas-blue' : 'border-gray-200 hover:bg-gray-50'}`}>
+                  <button key={date} onClick={() => setSelectedDate(date)} className={`flex flex-col items-center p-1.5 sm:p-3 rounded-xl border transition-all ${selectedDate === date ? 'border-vivas-blue bg-wine-soft text-vivas-blue' : 'border-gray-200 hover:bg-gray-50'}`}>
                     <span className="text-[9px] sm:text-xs text-gray-500 font-medium">{dayNames[d.getDay()]}</span>
                     <span className="text-sm sm:text-lg font-bold">{d.getDate()}</span>
                   </button>
@@ -215,7 +215,7 @@ export default function Teleconsulta() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {slots.map(slot => (
                   <button key={slot.hour} onClick={() => slot.available && setSelectedSlot(slot.hour)} disabled={!slot.available}
-                    className={`p-2 sm:p-3 rounded-xl border text-center transition-all ${selectedSlot === slot.hour ? 'border-vivas-green bg-green-50 text-vivas-green-dark' : slot.available ? 'border-gray-200 hover:border-vivas-blue hover:bg-blue-50' : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'}`}>
+                    className={`p-2 sm:p-3 rounded-xl border text-center transition-all ${selectedSlot === slot.hour ? 'border-vivas-green bg-green-50 text-vivas-green-dark' : slot.available ? 'border-gray-200 hover:border-vivas-blue hover:bg-wine-soft' : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'}`}>
                     <p className="font-bold text-sm">{slot.hour}</p>
                     <div className="flex items-center justify-center gap-1 mt-1">
                       {slot.available ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-gray-300" />}
@@ -250,18 +250,18 @@ export default function Teleconsulta() {
                 <div key={c.id} className="p-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-sm font-medium text-gray-900">{isPaciente ? c.professional : c.patient}</p>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">{c.status}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-wine-soft text-wine font-medium">{c.status}</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <CalendarDays className="w-3 h-3" /><span>{new Date(c.date + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
                     <Clock className="w-3 h-3 ml-1" /><span>{c.hour}</span>
                   </div>
-                  <button onClick={() => setView('call')} className="mt-2 w-full text-xs font-medium text-vivas-blue hover:bg-blue-50 p-1.5 rounded-lg transition-colors">Entrar na Teleconsulta</button>
+                  <button onClick={() => setView('call')} className="mt-2 w-full text-xs font-medium text-vivas-blue hover:bg-wine-soft p-1.5 rounded-lg transition-colors">Entrar na Teleconsulta</button>
                 </div>
               ))}
             </div>
           </div>
-          <div className="card bg-blue-50 border border-blue-100">
+          <div className="card bg-wine-soft border border-wine-line">
             <h4 className="font-medium text-sm text-gray-800 mb-2">Sincronização de Calendário</h4>
             <p className="text-xs text-gray-600">O sistema verifica automaticamente a disponibilidade de ambas as partes (profissional e paciente) para encontrar horários em comum para a teleconsulta.</p>
             <div className="mt-3 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /><span className="text-xs text-green-700 font-medium">Calendários sincronizados</span></div>

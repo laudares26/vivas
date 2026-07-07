@@ -57,7 +57,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
 
         <div className="flex items-center gap-2 pl-2 border-l border-gray-200">
           <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-            style={{ backgroundColor: user?.avatar_color || '#0057B8' }}>
+            style={{ backgroundColor: user?.avatar_color || '#7B1E3C' }}>
             {initials}
           </div>
           <div className="hidden md:block">

@@ -83,7 +83,7 @@ export default function Prescricoes() {
             <span className={`badge ${p.status === 'ativa' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{p.status}</span>
             <span className="text-xs text-gray-400">{new Date(p.date_time).toLocaleDateString('pt-BR')}</span>
             <div className="flex gap-1">
-              <button onClick={() => openPreview(p.id)} className="p-2 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-vivas-blue"><Eye className="w-4 h-4" /></button>
+              <button onClick={() => openPreview(p.id)} className="p-2 rounded-lg hover:bg-wine-soft text-gray-400 hover:text-vivas-blue"><Eye className="w-4 h-4" /></button>
               <button onClick={() => handleDelete(p.id)} className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
             </div>
           </div>

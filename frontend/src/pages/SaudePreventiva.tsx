@@ -166,7 +166,7 @@ export default function SaudePreventiva() {
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* Health Score */}
-          <div className="card bg-gradient-to-r from-blue-50 to-green-50 border border-blue-100">
+          <div className="card bg-gradient-to-r from-wine-soft to-green-50 border border-wine-line">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -179,7 +179,7 @@ export default function SaudePreventiva() {
                 <div className="relative w-20 h-20">
                   <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
                     <circle cx="18" cy="18" r="15.915" fill="none" stroke="#e2e8f0" strokeWidth="3" />
-                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="#0057B8" strokeWidth="3"
+                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="#7B1E3C" strokeWidth="3"
                       strokeDasharray="72 28" strokeLinecap="round" className="transition-all duration-1000" />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -356,13 +356,13 @@ export default function SaudePreventiva() {
                   key={exam.id}
                   onClick={() => setSelectedExam(exam)}
                   className={`p-4 rounded-xl border cursor-pointer transition-all hover:shadow-md ${
-                    selectedExam?.id === exam.id ? 'border-vivas-blue bg-blue-50/50' : 'border-gray-200 bg-white'
+                    selectedExam?.id === exam.id ? 'border-vivas-blue bg-wine-soft/50' : 'border-gray-200 bg-white'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {exam.type === 'lab' ? (
-                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-wine-soft flex items-center justify-center">
                           <FileText className="w-5 h-5 text-vivas-blue" />
                         </div>
                       ) : (
@@ -401,7 +401,7 @@ export default function SaudePreventiva() {
                     <p className="font-medium text-sm text-gray-900">{selectedExam.name}</p>
                     <p className="text-xs text-gray-500 mt-1">{new Date(selectedExam.date).toLocaleDateString('pt-BR')}</p>
                   </div>
-                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="p-3 bg-wine-soft rounded-lg border border-wine-line">
                     <p className="text-sm text-gray-700">{selectedExam.aiInsight}</p>
                   </div>
                   <p className="text-[10px] text-gray-400 italic">Esta análise é um suporte preventivo e não substitui a avaliação do seu médico.</p>
@@ -441,14 +441,14 @@ export default function SaudePreventiva() {
             </div>
 
             {uploadFile && !uploading && (
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg flex items-center justify-between">
+              <div className="mt-4 p-3 bg-wine-soft rounded-lg flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-vivas-blue" />
                   <span className="text-sm font-medium text-gray-700">{uploadFile.name}</span>
                 </div>
                 <button
                   onClick={handleUpload}
-                  className="px-4 py-1.5 bg-vivas-blue text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                  className="px-4 py-1.5 bg-vivas-blue text-white rounded-lg text-sm font-medium hover:bg-wine-deep transition-colors"
                 >
                   Enviar
                 </button>
@@ -456,7 +456,7 @@ export default function SaudePreventiva() {
             )}
 
             {uploading && (
-              <div className="mt-4 flex items-center justify-center gap-3 p-4 bg-blue-50 rounded-lg">
+              <div className="mt-4 flex items-center justify-center gap-3 p-4 bg-wine-soft rounded-lg">
                 <Loader2 className="w-5 h-5 text-vivas-blue animate-spin" />
                 <span className="text-sm font-medium text-vivas-blue">Enviando e analisando exame...</span>
               </div>
@@ -469,7 +469,7 @@ export default function SaudePreventiva() {
                   <p className="text-xs text-green-700 mt-1">{uploadResult.indicators_found} indicador(es) extraido(s)</p>
                 </div>
                 {uploadResult.ai_analysis && (
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="p-4 bg-wine-soft border border-wine-line rounded-lg">
                     <p className="font-semibold text-sm text-gray-900 mb-2">Analise preventiva:</p>
                     <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{uploadResult.ai_analysis}</p>
                   </div>
@@ -481,7 +481,7 @@ export default function SaudePreventiva() {
                 )}
                 <button
                   onClick={() => setUploadResult(null)}
-                  className="w-full px-4 py-2 bg-vivas-blue text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                  className="w-full px-4 py-2 bg-vivas-blue text-white rounded-lg text-sm font-medium hover:bg-wine-deep transition-colors"
                 >
                   Enviar outro exame
                 </button>

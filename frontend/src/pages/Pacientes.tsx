@@ -178,7 +178,7 @@ export default function Pacientes() {
                     <td className="px-6 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600"><Eye className="w-4 h-4" /></button>
-                        <button onClick={() => openEdit(p)} className="p-2 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-vivas-blue"><Edit2 className="w-4 h-4" /></button>
+                        <button onClick={() => openEdit(p)} className="p-2 rounded-lg hover:bg-wine-soft text-gray-400 hover:text-vivas-blue"><Edit2 className="w-4 h-4" /></button>
                         <button onClick={() => handleDelete(p.id)} className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>

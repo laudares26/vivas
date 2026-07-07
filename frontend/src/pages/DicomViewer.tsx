@@ -743,7 +743,7 @@ export default function DicomViewer() {
                   className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
-              <label className="flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white rounded-lg cursor-pointer hover:bg-blue-700 text-sm font-medium transition">
+              <label className="flex items-center gap-2 px-4 py-2 bg-[#7B1E3C] text-white rounded-lg cursor-pointer hover:bg-[#5E1730] text-sm font-medium transition">
                 <Upload size={16} />
                 {uploading ? 'Importando...' : 'Importar DICOM'}
                 <input type="file" multiple accept=".dcm,.dicom,.zip,application/dicom,application/octet-stream" onChange={handleFileUpload} className="hidden" />
@@ -860,7 +860,7 @@ export default function DicomViewer() {
                           <div className="mt-3 flex gap-2">
                             <button
                               onClick={() => openStudyInViewer(study)}
-                              className="px-4 py-2 bg-[#0057B8] text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-1.5"
+                              className="px-4 py-2 bg-[#7B1E3C] text-white rounded-lg text-sm font-medium hover:bg-[#5E1730] transition flex items-center gap-1.5"
                             >
                               <Eye size={14} /> Abrir Visualizador Clínico
                             </button>
@@ -1037,7 +1037,7 @@ export default function DicomViewer() {
                 </div>
                 <button
                   onClick={() => setShowAddPacs(true)}
-                  className="px-4 py-2 bg-[#0057B8] text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-1.5"
+                  className="px-4 py-2 bg-[#7B1E3C] text-white rounded-lg text-sm font-medium hover:bg-[#5E1730] transition flex items-center gap-1.5"
                 >
                   <Plus size={16} /> Adicionar Fonte
                 </button>
@@ -1220,7 +1220,7 @@ export default function DicomViewer() {
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowAddPacs(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancelar</button>
-                <button type="submit" className="flex-1 px-4 py-2 bg-[#0057B8] text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">Adicionar</button>
+                <button type="submit" className="flex-1 px-4 py-2 bg-[#7B1E3C] text-white rounded-lg text-sm font-medium hover:bg-[#5E1730] transition">Adicionar</button>
               </div>
             </form>
           </div>

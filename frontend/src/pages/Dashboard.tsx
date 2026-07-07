@@ -89,7 +89,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-wine-soft flex items-center justify-center">
               <CalendarDays className="w-5 h-5 text-vivas-blue" />
             </div>
             <div className="flex items-center gap-1 text-xs font-medium text-vivas-blue">
@@ -193,7 +193,7 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-vivas-blue text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-vivas-blue text-white rounded-xl font-medium hover:bg-wine-deep transition-colors"
               >
                 <Camera className="w-5 h-5" />
                 Tirar Foto do Exame
@@ -205,7 +205,7 @@ export default function Dashboard() {
                     fileInputRef.current.click()
                   }
                 }}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-vivas-blue text-vivas-blue rounded-xl font-medium hover:bg-blue-50 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-vivas-blue text-vivas-blue rounded-xl font-medium hover:bg-wine-soft transition-colors"
               >
                 <Upload className="w-5 h-5" />
                 Upload de Arquivo
@@ -222,7 +222,7 @@ export default function Dashboard() {
           )}
 
           {uploadState === 'analyzing' && (
-            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl">
+            <div className="flex items-center gap-3 p-4 bg-wine-soft rounded-xl">
               <div className="animate-spin w-5 h-5 border-2 border-vivas-blue border-t-transparent rounded-full" />
               <p className="text-sm text-vivas-blue font-medium">Analisando qualidade da imagem...</p>
             </div>
@@ -280,7 +280,7 @@ export default function Dashboard() {
             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip />
-            <Line type="monotone" dataKey="atendimentos" stroke="#0057B8" strokeWidth={2.5} dot={{ fill: '#0057B8', r: 4 }} />
+            <Line type="monotone" dataKey="atendimentos" stroke="#7B1E3C" strokeWidth={2.5} dot={{ fill: '#7B1E3C', r: 4 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -337,7 +337,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="card">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-wine-soft flex items-center justify-center">
                 <Users className="w-5 h-5 text-vivas-blue" />
               </div>
               <div>

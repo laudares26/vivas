@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 import Modal from '../components/Modal'
 
 const STATUS_COLORS: Record<string, string> = {
-  agendado: 'bg-blue-100 text-blue-700',
+  agendado: 'bg-wine-soft text-wine',
   confirmado: 'bg-green-100 text-green-700',
   em_atendimento: 'bg-amber-100 text-amber-700',
   concluido: 'bg-gray-100 text-gray-700',

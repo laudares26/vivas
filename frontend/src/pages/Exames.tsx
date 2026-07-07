@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 import Modal from '../components/Modal'
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  solicitado: { label: 'Solicitado', color: 'bg-blue-100 text-blue-700' },
+  solicitado: { label: 'Solicitado', color: 'bg-wine-soft text-wine' },
   coletado: { label: 'Coletado', color: 'bg-yellow-100 text-yellow-700' },
   em_analise: { label: 'Em Análise', color: 'bg-purple-100 text-purple-700' },
   concluido: { label: 'Concluído', color: 'bg-green-100 text-green-700' },

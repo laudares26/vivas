@@ -84,8 +84,8 @@ export default function Cupons() {
           </div>
         </div>
         <div className="card flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
-            <TrendingUp className="w-6 h-6 text-blue-600" />
+          <div className="w-12 h-12 rounded-xl bg-wine-soft flex items-center justify-center">
+            <TrendingUp className="w-6 h-6 text-wine" />
           </div>
           <div>
             <p className="text-2xl font-bold text-gray-900">{totalRedemptions.toLocaleString()}</p>
@@ -149,7 +149,7 @@ export default function Cupons() {
                   </td>
                   <td className="px-6 py-3 text-right">
                     <div className="flex gap-1 justify-end">
-                      <button onClick={() => openEdit(c)} className="p-2 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-vivas-blue"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => openEdit(c)} className="p-2 rounded-lg hover:bg-wine-soft text-gray-400 hover:text-vivas-blue"><Edit2 className="w-4 h-4" /></button>
                       <button onClick={() => handleDelete(c.id)} className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>

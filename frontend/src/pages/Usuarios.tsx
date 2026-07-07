@@ -144,7 +144,7 @@ export default function Usuarios() {
                   <td className="px-6 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                        style={{ backgroundColor: u.avatar_color || '#0057B8' }}>
+                        style={{ backgroundColor: u.avatar_color || '#7B1E3C' }}>
                         {u.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                       </div>
                       <span className="font-medium text-gray-900">{u.full_name}</span>
@@ -160,7 +160,7 @@ export default function Usuarios() {
                   <td className="px-6 py-3 text-gray-600 text-xs">{new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
                   <td className="px-6 py-3 text-right">
                     <div className="flex gap-1 justify-end">
-                      <button onClick={() => openEdit(u)} className="p-2 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-vivas-blue"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => openEdit(u)} className="p-2 rounded-lg hover:bg-wine-soft text-gray-400 hover:text-vivas-blue"><Edit2 className="w-4 h-4" /></button>
                       <button onClick={() => toggleActive(u)} className={`p-2 rounded-lg ${u.active ? 'hover:bg-red-50 text-gray-400 hover:text-red-600' : 'hover:bg-green-50 text-gray-400 hover:text-green-600'}`}>
                         {u.active ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                       </button>

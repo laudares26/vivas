@@ -75,7 +75,7 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
         `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all duration-200 group ${
           isActive
             ? 'bg-white/20 text-white shadow-lg shadow-black/10'
-            : 'text-blue-100 hover:bg-white/10 hover:text-white'
+            : 'text-white/70 hover:bg-white/10 hover:text-white'
         }`
       }
     >
@@ -123,11 +123,9 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
   }
 
   const isPatient = role === 'paciente'
-  const bgGradient = isPatient
-    ? 'linear-gradient(180deg, #5E1730 0%, #3D0F20 50%, #2A0A16 100%)'
-    : 'linear-gradient(180deg, #0057B8 0%, #003D82 50%, #002D61 100%)'
-  const textMuted = isPatient ? 'text-pink-200' : 'text-blue-200'
-  const textSection = isPatient ? 'text-pink-300' : 'text-blue-300'
+  const bgGradient = 'linear-gradient(180deg, #5E1730 0%, #3D0F20 50%, #2A0A16 100%)'
+  const textMuted = 'text-pink-200'
+  const textSection = 'text-pink-300'
 
   return (
     <aside
