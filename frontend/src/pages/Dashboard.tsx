@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Users, CalendarDays, AlertTriangle, Clock, TrendingUp, ArrowUpRight, Bell, Camera, Upload, FileText, CheckCircle, XCircle, Activity } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { api, type DashboardData } from '../services/api'
@@ -12,6 +13,7 @@ export default function Dashboard() {
   const [imageQuality, setImageQuality] = useState<'good' | 'bad' | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
     api.getDashboard().then(setData).catch(console.error).finally(() => setLoading(false))
@@ -87,7 +89,7 @@ export default function Dashboard() {
 
       {/* KPI Cards - personalized */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card">
+        <button type="button" onClick={() => navigate('/agendamentos')} className="card text-left w-full cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-wine">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-wine-soft flex items-center justify-center">
               <CalendarDays className="w-5 h-5 text-wine" />
@@ -99,9 +101,9 @@ export default function Dashboard() {
           </div>
           <p className="text-2xl font-bold text-gray-900">{data.personalStats?.totalConsultations || 0}</p>
           <p className="text-sm text-gray-500 mt-0.5">Consultas Realizadas</p>
-        </div>
+        </button>
 
-        <div className="card">
+        <button type="button" onClick={() => navigate('/agendamentos')} className="card text-left w-full cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-wine">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-wine-soft flex items-center justify-center">
               <Clock className="w-5 h-5 text-wine" />
@@ -113,9 +115,9 @@ export default function Dashboard() {
               : 'Nenhuma'}
           </p>
           <p className="text-sm text-gray-500 mt-0.5">Última Consulta</p>
-        </div>
+        </button>
 
-        <div className="card">
+        <button type="button" onClick={() => navigate('/agendamentos')} className="card text-left w-full cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-wine">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-wine-soft flex items-center justify-center">
               <Activity className="w-5 h-5 text-wine" />
@@ -123,9 +125,9 @@ export default function Dashboard() {
           </div>
           <p className="text-2xl font-bold text-gray-900">{data.kpis.appointmentsToday}</p>
           <p className="text-sm text-gray-500 mt-0.5">Atendimentos Hoje</p>
-        </div>
+        </button>
 
-        <div className="card relative">
+        <button type="button" onClick={() => navigate('/saude-preventiva')} className="card relative text-left w-full cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-wine">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
               <Bell className="w-5 h-5 text-red-600" />
@@ -141,7 +143,7 @@ export default function Dashboard() {
           {(data.healthAlerts?.unread || 0) > 0 && (
             <p className="text-xs text-red-500 mt-0.5 font-medium">{data.healthAlerts.unread} não lido(s)</p>
           )}
-        </div>
+        </button>
       </div>
 
       {/* Health Alerts Section */}
