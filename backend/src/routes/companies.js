@@ -20,8 +20,8 @@ router.post('/lead', async (req, res) => {
     try {
       const { sendEmail } = require('../services/notifications');
       await sendEmail(
-        process.env.SMTP_USER || 'sandrolaudares@gmail.com',
-        'VivaS Empresas - Novo lead B2B',
+        process.env.LEADS_NOTIFY_EMAIL || 'contato@vivas.digital',
+        'vivas Empresas - Novo lead B2B',
         `<div style="font-family:Arial,sans-serif;max-width:600px;">
           <h2 style="color:#7B1E3C;">Novo Lead B2B - VivaS Empresas</h2>
           <table style="width:100%;border-collapse:collapse;">

@@ -24,6 +24,32 @@ function getTransporter() {
   return transporter;
 }
 
+// Single source of truth for the platform sender address.
+// Set SMTP_FROM in the environment to change it (e.g. "vivas" <contato@vivas.digital>).
+function getFromAddress() {
+  return process.env.SMTP_FROM || '"vivas" <contato@vivas.digital>';
+}
+
+// Send a raw email through the shared transporter. Returns {success, ...}.
+// Supports optional attachments (nodemailer format). Falls back to console log
+// when no SMTP is configured.
+async function sendRawEmail({ to, subject, html, attachments }) {
+  const transport = getTransporter();
+  const emailData = { from: getFromAddress(), to, subject, html, attachments };
+  if (transport) {
+    try {
+      const info = await transport.sendMail(emailData);
+      console.log(`[Email] Sent to ${to}: ${subject} (messageId: ${info.messageId})`);
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error(`[Email] Failed to send to ${to}:`, err.message);
+      return { success: false, error: err.message };
+    }
+  }
+  console.log(`[Email][LOG] To: ${to} | Subject: ${subject}`);
+  return { success: true, logged: true };
+}
+
 // Health indicator thresholds (Brazilian clinical standards)
 const THRESHOLDS = {
   glicemia_jejum: { unit: 'mg/dL', normal: [70, 99], atencao: [100, 125], alerta: [126, Infinity], label: 'Glicemia em Jejum' },
@@ -48,7 +74,7 @@ async function sendEmail(to, subject, html) {
   const transport = getTransporter();
 
   const emailData = {
-    from: process.env.SMTP_FROM || '"VIVAS Saúde" <notificacoes@vivas.digital>',
+    from: getFromAddress(),
     to,
     subject,
     html,
@@ -539,4 +565,5 @@ module.exports = {
   checkAndNotify, classifyIndicator, THRESHOLDS, sendEmail,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
   sendInvitePatientEmail, sendPostConsultDiscountEmail,
+  getTransporter, getFromAddress, sendRawEmail,
 };

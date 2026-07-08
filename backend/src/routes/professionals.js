@@ -146,31 +146,20 @@ async function onboardingHandler(req, res) {
     );
 
     // Send contract email using full template
-    const nodemailer = require('nodemailer');
-    const smtpUser = process.env.SMTP_USER || 'sandrolaudares@gmail.com';
-    const smtpPass = process.env.SMTP_PASS;
-
-    if (smtpPass) {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: smtpUser, pass: smtpPass }
-      });
-
+    {
+      const { sendRawEmail } = require('../services/notifications');
       const contractData = { fullName, cpf, registro, registroUf, especialidade, email, tempPassword };
       const html = type === 'medico'
         ? generateMedicoContract(contractData)
         : generatePsicologoContract(contractData);
 
       const subjectType = type === 'medico' ? 'Medico' : 'Psicologo';
-      const info = await transporter.sendMail({
-        from: `"VivaS Saude" <${smtpUser}>`,
+      const result = await sendRawEmail({
         to: email,
-        subject: `VivaS - Contrato de Credenciamento ${subjectType} assinado`,
+        subject: `vivas - Contrato de Credenciamento ${subjectType} assinado`,
         html
       });
-      console.log(`[ONBOARDING] Contract email sent to ${email} - Response: ${info.response}`);
-    } else {
-      console.log(`[ONBOARDING] No SMTP_PASS - email would be sent to ${email}`);
+      console.log(`[ONBOARDING] Contract email dispatch to ${email} - success: ${result.success}`);
     }
 
     res.json({ success: true, id: profId });

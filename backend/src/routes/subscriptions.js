@@ -399,17 +399,11 @@ async function checkAbandonedCheckouts() {
       // Also send email notification about abandoned cart
       if (email) {
         try {
-          const nodemailer = require('nodemailer');
-          const smtpPass = process.env.SMTP_PASS;
-          if (smtpPass) {
-            const transporter = nodemailer.createTransport({
-              service: 'gmail',
-              auth: { user: process.env.SMTP_USER || 'sandrolaudares@gmail.com', pass: smtpPass }
-            });
-            await transporter.sendMail({
-              from: '"VivaS Saude" <contato@vivasaudeinteligente.com.br>',
+          const { sendRawEmail } = require('../services/notifications');
+          {
+            await sendRawEmail({
               to: email,
-              subject: `${nome}, sua cotacao VivaS esta esperando por voce`,
+              subject: `${nome}, sua cotacao vivas esta esperando por voce`,
               html: `
                 <div style="font-family:'Plus Jakarta Sans',sans-serif;max-width:520px;margin:0 auto;padding:32px;">
                   <div style="background:#7B1E3C;padding:24px;border-radius:12px 12px 0 0;text-align:center;">
@@ -576,16 +570,8 @@ router.post('/quote', async (req, res) => {
     const confirmUrl = `${baseUrl}/api/subscriptions/confirm-quote?id=${quoteId}&email=${encodeURIComponent(email)}`;
 
     // Send email with quote
-    const nodemailer = require('nodemailer');
-    const smtpUser = process.env.SMTP_USER || 'sandrolaudares@gmail.com';
-    const smtpPass = process.env.SMTP_PASS;
-
-    if (smtpPass) {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: smtpUser, pass: smtpPass }
-      });
-
+    const { sendRawEmail } = require('../services/notifications');
+    {
       let planLabel = plan === 'individual' ? 'Individual' : 'Família';
       let detailLines = `<tr><td style="padding:8px 0;color:#6B7280">Plano ${planLabel}</td><td style="padding:8px 0;text-align:right;font-weight:600">R$ ${base.toFixed(2).replace('.', ',')}</td></tr>`;
       if (depAdd > 0) detailLines += `<tr><td style="padding:8px 0;color:#6B7280">${dependentes} dependente(s)</td><td style="padding:8px 0;text-align:right;font-weight:600">+ R$ ${depAdd.toFixed(2).replace('.', ',')}</td></tr>`;
@@ -610,19 +596,16 @@ router.post('/quote', async (req, res) => {
           </div>
           <p style="font-size:12px;color:#9CA3AF;text-align:center">Este link expira em 48 horas. Se não solicitou esta cotação, ignore este email.</p>
           <hr style="border:none;border-top:1px solid #F3F4F6;margin:24px 0">
-          <p style="font-size:11px;color:#9CA3AF;text-align:center">VivaS Saúde Inteligente - vivasaudeinteligente.com.br</p>
+          <p style="font-size:11px;color:#9CA3AF;text-align:center">vivas Saúde Inteligente - vivasaudeinteligente.com.br</p>
         </div>
       `;
 
-      const info = await transporter.sendMail({
-        from: `"VivaS Saúde" <${smtpUser}>`,
+      const result = await sendRawEmail({
         to: email,
-        subject: 'VivaS - Sua cotação está pronta!',
+        subject: 'vivas - Sua cotação está pronta!',
         html
       });
-      console.log(`[QUOTE] Email sent to ${email} - Response: ${info.response}`);
-    } else {
-      console.log(`[QUOTE] No SMTP_PASS - Email would be sent to ${email} - Total: R$ ${total.toFixed(2)}`);
+      console.log(`[QUOTE] Email dispatch to ${email} - success: ${result.success}`);
     }
 
     res.json({ success: true, quoteId, total, confirmUrl });
