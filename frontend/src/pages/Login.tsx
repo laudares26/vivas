@@ -45,7 +45,7 @@ export default function Login() {
           <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
             <Heart className="w-12 h-12" fill="white" />
           </div>
-          <h1 className="font-display text-5xl font-extrabold mb-3">VivaS</h1>
+          <h1 className="font-display text-5xl font-extrabold mb-3">vivas</h1>
           <p className="text-xl text-white/70 mb-8">Saúde preventiva inteligente</p>
           <div className="max-w-md text-center text-white/60 space-y-2">
             <p>Cuide da sua saúde com inteligência artificial como suporte preventivo</p>
@@ -60,7 +60,7 @@ export default function Login() {
             <div className="w-10 h-10 rounded-xl bg-wine flex items-center justify-center">
               <Heart className="w-6 h-6 text-white" fill="white" />
             </div>
-            <h1 className="font-display text-2xl font-extrabold text-wine">VivaS</h1>
+            <h1 className="font-display text-2xl font-extrabold text-wine">vivas</h1>
           </div>
 
           <h2 className="text-2xl font-display font-extrabold text-ink mb-1">Bem-vindo de volta</h2>

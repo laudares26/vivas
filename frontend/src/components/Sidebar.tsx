@@ -97,7 +97,7 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
       >
         <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
           <div className={`flex items-center justify-center flex-shrink-0 ${collapsed ? 'p-1' : 'px-1 py-1'}`}>
-            <img src="/vivas-branco.svg" alt="VIVAS" className={`object-contain ${collapsed ? 'h-8 w-8' : 'h-9'}`} />
+            <img src="/vivas-branco.svg" alt="vivas" className={`object-contain ${collapsed ? 'h-8 w-8' : 'h-9'}`} />
           </div>
           {!collapsed && (
             <div className="overflow-hidden">
@@ -136,7 +136,7 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
     >
       <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
         <div className={`flex items-center justify-center flex-shrink-0 ${collapsed ? 'p-1' : 'px-1 py-1'}`}>
-          <img src="/vivas-branco.svg" alt="VIVAS" className={`object-contain ${collapsed ? 'h-8 w-8' : 'h-9'}`} />
+          <img src="/vivas-branco.svg" alt="vivas" className={`object-contain ${collapsed ? 'h-8 w-8' : 'h-9'}`} />
         </div>
         {!collapsed && (
           <div className="overflow-hidden">

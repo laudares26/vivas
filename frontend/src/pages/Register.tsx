@@ -52,7 +52,7 @@ export default function Register() {
             <span className="w-10 h-10 rounded-xl bg-wine flex items-center justify-center">
               <Heart className="w-5 h-5 text-white" fill="white" />
             </span>
-            <span className="font-display font-extrabold text-2xl text-ink">VivaS</span>
+            <span className="font-display font-extrabold text-2xl text-ink">vivas</span>
           </div>
           <h1 className="font-display font-extrabold text-xl text-ink">Crie sua conta</h1>
           <div className="mt-3 inline-flex items-center gap-2 bg-wine-soft text-wine text-sm font-semibold px-4 py-2 rounded-full">

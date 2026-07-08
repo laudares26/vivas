@@ -122,7 +122,7 @@ export default function PatientDashboard() {
             <span className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
               <Heart className="w-4 h-4 text-white" fill="white" />
             </span>
-            <span className="font-display font-extrabold text-lg">VivaS</span>
+            <span className="font-display font-extrabold text-lg">vivas</span>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => navigate('/saude-preventiva')} className="relative" aria-label="Notificacoes">
@@ -424,7 +424,7 @@ export default function PatientDashboard() {
           <div className="bg-gradient-to-br from-[#3A1020] to-wine-deep text-white rounded-2xl p-5 shadow-lg">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs uppercase tracking-wider text-white/60 font-bold">VivaS</p>
+                <p className="text-xs uppercase tracking-wider text-white/60 font-bold">vivas</p>
                 <p className="font-display font-extrabold text-xl mt-0.5">Família</p>
               </div>
               <span className="flex items-center gap-1.5 bg-green-400/20 text-green-300 text-xs font-bold px-2.5 py-1 rounded-full">
@@ -454,7 +454,7 @@ export default function PatientDashboard() {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Carteirinha Digital</p>
-                  <p className="font-display font-extrabold text-lg mt-1">VivaS Saude</p>
+                  <p className="font-display font-extrabold text-lg mt-1">vivas Saude</p>
                 </div>
                 <Heart className="w-8 h-8 text-white/30" />
               </div>

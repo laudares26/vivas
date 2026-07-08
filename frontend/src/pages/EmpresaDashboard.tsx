@@ -182,7 +182,7 @@ export default function EmpresaDashboard() {
               <CheckCircle className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-ink">VivaS Empresas</p>
+              <p className="text-2xl font-bold text-ink">vivas Empresas</p>
               <p className="text-xs text-muted">Plano ativo</p>
             </div>
           </div>
