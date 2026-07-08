@@ -34,9 +34,9 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
       className="min-h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 flex-shrink-0"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-sm min-w-0 flex-1">
         {onMenuClick && (
-          <button onClick={onMenuClick} className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 md:hidden">
+          <button onClick={onMenuClick} className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 md:hidden flex-shrink-0">
             <Menu className="w-5 h-5" />
           </button>
         )}
@@ -45,7 +45,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
         <span className="font-medium text-gray-900 truncate">{pageName}</span>
       </div>
 
-      <div className="flex items-center gap-2 md:gap-4">
+      <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
         <div className="relative hidden lg:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" placeholder="Buscar pacientes, médicos, exames..."
