@@ -706,7 +706,7 @@ export default function DicomViewer() {
             <p className="text-xs text-white/70 truncate">Visualizador de Imagens Médicas | vivas</p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 max-w-full">
+        <div className="flex flex-wrap items-center gap-1.5 max-w-full">
           <button
             onClick={() => setTab('library')}
             className={`px-3 py-1.5 text-sm rounded-lg transition flex-shrink-0 ${tab === 'library' ? 'bg-white text-wine font-semibold' : 'text-white/80 hover:bg-white/10'}`}
