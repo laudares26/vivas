@@ -55,6 +55,38 @@ export const api = {
   getExams: (params?: string) => request<Exam[]>(`/exams${params ? `?${params}` : ''}`),
   createExam: (data: Partial<Exam>) => request<Exam>('/exams', { method: 'POST', body: JSON.stringify(data) }),
   updateExam: (id: string, data: Partial<Exam>) => request<Exam>(`/exams/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  uploadExam: async (file: File, examName?: string, examText?: string): Promise<ExamUploadResult> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (examName) formData.append('exam_name', examName);
+    if (examText) formData.append('exam_text', examText);
+    const res = await fetch(`${API_BASE}/exams/upload`, {
+      method: 'POST',
+      headers: { ...getAuthHeaders() },
+      body: formData
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Erro de rede' }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  },
+  uploadExamsBatch: async (files: File[], notes?: string): Promise<ExamBatchResult> => {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+    if (notes) formData.append('notes', notes);
+    const res = await fetch(`${API_BASE}/exams/upload-batch`, {
+      method: 'POST',
+      headers: { ...getAuthHeaders() },
+      body: formData
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Erro de rede' }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  },
+  getExamComparative: () => request<ExamComparative>('/exams/comparative'),
 
   // EHR
   getEHR: (patientId: string) => request<EHREntry[]>(`/ehr/${patientId}`),
@@ -92,6 +124,13 @@ export const api = {
     return res.json();
   },
   getDicomFileUrl: (instanceId: string) => `${API_BASE}/dicom/file/${instanceId}`,
+  // Vivi (LLM assistant)
+  viviChat: (message: string, history: Array<{ role: 'user' | 'assistant'; content: string }>) =>
+    request<{ reply: string; source: string }>('/vivi/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, history }),
+    }),
+
   getPacsSources: () => request<PacsSource[]>('/dicom/pacs/sources'),
   createPacsSource: (data: Partial<PacsSource>) => request<PacsSource>('/dicom/pacs/sources', { method: 'POST', body: JSON.stringify(data) }),
   deletePacsSource: (id: string) => request<void>(`/dicom/pacs/sources/${id}`, { method: 'DELETE' }),
@@ -153,6 +192,49 @@ export interface Exam {
   professional_name: string; created_at: string; updated_at: string;
 }
 
+export interface ExamUploadResult {
+  success: boolean;
+  exam: Exam;
+  indicators_found: number;
+  indicators: Array<{ name: string; value: number }>;
+  ai_analysis: string;
+  notifications: { notified: boolean; alerts?: Array<{ label: string; value: number; unit: string; status: string }>; } | null;
+}
+
+export interface ExamTrend {
+  name: string; label: string; unit: string; count: number;
+  first_value: number; first_date: string;
+  previous_value: number | null; current_value: number; current_date: string;
+  delta: number | null; delta_pct: number | null;
+  direction: 'subiu' | 'desceu' | 'estavel';
+  worsening: boolean;
+  current_status: string; previous_status: string | null;
+}
+
+export interface ExamComparative {
+  trends: ExamTrend[];
+  alerts: Array<{ label: string; value: number; unit: string; status: string; delta: number | null; direction: string; worsening: boolean }>;
+  history?: Record<string, Array<{ value: number; unit: string; recorded_at: string }>>;
+}
+
+export interface ExamBatchResult {
+  success: boolean;
+  files_processed: number;
+  exams: Array<{ file_name: string; indicators_found?: number; ai_analysis?: string; error?: string }>;
+  total_indicators: number;
+  comparative: {
+    trends: ExamTrend[];
+    alerts: ExamComparative['alerts'];
+    analysis: string | null;
+  };
+  notifications: {
+    notified: boolean;
+    reason?: string;
+    alerts?: ExamComparative['alerts'];
+    emailsSent?: { patient: { success: boolean }; professionals: Array<{ name: string; success: boolean }> };
+  } | null;
+}
+
 export interface EHREntry {
   id: string; patient_id: string; entry_type: string; title: string; description: string;
   metadata: Record<string, string>; created_at: string;
@@ -169,12 +251,21 @@ export interface RiskPrediction {
   hypertension_risk: number; renal_risk: number; recommendations: string; prediction_date: string;
 }
 
+export interface HealthAlert {
+  id: string; patient_user_id: string; indicator_name: string; value: number;
+  threshold: number; severity: string; created_at: string; read_by_patient: boolean;
+  read_by_professional: boolean; patient_name?: string;
+}
+
 export interface DashboardData {
   kpis: { totalPatients: number; totalProfessionals: number; appointmentsToday: number; triageQueue: number; satisfaction: number; };
   upcomingAppointments: Appointment[];
   specialtyStats: { specialty: string; count: number; }[];
   manchesterStats: { manchester_color: string; count: number; }[];
   weeklyStats: { day: string; count: number; }[];
+  healthAlerts: { total: number; unread: number; recent: HealthAlert[]; };
+  personalStats: { totalConsultations: number; lastConsultation: string | null; };
+  dependentes?: Array<{ name: string; cpf?: string; }>;
 }
 
 export interface Coupon {

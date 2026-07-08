@@ -7,7 +7,6 @@ const seedData = async () => {
     // Seed default users
     const adminHash = await bcrypt.hash('admin123', 10);
     const medicoHash = await bcrypt.hash('medico123', 10);
-    const enfermeiroHash = await bcrypt.hash('enfermeiro123', 10);
     const pacienteHash = await bcrypt.hash('paciente123', 10);
     const marketingHash = await bcrypt.hash('marketing123', 10);
     const psicologoHash = await bcrypt.hash('psicologo123', 10);
@@ -15,14 +14,14 @@ const seedData = async () => {
     await pool.query(`
       INSERT INTO users (email, password_hash, full_name, role, avatar_color)
       VALUES 
-        ('admin@vivas.com', $1, 'Dr. Admin', 'admin', '#0057B8'),
-        ('ricardo@vivas.com', $2, 'Dr. Ricardo Mendes', 'medico', '#2563EB'),
-        ('mariana@vivas.com', $3, 'Enf. Mariana Costa', 'enfermeiro', '#16A34A'),
-        ('maria@email.com', $4, 'Maria Silva Santos', 'paciente', '#EA580C'),
-        ('marketing@vivas.com', $5, 'Ana Marketing', 'marketing_admin', '#9333EA'),
-        ('psicologa@vivas.com', $6, 'Dra. Carla Sousa', 'psicologo', '#EC4899')
+        ('admin@vivas.com', $1, 'Dr. Admin', 'admin', '#7B1E3C'),
+        ('bruno.hodos@gmail.com', $2, 'Dr. Bruno Hodos', 'medico', '#7B1E3C'),
+        ('maria@email.com', $3, 'Maria Silva Santos', 'paciente', '#EA580C'),
+        ('brunocorreafotografo@gmail.com', $3, 'Bruno Correa', 'paciente', '#F59E0B'),
+        ('marketing@vivas.com', $4, 'Ana Marketing', 'marketing_admin', '#9333EA'),
+        ('psicologa@vivas.com', $5, 'Dra. Carla Sousa', 'psicologo', '#EC4899')
       ON CONFLICT (email) DO NOTHING;
-    `, [adminHash, medicoHash, enfermeiroHash, pacienteHash, marketingHash, psicologoHash]);
+    `, [adminHash, medicoHash, pacienteHash, marketingHash, psicologoHash]);
 
     // Seed patients
     await pool.query(`
@@ -45,14 +44,10 @@ const seedData = async () => {
     await pool.query(`
       INSERT INTO professionals (full_name, cpf, professional_id, category, specialty, cnes, phone, email, schedule, consultations_month, rating)
       VALUES
-        ('Dr. Ricardo Mendes', '111.222.333-44', 'CRM-MG 12345', 'Médico', 'Clínica Geral', '7891023', '(31) 98888-1111', 'dr.ricardo@vivas.com', 'Seg-Sex', 180, 4.9),
+        ('Dr. Bruno Hodos', '111.222.333-44', 'CRM-MG 12345', 'Médico', 'Clínica Geral', '7891023', '(31) 98888-1111', 'bruno.hodos@gmail.com', 'Seg-Sex', 180, 4.9),
         ('Dra. Patrícia Gomes', '222.333.444-55', 'CRM-MG 23456', 'Médico', 'Cardiologia', '7891023', '(31) 98888-2222', 'dra.patricia@vivas.com', 'Seg-Qui', 145, 4.8),
         ('Dr. Antônio Almeida', '333.444.555-66', 'CRM-MG 34567', 'Médico', 'Pediatria', '7891023', '(31) 98888-3333', 'dr.antonio@vivas.com', 'Ter-Sáb', 210, 4.7),
         ('Dra. Juliana Barros', '444.555.666-77', 'CRM-MG 45678', 'Médico', 'Ginecologia', '7891023', '(31) 98888-4444', 'dra.juliana@vivas.com', 'Seg-Sex', 160, 4.9),
-        ('Enf. Mariana Costa', '555.666.777-88', 'COREN-MG 56789', 'Enfermeiro', 'Enfermagem Geral', '7891023', '(31) 98888-5555', 'enf.mariana@vivas.com', 'Seg-Sex', 0, 4.8),
-        ('Enf. Lucas Ferreira', '666.777.888-99', 'COREN-MG 67890', 'Enfermeiro', 'UTI', '7891023', '(31) 98888-6666', 'enf.lucas@vivas.com', 'Seg-Sex', 0, 4.6),
-        ('Ft. Daniela Rocha', '777.888.999-00', 'CREFITO-MG 78901', 'Fisioterapeuta', 'Ortopedia', '7891023', '(31) 98888-7777', 'ft.daniela@vivas.com', 'Seg-Sex', 0, 4.7),
-        ('Ft. Bruno Cardoso', '888.999.000-11', 'CREFITO-MG 89012', 'Fisioterapeuta', 'Respiratória', '7891023', '(31) 98888-8888', 'ft.bruno@vivas.com', 'Seg-Sex', 0, 4.5),
         ('Dra. Carla Sousa', '999.111.222-33', 'CRP-MG 12345', 'Psicólogo', 'Psicologia Clínica', '7891023', '(31) 98888-9999', 'psicologa@vivas.com', 'Seg-Sex', 120, 4.9)
       ON CONFLICT (cpf) DO NOTHING;
     `);
@@ -130,7 +125,7 @@ const seedData = async () => {
           patients.rows[i].id,
           manchesterColors[i],
           'Sintomas reportados pelo paciente durante triagem',
-          'Avaliação IA: classificação baseada em protocolo Manchester',
+          'Avaliação inteligente: classificação baseada em protocolo Manchester',
           (5 - i),
           i * 15,
           triageStatuses[i]
@@ -228,6 +223,25 @@ const seedData = async () => {
           ('JANE1R020', 'Campanha Janeiro', '20%', 2100, 2000, '2026-01-31', 'Expirado')
         ON CONFLICT (code) DO NOTHING;
       `);
+    }
+
+    // Seed professional-patient relationships for data isolation
+    const profUsers = await pool.query(
+      "SELECT id, role FROM users WHERE role IN ('medico', 'psicologo') AND active = true"
+    );
+    const patientUsers = await pool.query(
+      "SELECT id FROM users WHERE role = 'paciente' AND active = true"
+    );
+    if (profUsers.rows.length > 0 && patientUsers.rows.length > 0) {
+      for (const prof of profUsers.rows) {
+        for (const pat of patientUsers.rows) {
+          await pool.query(
+            `INSERT INTO professional_patient_relationships (professional_user_id, patient_user_id)
+             VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [prof.id, pat.id]
+          );
+        }
+      }
     }
 
     console.log('Seed completed successfully');

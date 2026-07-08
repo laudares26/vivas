@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, UserCog, CalendarDays, Stethoscope, FileText,
   TestTubeDiagonal, ClipboardList, Video, Brain, Bot, Activity,
-  ChevronLeft, ChevronRight, Heart, Tag, Settings, UsersRound, LogOut, Layers
+  ChevronLeft, ChevronRight, Heart, Tag, Settings, UsersRound, LogOut, Layers, Building2
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -16,35 +16,46 @@ interface NavItem {
 
 const clinicalLinks: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/pacientes', icon: Users, label: 'Pacientes', roles: ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'] },
-  { to: '/profissionais', icon: UserCog, label: 'Profissionais', roles: ['admin', 'medico', 'enfermeiro'] },
+  { to: '/pacientes', icon: Users, label: 'Pacientes', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/profissionais', icon: UserCog, label: 'Profissionais', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/agendamentos', icon: CalendarDays, label: 'Agendamentos' },
-  { to: '/atendimento', icon: Stethoscope, label: 'Atendimento Médico', roles: ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'] },
-  { to: '/prontuario', icon: FileText, label: 'Prontuário Eletrônico', roles: ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'] },
-  { to: '/exames', icon: TestTubeDiagonal, label: 'Exames e Laudos', roles: ['admin', 'medico', 'enfermeiro'] },
-  { to: '/dicom', icon: Layers, label: 'Isis DICOM Viewer', roles: ['admin', 'medico', 'enfermeiro', 'psicologo', 'fisioterapeuta'] },
-  { to: '/prescricoes', icon: ClipboardList, label: 'Receitas e Prescrições', roles: ['admin', 'medico'] },
+  { to: '/atendimento', icon: Stethoscope, label: 'Atendimento Medico', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/prontuario', icon: FileText, label: 'Prontuario Eletronico', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/exames', icon: TestTubeDiagonal, label: 'Exames e Laudos', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/dicom', icon: Layers, label: 'Isis DICOM Viewer', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/prescricoes', icon: ClipboardList, label: 'Receitas e Prescricoes', roles: ['admin', 'medico'] },
   { to: '/teleconsulta', icon: Video, label: 'Teleconsulta' },
+  { to: '/vivi', icon: Bot, label: 'Vivi', roles: ['paciente'] },
+  { to: '/mental', icon: Heart, label: 'Saude Mental', roles: ['paciente'] },
 ]
 
 const aiLinks: NavItem[] = [
-  { to: '/triagem', icon: Brain, label: 'Triagem Inteligente', roles: ['admin', 'medico', 'enfermeiro'] },
-  { to: '/assistente', icon: Bot, label: 'Assistente Médico IA', roles: ['admin', 'medico'] },
-  { to: '/predicao', icon: Activity, label: 'Predição de Riscos', roles: ['admin', 'medico'] },
+  { to: '/triagem', icon: Brain, label: 'Triagem Inteligente', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/assistente', icon: Bot, label: 'Assistente Inteligente (Apoio)', roles: ['admin', 'medico'] },
+  { to: '/predicao', icon: Activity, label: 'Suporte Preventivo', roles: ['admin', 'medico'] },
+  { to: '/saude-preventiva', icon: Heart, label: 'Saude Preventiva' },
+]
+
+const rhLinks: NavItem[] = [
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/empresas', icon: Building2, label: 'Minha Empresa' },
+  { to: '/configuracoes', icon: Settings, label: 'Configurações' },
 ]
 
 const adminLinks: NavItem[] = [
   { to: '/cupons', icon: Tag, label: 'Cupons e Promoções', roles: ['admin', 'marketing_admin'] },
   { to: '/usuarios', icon: UsersRound, label: 'Usuários', roles: ['admin'] },
   { to: '/configuracoes', icon: Settings, label: 'Configurações', roles: ['admin'] },
+  { to: '/empresas', icon: Building2, label: 'Empresas', roles: ['admin'] },
 ]
 
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
+  mobileHidden?: boolean
 }
 
-export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarProps) {
   const { user, logout } = useAuth()
   const role = user?.role || 'paciente'
 
@@ -64,7 +75,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all duration-200 group ${
           isActive
             ? 'bg-white/20 text-white shadow-lg shadow-black/10'
-            : 'text-blue-100 hover:bg-white/10 hover:text-white'
+            : 'text-white/70 hover:bg-white/10 hover:text-white'
         }`
       }
     >
@@ -73,35 +84,75 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     </NavLink>
   )
 
+  // RH gets a special sidebar
+  if (role === 'rh') {
+    return (
+      <aside
+        className={`fixed left-0 top-0 h-full z-40 flex flex-col transition-all duration-300 ${
+          collapsed ? 'w-[72px]' : 'w-[260px]'
+        } ${mobileHidden ? '-translate-x-full' : 'translate-x-0'}`}
+        style={{
+          background: 'linear-gradient(180deg, #5E1730 0%, #3D0F20 50%, #2A0A16 100%)',
+        }}
+      >
+        <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
+          <div className={`flex items-center justify-center flex-shrink-0 ${collapsed ? 'p-1' : 'px-1 py-1'}`}>
+            <img src="/vivas-branco.svg" alt="vivas" className={`object-contain ${collapsed ? 'h-8 w-8' : 'h-9'}`} />
+          </div>
+          {!collapsed && (
+            <div className="overflow-hidden">
+              <p className="text-pink-200 text-[10px] leading-tight">Empresas</p>
+            </div>
+          )}
+        </div>
+        <nav className="flex-1 overflow-y-auto py-4 px-2">
+          {!collapsed && <p className="text-pink-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">Gestão</p>}
+          {rhLinks.map(renderLink)}
+        </nav>
+        <div className="border-t border-white/10">
+          <button onClick={logout} className="flex items-center gap-3 px-5 py-3 text-pink-200 hover:text-white hover:bg-white/10 transition-colors w-full">
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            {!collapsed && <span className="text-sm font-medium">Sair</span>}
+          </button>
+          <button onClick={onToggle} className="flex items-center justify-center h-10 border-t border-white/10 text-pink-200 hover:text-white hover:bg-white/10 transition-colors w-full">
+            {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          </button>
+        </div>
+      </aside>
+    )
+  }
+
+  const isPatient = role === 'paciente'
+  const bgGradient = 'linear-gradient(180deg, #5E1730 0%, #3D0F20 50%, #2A0A16 100%)'
+  const textMuted = 'text-pink-200'
+  const textSection = 'text-pink-300'
+
   return (
     <aside
       className={`fixed left-0 top-0 h-full z-40 flex flex-col transition-all duration-300 ${
         collapsed ? 'w-[72px]' : 'w-[260px]'
-      }`}
-      style={{
-        background: 'linear-gradient(180deg, #0057B8 0%, #003D82 50%, #002D61 100%)',
-      }}
+      } ${mobileHidden ? '-translate-x-full' : 'translate-x-0'}`}
+      style={{ background: bgGradient }}
     >
-      <div className="flex items-center gap-3 px-4 h-14 border-b border-white/10">
-        <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-          <Heart className="w-5 h-5 text-white" />
+      <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
+        <div className={`flex items-center justify-center flex-shrink-0 ${collapsed ? 'p-1' : 'px-1 py-1'}`}>
+          <img src="/vivas-branco.svg" alt="vivas" className={`object-contain ${collapsed ? 'h-8 w-8' : 'h-9'}`} />
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-white font-bold text-lg leading-tight">VIVAS Saúde</h1>
-            <p className="text-blue-200 text-[10px] leading-tight">Sistema Integrado SUS</p>
+            <p className={`${textMuted} text-[10px] leading-tight`}>Saude Inteligente</p>
           </div>
         )}
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-2">
-        {!collapsed && <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">Principal</p>}
+        {!collapsed && <p className={`${textSection} text-[10px] font-semibold uppercase tracking-wider px-3 mb-2`}>Principal</p>}
         {renderLink(filteredClinical[0])}
 
         {filteredClinical.length > 1 && (
           <>
             <div className="my-2" />
-            {!collapsed && <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">Clínico</p>}
+            {!collapsed && <p className={`${textSection} text-[10px] font-semibold uppercase tracking-wider px-3 mb-2`}>{isPatient ? 'Menu' : 'Clinico'}</p>}
             {filteredClinical.slice(1).map(renderLink)}
           </>
         )}
@@ -109,7 +160,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {filteredAI.length > 0 && (
           <>
             <div className="my-3 mx-3 border-t border-white/10" />
-            {!collapsed && <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">Inteligência Artificial</p>}
+            {!collapsed && <p className={`${textSection} text-[10px] font-semibold uppercase tracking-wider px-3 mb-2`}>Saúde Inteligente</p>}
             {filteredAI.map(renderLink)}
           </>
         )}
@@ -117,7 +168,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {filteredAdmin.length > 0 && (
           <>
             <div className="my-3 mx-3 border-t border-white/10" />
-            {!collapsed && <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider px-3 mb-2">Administrativo</p>}
+            {!collapsed && <p className={`${textSection} text-[10px] font-semibold uppercase tracking-wider px-3 mb-2`}>Administrativo</p>}
             {filteredAdmin.map(renderLink)}
           </>
         )}
@@ -126,14 +177,14 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="border-t border-white/10">
         <button
           onClick={logout}
-          className="flex items-center gap-3 px-5 py-3 text-blue-200 hover:text-white hover:bg-white/10 transition-colors w-full"
+          className={`flex items-center gap-3 px-5 py-3 ${textMuted} hover:text-white hover:bg-white/10 transition-colors w-full`}
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="text-sm font-medium">Sair</span>}
         </button>
         <button
           onClick={onToggle}
-          className="flex items-center justify-center h-10 border-t border-white/10 text-blue-200 hover:text-white hover:bg-white/10 transition-colors w-full"
+          className={`flex items-center justify-center h-10 border-t border-white/10 ${textMuted} hover:text-white hover:bg-white/10 transition-colors w-full`}
         >
           {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
         </button>

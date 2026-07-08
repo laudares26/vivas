@@ -3,37 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VIVAS - Saúde Inteligente | Plataforma de Gestão em Saúde</title>
-  <meta name="description" content="VIVAS Saúde Inteligente - Plataforma completa de gestão em saúde com IA, prontuário eletrônico, telemedicina e muito mais." />
+  <title>VivaS — Saúde preventiva inteligente</title>
+  <meta name="description" content="A VivaS cruza todos os seus exames e dados de saúde, monitora 24h e alerta quando algo sai do lugar. Saúde preventiva de verdade." />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <!-- Navbar -->
+  <!-- 0. NAVBAR -->
   <nav class="navbar" id="navbar">
     <div class="container navbar-content">
       <a href="#" class="logo">
-        <div class="logo-icon">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="white" fill-opacity="0.2"/>
-            <path d="M8 16C8 11.6 11.6 8 16 8C20.4 8 24 11.6 24 16C24 20.4 20.4 24 16 24" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M16 12V16L19 19" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="12" cy="22" r="2" fill="#00A859"/>
-          </svg>
-        </div>
-        <span class="logo-text">VIVAS</span>
+        <img src="/vivas-branco.svg" alt="vivas" class="logo-img" />
       </a>
       <div class="nav-links" id="navLinks">
-        <a href="#inicio">Início</a>
-        <a href="#solucoes">Soluções</a>
-        <a href="#recursos">Recursos</a>
-        <a href="#ia">IA em Saúde</a>
-        <a href="#contato">Contato</a>
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#tecnologia">A tecnologia</a>
+        <a href="#planos">Planos</a>
+        <a href="/mental">Saúde Mental</a>
+        <a href="/empresas">Para empresas</a>
+        <a href="/profissionais">Sou Profissional</a>
+        <a href="https://vivas.digital/login">Entrar</a>
       </div>
       <div class="nav-actions">
-        <a href="https://vivas.digital/login" class="btn btn-outline-light btn-sm">Entrar</a>
-        <a href="https://vivas.digital/login" class="btn btn-accent btn-sm">Acessar Plataforma</a>
+        <a href="/cotacao" class="btn btn-wine btn-sm">Fazer cotação</a>
       </div>
       <button class="mobile-menu" id="mobileMenu" aria-label="Menu">
         <span></span><span></span><span></span>
@@ -41,374 +36,523 @@
     </div>
   </nav>
 
-  <!-- Mobile Menu Overlay -->
-  <div class="mobile-overlay" id="mobileOverlay">
-    <div class="mobile-nav">
-      <a href="#inicio" onclick="closeMobile()">Início</a>
-      <a href="#solucoes" onclick="closeMobile()">Soluções</a>
-      <a href="#recursos" onclick="closeMobile()">Recursos</a>
-      <a href="#ia" onclick="closeMobile()">IA em Saúde</a>
-      <a href="#contato" onclick="closeMobile()">Contato</a>
-      <div class="mobile-actions">
-        <a href="https://vivas.digital/login" class="btn btn-accent">Acessar Plataforma</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Hero Section -->
+  <!-- 1. HERO — MedSeguros split layout -->
   <section class="hero" id="inicio">
-    <div class="hero-bg">
-      <div class="hero-gradient"></div>
-      <div class="hero-pattern"></div>
-    </div>
-    <div class="container hero-content">
-      <div class="hero-text">
-        <div class="hero-badge">
-          <span class="badge-dot"></span>
-          Plataforma de Saúde com Inteligência Artificial
+    <div class="container">
+      <div class="hero-content">
+        <span class="pill">Saúde preventiva inteligente</span>
+        <h1>Sua saúde tem sinais.<br>A gente percebe antes de virar doença.</h1>
+        <p class="hero-sub">A VivaS cruza todos os seus exames e dados de saúde, ano após ano, e monitora 24 horas por dia. Quando algo começa a sair do lugar, você recebe um alerta. Tempo de agir antes, não de remediar depois.</p>
+        <div class="hero-actions">
+          <a href="/cotacao" class="btn btn-wine btn-lg">Fazer minha cotação grátis</a>
+          <a href="#como-funciona" class="btn btn-ghost btn-lg">Ver como funciona</a>
         </div>
-        <h1>Transforme a gestão da sua <span class="text-gradient">unidade de saúde</span></h1>
-        <p class="hero-subtitle">
-          Prontuário eletrônico, agendamentos, telemedicina, triagem inteligente e predição de riscos — tudo integrado em uma única plataforma com tecnologia de IA.
-        </p>
-        <div class="hero-buttons">
-          <a href="https://vivas.digital/login" class="btn btn-accent btn-lg">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-            Acessar Plataforma
-          </a>
-          <a href="#solucoes" class="btn btn-outline-white btn-lg">
-            Conhecer Soluções
-          </a>
-        </div>
-        <div class="hero-stats">
-          <div class="stat">
-            <span class="stat-number">12+</span>
-            <span class="stat-label">Módulos integrados</span>
+        <div class="trust-bar">
+          <div class="trust-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Seus dados, criptografados e seus
           </div>
-          <div class="stat-divider"></div>
-          <div class="stat">
-            <span class="stat-number">7</span>
-            <span class="stat-label">Perfis de acesso</span>
+          <div class="trust-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            Telemedicina incluída, sem fila
           </div>
-          <div class="stat-divider"></div>
-          <div class="stat">
-            <span class="stat-number">100%</span>
-            <span class="stat-label">SUS compatível</span>
+          <div class="trust-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Monitoramento ativo 24h
           </div>
         </div>
       </div>
       <div class="hero-visual">
-        <div class="dashboard-preview">
-          <div class="preview-header">
-            <div class="preview-dots">
-              <span class="dot red"></span>
-              <span class="dot yellow"></span>
-              <span class="dot green"></span>
-            </div>
-            <span class="preview-url">vivas.digital</span>
-          </div>
-          <div class="preview-body">
-            <div class="preview-sidebar">
-              <div class="sidebar-item active"></div>
-              <div class="sidebar-item"></div>
-              <div class="sidebar-item"></div>
-              <div class="sidebar-item"></div>
-              <div class="sidebar-item"></div>
-            </div>
-            <div class="preview-main">
-              <div class="preview-kpi-row">
-                <div class="preview-kpi"><div class="kpi-icon blue"></div><div class="kpi-lines"><div class="line short"></div><div class="line long"></div></div></div>
-                <div class="preview-kpi"><div class="kpi-icon green"></div><div class="kpi-lines"><div class="line short"></div><div class="line long"></div></div></div>
-                <div class="preview-kpi"><div class="kpi-icon purple"></div><div class="kpi-lines"><div class="line short"></div><div class="line long"></div></div></div>
-              </div>
-              <div class="preview-chart">
-                <div class="chart-bars">
-                  <div class="bar" style="height:60%"></div>
-                  <div class="bar" style="height:80%"></div>
-                  <div class="bar" style="height:45%"></div>
-                  <div class="bar" style="height:90%"></div>
-                  <div class="bar" style="height:70%"></div>
-                  <div class="bar" style="height:55%"></div>
-                  <div class="bar" style="height:85%"></div>
-                </div>
-              </div>
-              <div class="preview-table">
-                <div class="table-row"></div>
-                <div class="table-row"></div>
-                <div class="table-row"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="shape shape-1"><img src="/images/feature-telemedicine.jpg" alt="Telemedicina" /></div>
+        <div class="shape shape-2"><img src="/images/feature-exams.jpg" alt="Exames" /></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"><img src="/images/hero-family.jpg" alt="Família" /></div>
+        <div class="shape shape-5"><img src="/images/hero-doctor.jpg" alt="Médica" /></div>
+        <div class="accent-circle accent-1"></div>
+        <div class="accent-circle accent-2"></div>
       </div>
-    </div>
-    <div class="hero-wave">
-      <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
-        <path d="M0,60 C360,120 720,0 1440,60 L1440,120 L0,120 Z" fill="white"/>
-      </svg>
     </div>
   </section>
 
-  <!-- Solutions Section -->
-  <section class="section" id="solucoes">
+  <!-- 2. O PROBLEMA -->
+  <section class="section-problem">
     <div class="container">
-      <div class="section-header">
-        <span class="section-badge">Soluções</span>
-        <h2>Uma plataforma completa para <span class="text-primary">gestão em saúde</span></h2>
-        <p>Do agendamento ao diagnóstico com IA, o VIVAS oferece todas as ferramentas que sua equipe precisa.</p>
-      </div>
-      <div class="solutions-grid">
-        <div class="solution-card">
-          <div class="solution-icon blue">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          <h3>Gestão de Pacientes</h3>
-          <p>Cadastro completo com CNS, CPF, convênio, histórico médico, filtros avançados e paginação.</p>
+      <span class="section-tag">O PROBLEMA</span>
+      <h2>O sistema de saúde só age quando você já está doente</h2>
+      <p>No Brasil, ou você depende do SUS sobrecarregado, ou paga R$300+ por mês num plano que só serve quando a doença já apareceu. Nos dois casos, a lógica é a mesma: esperar o problema acontecer para então tratar.</p>
+      <p>A maioria das doenças graves (diabetes, hipertensão, problemas cardíacos e renais) dá sinais anos antes. Esses sinais estão espalhados nos seus exames. Só que ninguém os conecta.</p>
+      <p class="highlight">A VivaS conecta. E avisa a tempo.</p>
+    </div>
+  </section>
+
+  <!-- 3. COMO FUNCIONA — numbered service rows -->
+  <section class="section-steps" id="como-funciona">
+    <div class="container">
+      <span class="section-tag">COMO FUNCIONA</span>
+      <h2>Uma inteligência que cuida de você o tempo todo</h2>
+      <p class="section-intro">Você faz exames a vida inteira, mas eles ficam soltos em PDFs, gavetas e laboratórios diferentes. A VivaS reúne tudo num só lugar e transforma esse histórico em proteção real.</p>
+      <div class="steps-grid">
+        <div class="step-card">
+          <span class="step-num">01</span>
+          <h3>Tudo em um só lugar</h3>
+          <p>Seus exames, consultas, medicamentos e histórico organizados numa linha do tempo clínica única. Do primeiro exame ao último, sem nada se perder.</p>
         </div>
-        <div class="solution-card">
-          <div class="solution-icon green">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </div>
-          <h3>Agendamentos</h3>
-          <p>Calendário interativo com visualização por dia, semana e mês. Filtros por profissional e especialidade.</p>
+        <div class="step-card">
+          <span class="step-num">02</span>
+          <h3>Leitura e interpretação inteligente</h3>
+          <p>Nossa inteligência interpreta seus exames e explica, em linguagem simples, o que cada resultado significa para você. Sem jargão, sem susto desnecessário.</p>
         </div>
-        <div class="solution-card">
-          <div class="solution-icon purple">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          </div>
-          <h3>Prontuário Eletrônico</h3>
-          <p>Timeline completa com medicamentos, alergias, vacinas, antecedentes familiares e evolução clínica.</p>
+        <div class="step-card featured">
+          <span class="step-num">03</span>
+          <h3>Cruzamento 24 horas por dia</h3>
+          <p>Aqui está o diferencial. A VivaS cruza todos os seus dados, continuamente, e compara a sua evolução ao longo dos anos. Um valor que sobe devagar, uma combinação de fatores que ninguém olharia junto: a nossa tecnologia percebe.</p>
         </div>
-        <div class="solution-card">
-          <div class="solution-icon orange">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          </div>
-          <h3>Atendimento Médico</h3>
-          <p>Fila Manchester colorida, sinais vitais, classificação CID-10, prescrição rápida e encaminhamentos.</p>
-        </div>
-        <div class="solution-card">
-          <div class="solution-icon teal">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.6 11.6L22 7v10l-6.4-4.5"/><rect x="2" y="7" width="14" height="10" rx="2" ry="2"/></svg>
-          </div>
-          <h3>Teleconsulta</h3>
-          <p>Videochamada integrada com timer, controles de áudio/vídeo, chat e compartilhamento de tela.</p>
-        </div>
-        <div class="solution-card">
-          <div class="solution-icon pink">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m-7.5-3.5l4.3-4.3m6.4-6.4l4.3-4.3M1 12h6m6 0h6m-3.5 7.5l-4.3-4.3M6.8 6.8L2.5 2.5"/></svg>
-          </div>
-          <h3>Exames DICOM</h3>
-          <p>Visualizador Isis DICOM integrado para imagens médicas — CT, RX, RM — com ferramentas profissionais.</p>
+        <div class="step-card">
+          <span class="step-num">04</span>
+          <h3>O alerta que muda tudo</h3>
+          <p>Quando algo indica risco, você recebe um alerta claro e uma orientação do que fazer: marcar uma teleconsulta, repetir um exame, ajustar um hábito. Antes da doença se consolidar.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Features Section -->
-  <section class="section section-gray" id="recursos">
+  <!-- 4. DIFERENCIAL TÉCNICO — dark section with split layout -->
+  <section class="section-tech" id="tecnologia">
     <div class="container">
-      <div class="section-header">
-        <span class="section-badge">Recursos</span>
-        <h2>Projetado para <span class="text-primary">profissionais de saúde</span></h2>
-        <p>Cada detalhe pensado para otimizar o fluxo de trabalho clínico e administrativo.</p>
+      <div class="tech-layout">
+        <div>
+          <span class="section-tag section-tag-light">TECNOLOGIA</span>
+          <h2>Não é um aplicativo de exames. É um motor de risco preditivo.</h2>
+          <p class="section-intro">A diferença entre guardar exames e ser cuidado por eles está no que acontece nos bastidores. A VivaS roda um modelo de risco preditivo que acompanha quatro frentes críticas de forma contínua:</p>
+          <p class="tech-note">Cada novo exame que entra na plataforma recalibra o seu mapa de risco. Sua saúde deixa de ser uma foto isolada e vira um filme que a nossa tecnologia acompanha por você, 24 horas por dia.</p>
+          <div class="compliance-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <p>A tecnologia da VivaS apoia o cuidado preventivo e organiza informações para você e seu médico. Ela não substitui a avaliação profissional. Ela garante que nada importante passe batido.</p>
+          </div>
+        </div>
+        <div class="tech-grid">
+          <div class="tech-card">
+            <div class="tech-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <h3>Cardiovascular</h3>
+            <p>Monitora indicadores ligados ao coração e à circulação ao longo do tempo.</p>
+          </div>
+          <div class="tech-card">
+            <div class="tech-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3c0 1.5 1 2 1 4H8a3 3 0 0 0 0 6h1l1 7h4l1-7h1a3 3 0 0 0 0-6h-2c0-2 1-2.5 1-4a3 3 0 0 0-3-3z"/></svg>
+            </div>
+            <h3>Metabólico / Diabetes</h3>
+            <p>Acompanha a evolução de glicemia e fatores associados antes do diagnóstico.</p>
+          </div>
+          <div class="tech-card">
+            <div class="tech-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v6h-6"/></svg>
+            </div>
+            <h3>Pressão / Hipertensão</h3>
+            <p>Cruza medições e padrões para identificar tendências silenciosas.</p>
+          </div>
+          <div class="tech-card">
+            <div class="tech-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.6-9.7-9.3C.7 8 2.5 4.5 6 4.5c2 0 3.2 1.1 4 2.3.8-1.2 2-2.3 4-2.3 3.5 0 5.3 3.5 3.7 7.2C19.5 16.4 12 21 12 21z"/></svg>
+            </div>
+            <h3>Função renal</h3>
+            <p>Observa marcadores que costumam passar despercebidos por anos.</p>
+          </div>
+        </div>
       </div>
+    </div>
+  </section>
+
+  <!-- 5. RECURSOS — rectangular institutional cards -->
+  <section class="section-features">
+    <div class="container">
+      <span class="section-tag">RECURSOS</span>
+      <h2>Tudo que você precisa para se cuidar, num só app</h2>
       <div class="features-grid">
-        <div class="feature-item">
-          <div class="feature-check">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div>
-            <h4>7 perfis de acesso</h4>
-            <p>Admin, médico, enfermeiro, psicólogo, fisioterapeuta, paciente e marketing</p>
-          </div>
+        <div class="feature-card">
+          <img src="/images/feature-timeline.jpg" alt="Linha do tempo de saúde" class="feature-img" />
+          <h3>Linha do tempo de saúde</h3>
+          <p>Todo o seu histórico clínico organizado e acessível.</p>
         </div>
-        <div class="feature-item">
-          <div class="feature-check">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div>
-            <h4>Padrões SUS</h4>
-            <p>CNS, CID-10, CNES, SIGTAP, LOINC integrados em todos os módulos</p>
-          </div>
+        <div class="feature-card">
+          <img src="/images/feature-exams.jpg" alt="Interpretação inteligente de exames" class="feature-img" />
+          <h3>Interpretação inteligente de exames</h3>
+          <p>Entenda seus resultados em linguagem clara.</p>
         </div>
-        <div class="feature-item">
-          <div class="feature-check">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div>
-            <h4>Receitas digitais</h4>
-            <p>Preview visual de receita médica com CRUD completo e impressão</p>
-          </div>
+        <div class="feature-card">
+          <img src="/images/feature-alerts.jpg" alt="Alertas preventivos 24h" class="feature-img" />
+          <h3>Alertas preventivos 24h</h3>
+          <p>Avisos inteligentes baseados na sua evolução real.</p>
         </div>
-        <div class="feature-item">
-          <div class="feature-check">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div>
-            <h4>Dashboard em tempo real</h4>
-            <p>KPIs, gráficos por especialidade, próximas consultas e alertas</p>
-          </div>
+        <div class="feature-card">
+          <img src="/images/feature-telemedicine.jpg" alt="Telemedicina sem fila" class="feature-img" />
+          <h3>Telemedicina sem fila</h3>
+          <p>Fale com um médico quando precisar, direto do app.</p>
         </div>
-        <div class="feature-item">
-          <div class="feature-check">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div>
-            <h4>Segurança avançada</h4>
-            <p>JWT, bcrypt, validação de roles, proteção contra path traversal</p>
-          </div>
+        <div class="feature-card">
+          <img src="/images/feature-triage.jpg" alt="Triagem inteligente" class="feature-img" />
+          <h3>Triagem inteligente</h3>
+          <p>A tecnologia entende seu sintoma e encaminha ao profissional certo.</p>
         </div>
-        <div class="feature-item">
-          <div class="feature-check">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div>
-            <h4>100% responsivo</h4>
-            <p>Adapta para desktop, tablet e mobile automaticamente</p>
-          </div>
+        <div class="feature-card">
+          <img src="/images/feature-mental.jpg" alt="Cuidado com a mente também" class="feature-img" />
+          <h3>Cuidado com a mente também</h3>
+          <p>Acesso a psicólogos, psiquiatras e terapeutas pela plataforma.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- AI Section -->
-  <section class="section" id="ia">
+  <!-- 6. PLANOS -->
+  <section class="section-plans" id="planos">
     <div class="container">
-      <div class="section-header">
-        <span class="section-badge accent">Inteligência Artificial</span>
-        <h2>IA aplicada à <span class="text-accent">saúde</span></h2>
-        <p>Módulos inteligentes que auxiliam na tomada de decisão clínica e otimizam processos.</p>
+      <span class="section-tag">PLANOS</span>
+      <h2>Cuidar da saúde antes custa menos que tratar depois</h2>
+      <p class="section-intro">Planos a partir de R$49,90 por mês. Sem carência interminável, sem letra miúda. Cancele quando quiser.</p>
+      <div class="plans-grid">
+        <!-- INDIVIDUAL -->
+        <div class="plan-card">
+          <h3>Individual</h3>
+          <p class="plan-desc">Para quem quer assumir o controle da própria saúde.</p>
+          <div class="plan-price">
+            <span class="old-price">R$79,90</span>
+            <span class="current-price">R$49,90<small>/mês</small></span>
+          </div>
+          <span class="founder-badge">Preço de fundador, congelado para sempre</span>
+          <ul class="plan-features">
+            <li>Linha do tempo de saúde completa</li>
+            <li>Interpretação inteligente de exames</li>
+            <li>Alertas preventivos 24h</li>
+            <li>Triagem inteligente ilimitada</li>
+            <li>Teleconsultas incluídas</li>
+            <li>1 pessoa</li>
+          </ul>
+          <a href="#" class="btn btn-outline-wine btn-plan" data-plan="individual">Começar agora</a>
+        </div>
+
+        <!-- FAMÍLIA -->
+        <div class="plan-card featured">
+          <span class="plan-badge">Mais escolhido</span>
+          <h3>Família</h3>
+          <p class="plan-desc">Proteção preventiva para até 4 pessoas da família.</p>
+          <div class="plan-price">
+            <span class="old-price">R$149,90</span>
+            <span class="current-price">R$89,90<small>/mês</small></span>
+          </div>
+          <span class="founder-badge">Preço de fundador, congelado para sempre</span>
+          <ul class="plan-features">
+            <li>Tudo do plano Individual</li>
+            <li>Até 4 perfis (você + 3)</li>
+            <li>Painel familiar de saúde</li>
+            <li>Alertas para cada membro</li>
+            <li>Acompanhamento de crianças e idosos</li>
+            <li>Prioridade no atendimento</li>
+          </ul>
+          <a href="#" class="btn btn-wine btn-plan" data-plan="familia">Proteger minha família</a>
+        </div>
+
+        <!-- EMPRESA -->
+        <div class="plan-card">
+          <h3>Empresa</h3>
+          <p class="plan-desc">Saúde preventiva como benefício corporativo.</p>
+          <div class="plan-price">
+            <span class="label-from">A partir de</span>
+            <span class="current-price">R$29,90<small>/vida</small></span>
+          </div>
+          <ul class="plan-features">
+            <li>Tudo do plano Família, por colaborador</li>
+            <li>Painel de gestão para o RH</li>
+            <li>Relatórios de saúde populacional (anonimizados)</li>
+            <li>Onboarding assistido</li>
+            <li>Faturamento simplificado</li>
+          </ul>
+          <a href="/empresas" class="btn btn-outline-wine btn-plan">Conheça o VivaS Empresas</a>
+        </div>
       </div>
-      <div class="ai-grid">
-        <div class="ai-card">
-          <div class="ai-card-header">
-            <div class="ai-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </div>
-            <div class="ai-badge">IA</div>
-          </div>
-          <h3>Triagem Inteligente</h3>
-          <p>Chat com IA que classifica pacientes pelo Protocolo Manchester em 5 cores de urgência, organizando a fila de atendimento em tempo real.</p>
-          <div class="manchester-colors">
-            <span class="manchester red" title="Emergência">Emergência</span>
-            <span class="manchester orange" title="Muito Urgente">Muito Urgente</span>
-            <span class="manchester yellow" title="Urgente">Urgente</span>
-            <span class="manchester green" title="Pouco Urgente">Pouco Urgente</span>
-            <span class="manchester blue-m" title="Não Urgente">Não Urgente</span>
-          </div>
-        </div>
-        <div class="ai-card">
-          <div class="ai-card-header">
-            <div class="ai-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M20.2 20.2A10 10 0 0 0 22 12h-10"/></svg>
-            </div>
-            <div class="ai-badge">IA</div>
-          </div>
-          <h3>Assistente Médico IA</h3>
-          <p>Chat clínico inteligente com respostas baseadas em evidências, verificador de interações medicamentosas e sugestões de conduta.</p>
-        </div>
-        <div class="ai-card">
-          <div class="ai-card-header">
-            <div class="ai-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            </div>
-            <div class="ai-badge">IA</div>
-          </div>
-          <h3>Predição de Riscos</h3>
-          <p>Gauges de risco cardiovascular, diabetes, hipertensão e renal com gráfico de evolução e recomendações personalizadas.</p>
-        </div>
-      </div>
+      <p class="plans-note">Todos os planos incluem teleconsulta e a inteligência preventiva 24h. A diferença está em quantas pessoas você cuida.</p>
     </div>
   </section>
 
-  <!-- CTA Section -->
-  <section class="cta-section">
+  <!-- 7. COMPARATIVO -->
+  <section class="section-compare">
     <div class="container">
-      <div class="cta-content">
-        <h2>Pronto para transformar sua gestão em saúde?</h2>
-        <p>Acesse a plataforma VIVAS e descubra como a tecnologia pode otimizar sua unidade de saúde.</p>
-        <div class="cta-buttons">
-          <a href="https://vivas.digital/login" class="btn btn-white btn-lg">
-            Acessar Plataforma
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
+      <span class="section-tag">COMPARATIVO</span>
+      <h2>Entre o cartão de desconto e o plano caro, existe um jeito melhor</h2>
+      <div class="compare-table">
+        <div class="compare-row header">
+          <div class="compare-cell"></div>
+          <div class="compare-cell">Cartões de desconto</div>
+          <div class="compare-cell featured">VivaS</div>
+          <div class="compare-cell">Planos de saúde</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell label">Preço/mês</div>
+          <div class="compare-cell">R$30 a 35</div>
+          <div class="compare-cell featured"><strong>R$49,90</strong></div>
+          <div class="compare-cell">R$300+</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell label">Inteligência preventiva 24h</div>
+          <div class="compare-cell"><span class="x">&#10005;</span></div>
+          <div class="compare-cell featured"><span class="check">&#10003;</span></div>
+          <div class="compare-cell"><span class="x">&#10005;</span></div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell label">Cruza seu histórico de exames</div>
+          <div class="compare-cell"><span class="x">&#10005;</span></div>
+          <div class="compare-cell featured"><span class="check">&#10003;</span></div>
+          <div class="compare-cell"><span class="x">&#10005;</span></div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell label">Alertas antes da doença</div>
+          <div class="compare-cell"><span class="x">&#10005;</span></div>
+          <div class="compare-cell featured"><span class="check">&#10003;</span></div>
+          <div class="compare-cell"><span class="x">&#10005;</span></div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell label">Telemedicina</div>
+          <div class="compare-cell"><span class="partial">&#126;</span></div>
+          <div class="compare-cell featured"><span class="check">&#10003;</span></div>
+          <div class="compare-cell"><span class="check">&#10003;</span></div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell label">Interpretação inteligente de exames</div>
+          <div class="compare-cell"><span class="x">&#10005;</span></div>
+          <div class="compare-cell featured"><span class="check">&#10003;</span></div>
+          <div class="compare-cell"><span class="x">&#10005;</span></div>
         </div>
       </div>
+      <p class="compare-footer">Os cartões te dão desconto. Os planos te atendem quando você adoece. A VivaS faz a única coisa que importa: evita que você chegue lá.</p>
     </div>
   </section>
 
-  <!-- Contact Section -->
-  <section class="section section-gray" id="contato">
+  <!-- 8. PARA EMPRESAS -->
+  <section class="section-enterprise" id="empresas">
     <div class="container">
-      <div class="section-header">
-        <span class="section-badge">Contato</span>
-        <h2>Fale <span class="text-primary">conosco</span></h2>
-        <p>Entre em contato para saber mais sobre a plataforma VIVAS.</p>
-      </div>
-      <div class="contact-grid">
-        <div class="contact-card">
-          <div class="contact-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          </div>
-          <h4>E-mail</h4>
-          <p>contato@vivasaudeinteligente.com.br</p>
+      <span class="section-tag">EMPRESAS</span>
+      <h2>Colaborador saudável, empresa que economiza</h2>
+      <p>Cada doença evitada é uma ausência a menos, um afastamento a menos, um custo a menos. A VivaS Empresas oferece saúde preventiva de verdade como benefício, por uma fração do custo de um plano tradicional.</p>
+      <a href="/empresas" class="btn btn-wine btn-lg">Conheça o VivaS Empresas</a>
+    </div>
+  </section>
+
+  <!-- 9. SEGURANÇA -->
+  <section class="section-security">
+    <div class="container">
+      <span class="section-tag">SEGURANÇA</span>
+      <h2>Seus dados de saúde são seus. Ponto.</h2>
+      <div class="security-grid">
+        <div class="security-item">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Criptografia de ponta a ponta</span>
         </div>
-        <div class="contact-card">
-          <div class="contact-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          </div>
-          <h4>Localização</h4>
-          <p>Belo Horizonte, MG - Brasil</p>
+        <div class="security-item">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Conformidade com a LGPD</span>
         </div>
-        <div class="contact-card">
-          <div class="contact-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <h4>Horário</h4>
-          <p>Seg - Sex: 8h às 18h</p>
+        <div class="security-item">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>Você controla quem vê o quê</span>
+        </div>
+        <div class="security-item">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          <span>Nunca vendemos seus dados. Para ninguém.</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Footer -->
+  <!-- 10. FAQ — MedSeguros split layout -->
+  <section class="section-faq" id="faq">
+    <div class="container">
+      <div class="faq-layout">
+        <div class="faq-heading">
+          <span class="section-tag">FAQ</span>
+          <h2>Dúvidas frequentes</h2>
+        </div>
+        <div class="faq-list">
+          <details class="faq-item">
+            <summary>A tecnologia da VivaS substitui meu médico?</summary>
+            <p>Não. Ela organiza suas informações, interpreta exames e alerta sobre riscos, para que você e seu médico tomem decisões melhores e mais cedo. A decisão clínica é sempre do profissional.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Como a VivaS consegue identificar riscos?</summary>
+            <p>Ela cruza todo o seu histórico de exames e acompanha a evolução dos seus indicadores ao longo do tempo, 24 horas por dia. Mudanças sutis que passariam despercebidas em um exame isolado são identificadas quando vistas em conjunto.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Preciso ter muitos exames para começar?</summary>
+            <p>Não. Você começa com o que tem, e a inteligência fica mais precisa a cada novo exame que você adiciona.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Tem carência?</summary>
+            <p>Não. Você usa desde o primeiro dia.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Posso cancelar quando quiser?</summary>
+            <p>Sim. Sem multa e sem burocracia.</p>
+          </details>
+          <details class="faq-item">
+            <summary>A teleconsulta tem custo extra?</summary>
+            <p>Não. As teleconsultas estão incluídas no seu plano.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. CTA FINAL -->
+  <section class="section-cta-final">
+    <div class="container">
+      <h2>A doença avisa antes. Agora você tem quem escute.</h2>
+      <p>Comece hoje a transformar seus exames em proteção. Sua saúde de daqui a 10 anos começa com a decisão de agora.</p>
+      <a href="#planos" class="btn btn-white btn-lg">Começar a me cuidar</a>
+      <span class="cta-note">Planos a partir de R$49,90/mês &middot; Cancele quando quiser</span>
+    </div>
+  </section>
+
+  <!-- CTA COTAÇÃO -->
+  <section class="section-cta-cotacao">
+    <div class="container">
+      <h2>Faça sua cotação agora e comece a se cuidar</h2>
+      <p>Descubra o plano ideal para você em menos de 2 minutos. Individual, família ou empresa. Receba os valores no seu email.</p>
+      <a href="/cotacao" class="btn">Fazer minha cotação grátis &rarr;</a>
+    </div>
+  </section>
+
+  <!-- 12. RODAPÉ — MedSeguros multi-column -->
   <footer class="footer">
     <div class="container">
-      <div class="footer-content">
+      <div class="footer-grid">
         <div class="footer-brand">
-          <div class="logo">
-            <div class="logo-icon">
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                <rect width="32" height="32" rx="8" fill="white" fill-opacity="0.2"/>
-                <path d="M8 16C8 11.6 11.6 8 16 8C20.4 8 24 11.6 24 16C24 20.4 20.4 24 16 24" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-                <path d="M16 12V16L19 19" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="12" cy="22" r="2" fill="#00A859"/>
-              </svg>
-            </div>
-            <span class="logo-text">VIVAS</span>
-          </div>
-          <p>Plataforma de gestão em saúde com inteligência artificial.</p>
+          <img src="/vivas-branco.svg" alt="vivas" class="footer-logo" />
+          <p>Saúde preventiva inteligente</p>
         </div>
-        <div class="footer-links">
-          <h4>Plataforma</h4>
-          <a href="https://vivas.digital/login">Acessar</a>
-          <a href="#solucoes">Soluções</a>
-          <a href="#recursos">Recursos</a>
-          <a href="#ia">IA em Saúde</a>
+        <div class="footer-col">
+          <h4>Menu</h4>
+          <a href="#como-funciona">Como funciona</a>
+          <a href="#tecnologia">A tecnologia</a>
+          <a href="#planos">Planos</a>
+          <a href="/mental">Saúde Mental</a>
+          <a href="/empresas">Para empresas</a>
+          <a href="https://vivas.digital/login">Entrar</a>
         </div>
-        <div class="footer-links">
+        <div class="footer-col">
+          <h4>Contato</h4>
+          <a href="mailto:contato@vivasaudeinteligente.com.br">contato@vivasaudeinteligente.com.br</a>
+          <span>Belo Horizonte, MG</span>
+        </div>
+        <div class="footer-col">
           <h4>Institucional</h4>
-          <a href="#contato">Contato</a>
+          <a href="#">Sobre</a>
           <a href="#">Termos de Uso</a>
           <a href="#">Privacidade</a>
+          <a href="#">LGPD</a>
         </div>
       </div>
       <div class="footer-bottom">
-        <p>&copy; 2026 VIVAS Saúde Inteligente. Todos os direitos reservados.</p>
+        <p>A VivaS é uma plataforma de apoio à saúde preventiva e não substitui atendimento médico de emergência. Em caso de urgência, procure o serviço de saúde mais próximo ou ligue 192.</p>
+        <p>&copy; 2026 VivaS Saúde Inteligente. Todos os direitos reservados.</p>
       </div>
     </div>
   </footer>
 
-  <script src="/script.js"></script>
+  <!-- WhatsApp Widget -->
+  <div class="whatsapp-float" id="whatsappWidget">
+    <div class="whatsapp-bubble">
+      <button class="whatsapp-close" onclick="document.getElementById('whatsappWidget').classList.remove('open')">&times;</button>
+      <div class="whatsapp-bubble-header">
+        <div class="whatsapp-bubble-avatar">V</div>
+        <div>
+          <div class="whatsapp-bubble-name">VivaS Saude</div>
+          <div class="whatsapp-bubble-role">Atendimento</div>
+        </div>
+      </div>
+      <div class="whatsapp-bubble-msg">
+        Oi! Sou da equipe VivaS. Posso te ajudar a escolher o melhor plano de saude preventiva para voce. Fale comigo!
+      </div>
+      <div class="whatsapp-bubble-actions">
+        <a href="https://wa.me/5511947382375?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20os%20planos%20da%20VivaS" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Iniciar conversa
+        </a>
+      </div>
+    </div>
+    <button class="whatsapp-btn" onclick="this.parentElement.classList.toggle('open')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <span>Fale conosco</span>
+    </button>
+  </div>
+
+  <script>
+    // Mobile menu toggle
+    const mobileMenu = document.getElementById('mobileMenu');
+    const navLinks = document.getElementById('navLinks');
+    if (mobileMenu) {
+      mobileMenu.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+        mobileMenu.classList.toggle('active');
+      });
+    }
+    // Sticky navbar
+    window.addEventListener('scroll', () => {
+      const nav = document.getElementById('navbar');
+      if (window.scrollY > 50) nav.classList.add('scrolled');
+      else nav.classList.remove('scrolled');
+    });
+    // Smooth scroll for anchors
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const id = a.getAttribute('href');
+        if (id && id !== '#') {
+          e.preventDefault();
+          document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' });
+          navLinks.classList.remove('active');
+          mobileMenu.classList.remove('active');
+        }
+      });
+    });
+    // Plan checkout — track abandoned carts
+    document.querySelectorAll('.btn-plan').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const plan = btn.getAttribute('data-plan');
+        if (!plan || plan === 'empresa') return;
+        btn.textContent = 'Redirecionando...';
+        btn.style.opacity = '0.7';
+        try {
+          const res = await fetch('/api/subscriptions/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plan })
+          });
+          const data = await res.json();
+          if (data.url) {
+            // Track that user started checkout (for abandoned cart recovery)
+            if (data.sessionId) {
+              fetch('/api/subscriptions/track-checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId: data.sessionId, plan })
+              }).catch(() => {});
+            }
+            window.location.href = data.url;
+          } else {
+            window.location.href = 'https://vivas.digital/register?plan=' + plan;
+          }
+        } catch {
+          window.location.href = 'https://vivas.digital/register?plan=' + plan;
+        }
+      });
+    });
+    // Auto-show WhatsApp bubble after 15 seconds
+    setTimeout(() => {
+      const w = document.getElementById('whatsappWidget');
+      if (w && !sessionStorage.getItem('wa_shown')) {
+        w.classList.add('open');
+        sessionStorage.setItem('wa_shown', '1');
+      }
+    }, 15000);
+  </script>
 </body>
 </html>

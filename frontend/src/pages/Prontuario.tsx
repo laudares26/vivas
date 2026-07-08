@@ -4,7 +4,7 @@ import { api, type Patient, type EHREntry } from '../services/api'
 import { useToast } from '../components/Toast'
 
 const TYPE_CONFIG: Record<string, { icon: typeof FileText; color: string; bg: string }> = {
-  consulta: { icon: Stethoscope, color: 'text-blue-600', bg: 'bg-blue-100' },
+  consulta: { icon: Stethoscope, color: 'text-wine', bg: 'bg-wine-soft' },
   exame: { icon: TestTubeDiagonal, color: 'text-purple-600', bg: 'bg-purple-100' },
   medicamento: { icon: Pill, color: 'text-green-600', bg: 'bg-green-100' },
   vacina: { icon: Syringe, color: 'text-cyan-600', bg: 'bg-cyan-100' },
@@ -84,7 +84,7 @@ export default function Prontuario() {
                   </div>
                   <div className="flex-1">
                     <h2 className="text-lg font-bold">{selectedPatient.full_name}</h2>
-                    <div className="flex gap-3 mt-1 flex-wrap text-sm text-blue-100">
+                    <div className="flex gap-3 mt-1 flex-wrap text-sm text-white/70">
                       <span>CPF: {selectedPatient.cpf}</span>
                       {selectedPatient.cns && <span className="bg-white/20 px-2 py-0.5 rounded text-xs">CNS: {selectedPatient.cns}</span>}
                       <span>{selectedPatient.gender}</span>

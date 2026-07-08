@@ -82,4 +82,104 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Professional onboarding - public (no auth required)
+const bcrypt = require('bcryptjs');
+const { generateMedicoContract, generatePsicologoContract } = require('../services/contracts');
+
+async function onboardingHandler(req, res) {
+  try {
+    const { type, nome, sobrenome, email, nascimento, celular, registro, registroUf, cpf, especialidade, signature } = req.body;
+
+    if (!nome || !sobrenome || !email || !registro || !cpf) {
+      return res.status(400).json({ error: 'Campos obrigatórios não preenchidos' });
+    }
+
+    // Create professionals_onboarding table if needed
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS professionals_onboarding (
+        id SERIAL PRIMARY KEY,
+        type VARCHAR(20) NOT NULL,
+        nome VARCHAR(255) NOT NULL,
+        sobrenome VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        nascimento DATE,
+        celular VARCHAR(50),
+        registro VARCHAR(50) NOT NULL,
+        registro_uf VARCHAR(2),
+        cpf VARCHAR(20) NOT NULL,
+        especialidade VARCHAR(100),
+        signature_data TEXT,
+        contract_signed BOOLEAN DEFAULT true,
+        contract_date TIMESTAMP DEFAULT NOW(),
+        status VARCHAR(20) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Insert professional
+    const result = await pool.query(
+      `INSERT INTO professionals_onboarding (type, nome, sobrenome, email, nascimento, celular, registro, registro_uf, cpf, especialidade, signature_data)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+      [type, nome, sobrenome, email, nascimento || null, celular || null, registro, registroUf || null, cpf, especialidade || null, signature || null]
+    );
+    const profId = result.rows[0].id;
+
+    // Create user account with temp password
+    const tempPassword = Math.random().toString(36).slice(-8);
+    const hash = await bcrypt.hash(tempPassword, 10);
+    const role = type === 'medico' ? 'medico' : 'psicologo';
+    const fullName = type === 'medico' ? `Dr(a). ${nome} ${sobrenome}` : `${nome} ${sobrenome}`;
+
+    await pool.query(
+      `INSERT INTO users (email, password_hash, full_name, role, avatar_color, active)
+       VALUES ($1, $2, $3, $4, $5, true) ON CONFLICT (email) DO NOTHING`,
+      [email, hash, fullName, role, type === 'medico' ? '#2563EB' : '#EC4899']
+    );
+
+    // Also insert into professionals table
+    const regLabel = type === 'medico' ? 'CRM' : 'CRP';
+    const category = type === 'medico' ? 'Médico' : 'Psicólogo';
+    await pool.query(
+      `INSERT INTO professionals (full_name, cpf, professional_id, category, specialty, phone, email, schedule, consultations_month, rating)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'Seg-Sex', 0, 5.0) ON CONFLICT (cpf) DO NOTHING`,
+      [fullName, cpf, `${regLabel}-${registroUf} ${registro}`, category, especialidade || 'Geral', celular || '', email]
+    );
+
+    // Send contract email using full template
+    const nodemailer = require('nodemailer');
+    const smtpUser = process.env.SMTP_USER || 'sandrolaudares@gmail.com';
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (smtpPass) {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: smtpUser, pass: smtpPass }
+      });
+
+      const contractData = { fullName, cpf, registro, registroUf, especialidade, email, tempPassword };
+      const html = type === 'medico'
+        ? generateMedicoContract(contractData)
+        : generatePsicologoContract(contractData);
+
+      const subjectType = type === 'medico' ? 'Medico' : 'Psicologo';
+      const info = await transporter.sendMail({
+        from: `"VivaS Saude" <${smtpUser}>`,
+        to: email,
+        subject: `VivaS - Contrato de Credenciamento ${subjectType} assinado`,
+        html
+      });
+      console.log(`[ONBOARDING] Contract email sent to ${email} - Response: ${info.response}`);
+    } else {
+      console.log(`[ONBOARDING] No SMTP_PASS - email would be sent to ${email}`);
+    }
+
+    res.json({ success: true, id: profId });
+  } catch (err) {
+    console.error('Onboarding error:', err);
+    if (err.code === '23505') return res.status(400).json({ error: 'Email ou CPF já cadastrado' });
+    res.status(500).json({ error: 'Erro ao processar cadastro' });
+  }
+}
+
 module.exports = router;
+module.exports.onboardingHandler = onboardingHandler;

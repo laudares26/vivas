@@ -296,13 +296,118 @@ CREATE INDEX IF NOT EXISTS idx_dicom_studies_modality ON dicom_studies(modality)
 CREATE INDEX IF NOT EXISTS idx_dicom_series_study ON dicom_series(study_id);
 CREATE INDEX IF NOT EXISTS idx_dicom_instances_series ON dicom_instances(series_id);
 
+-- Professional-Patient relationships (data isolation)
+CREATE TABLE IF NOT EXISTS professional_patient_relationships (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  professional_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  patient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(professional_user_id, patient_user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ppr_professional ON professional_patient_relationships(professional_user_id);
+CREATE INDEX IF NOT EXISTS idx_ppr_patient ON professional_patient_relationships(patient_user_id);
+
+-- Health notifications (alerts sent to patients/professionals)
+CREATE TABLE IF NOT EXISTS health_notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  patient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  alert_data JSONB NOT NULL,
+  notified_professionals JSONB,
+  read_by_patient BOOLEAN DEFAULT false,
+  read_by_professional BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_health_notifications_patient ON health_notifications(patient_user_id);
+
+-- Preventive health indicators (stored values per patient)
+CREATE TABLE IF NOT EXISTS health_indicators (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  patient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  indicator_name VARCHAR(50) NOT NULL,
+  value DECIMAL(10,2) NOT NULL,
+  unit VARCHAR(20),
+  recorded_at TIMESTAMP DEFAULT NOW(),
+  source VARCHAR(50) DEFAULT 'manual'
+);
+
+CREATE INDEX IF NOT EXISTS idx_health_indicators_patient ON health_indicators(patient_user_id);
+CREATE INDEX IF NOT EXISTS idx_health_indicators_name ON health_indicators(indicator_name);
+
+-- Subscriptions table (Stripe payments)
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  plan VARCHAR(30) NOT NULL DEFAULT 'individual',
+  status VARCHAR(30) NOT NULL DEFAULT 'active',
+  max_members INT DEFAULT 1,
+  stripe_customer_id VARCHAR(255),
+  stripe_subscription_id VARCHAR(255),
+  current_period_end TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe ON subscriptions(stripe_subscription_id);
+
+-- Companies table (B2B)
+CREATE TABLE IF NOT EXISTS companies (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  cnpj VARCHAR(18) UNIQUE,
+  trade_name VARCHAR(255),
+  sector VARCHAR(100),
+  employee_count INT,
+  contact_email VARCHAR(255),
+  contact_phone VARCHAR(20),
+  address_city VARCHAR(100),
+  address_state VARCHAR(2),
+  plan VARCHAR(30) DEFAULT 'empresa',
+  status VARCHAR(20) DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Company employees (links users to companies, RH or employee)
+CREATE TABLE IF NOT EXISTS company_employees (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role VARCHAR(20) NOT NULL DEFAULT 'employee',
+  department VARCHAR(100),
+  job_title VARCHAR(100),
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(company_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_companies_cnpj ON companies(cnpj);
+CREATE INDEX IF NOT EXISTS idx_company_employees_company ON company_employees(company_id);
+CREATE INDEX IF NOT EXISTS idx_company_employees_user ON company_employees(user_id);
+
+-- Company leads (contact form submissions)
+CREATE TABLE IF NOT EXISTS company_leads (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  company VARCHAR(255),
+  employees VARCHAR(20),
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(20),
+  status VARCHAR(20) DEFAULT 'new',
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Add new columns if they don't exist (safe migration)
 DO $$ BEGIN
   ALTER TABLE patients ADD COLUMN IF NOT EXISTS convenio VARCHAR(50) DEFAULT 'SUS';
   ALTER TABLE patients ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'Ativo';
+  ALTER TABLE patients ADD COLUMN IF NOT EXISTS titular_id UUID REFERENCES patients(id) ON DELETE SET NULL;
+  ALTER TABLE patients ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL;
   ALTER TABLE professionals ADD COLUMN IF NOT EXISTS schedule VARCHAR(20) DEFAULT 'Seg-Sex';
   ALTER TABLE professionals ADD COLUMN IF NOT EXISTS consultations_month INT DEFAULT 0;
   ALTER TABLE professionals ADD COLUMN IF NOT EXISTS rating DECIMAL(2,1) DEFAULT 4.5;
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id UUID REFERENCES companies(id) ON DELETE SET NULL;
 EXCEPTION WHEN OTHERS THEN NULL; END $$;
 `;
 

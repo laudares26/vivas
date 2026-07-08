@@ -70,8 +70,8 @@ export default function Predicao() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Predição de Riscos</h1>
-        <p className="text-gray-500 text-sm mt-1">Análise preditiva de saúde com inteligência artificial</p>
+        <h1 className="text-2xl font-bold text-gray-900">Suporte Preventivo</h1>
+        <p className="text-gray-500 text-sm mt-1">Suporte preventivo de saúde inteligente</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

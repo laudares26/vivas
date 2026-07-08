@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VivaS - Cadastro de Profissionais de Saúde</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    body { background: var(--bg); min-height: 100vh; }
+    .page { display: flex; flex-direction: column; min-height: 100vh; }
+    .main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; }
+    .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); max-width: 600px; width: 100%; padding: 40px 36px; border: 1px solid var(--line); }
+    .card-header { text-align: center; margin-bottom: 8px; }
+    .card-header h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: var(--wine-deep); margin-bottom: 4px; }
+    .card-header p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+
+    /* Steps */
+    .steps { display: flex; justify-content: center; gap: 32px; margin-bottom: 28px; }
+    .step-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .step-num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; border: 2px solid var(--line); color: var(--muted); transition: all 0.3s; }
+    .step-item.active .step-num { background: var(--wine); border-color: var(--wine); color: white; }
+    .step-item.done .step-num { background: var(--green); border-color: var(--green); color: white; }
+    .step-label { font-size: 11px; color: var(--muted); font-weight: 500; }
+    .step-item.active .step-label { color: var(--wine); font-weight: 700; }
+
+    /* Form */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-weight: 600; font-size: 13px; color: var(--ink); margin-bottom: 6px; }
+    .form-group label .req { color: var(--wine); }
+    .form-group input, .form-group select { width: 100%; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; font-size: 14px; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; background: var(--bg); color: var(--ink); }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--wine); box-shadow: 0 0 0 3px rgba(123,30,60,0.1); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-row-3 { display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 12px; }
+
+    /* Radio */
+    .radio-group { display: flex; gap: 12px; }
+    .radio-card { flex: 1; border: 1.5px solid var(--line); border-radius: 10px; padding: 14px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .radio-card:hover { border-color: var(--wine-line); }
+    .radio-card.selected { border-color: var(--wine); background: var(--wine-soft); }
+    .radio-card .rc-icon { font-size: 22px; margin-bottom: 4px; }
+    .radio-card .rc-label { font-weight: 600; font-size: 13px; }
+    .radio-card .rc-sub { font-size: 11px; color: var(--muted); }
+
+    /* Upload */
+    .upload-area { border: 2px dashed var(--line); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+    .upload-area:hover { border-color: var(--wine); background: var(--wine-soft); }
+    .upload-area.has-file { border-color: var(--green); background: var(--green-soft); }
+    .upload-area .ua-icon { font-size: 28px; margin-bottom: 6px; }
+    .upload-area .ua-text { font-size: 13px; color: var(--muted); }
+    .upload-area .ua-text strong { color: var(--wine); }
+    .upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-preview { display: none; }
+    .upload-area.has-file .upload-preview { display: block; }
+    .upload-area.has-file .upload-default { display: none; }
+    .upload-preview img { max-width: 200px; max-height: 150px; border-radius: 8px; }
+    .upload-preview .up-name { font-size: 12px; color: var(--success); font-weight: 600; margin-top: 6px; }
+    .quality-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-top: 8px; }
+    .quality-badge.good { background: var(--green-soft); color: var(--green); }
+    .quality-badge.bad { background: #FEE2E2; color: #DC2626; }
+
+    /* Contract */
+    .contract-box { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; font-size: 12px; line-height: 1.7; color: var(--ink); margin-bottom: 16px; }
+    .contract-box h3 { font-size: 14px; text-align: center; margin-bottom: 12px; color: var(--wine-deep); }
+    .contract-box p { margin-bottom: 8px; }
+    .contract-box .clause { margin-bottom: 12px; }
+    .contract-box .clause strong { color: var(--wine-deep); }
+
+    /* Signature */
+    .sig-area { border: 1.5px solid var(--line); border-radius: 12px; height: 120px; position: relative; background: white; cursor: crosshair; margin-bottom: 12px; }
+    .sig-area canvas { width: 100%; height: 100%; border-radius: 12px; }
+    .sig-clear { position: absolute; top: 8px; right: 8px; background: var(--wine-soft); border: none; border-radius: 6px; padding: 4px 8px; font-size: 11px; color: var(--wine); cursor: pointer; font-weight: 600; }
+    .sig-label { font-size: 12px; color: var(--muted); text-align: center; }
+
+    /* Checkbox */
+    .checkbox-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 16px; }
+    .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--wine); }
+    .checkbox-row label { font-size: 13px; color: var(--muted); line-height: 1.4; }
+
+    /* Buttons */
+    .btn-primary { display: block; width: 100%; padding: 14px; background: var(--wine); color: white; border: none; border-radius: 50px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+    .btn-primary:hover { background: var(--wine-deep); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(123,30,60,0.3); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-back { background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 12px; display: block; width: 100%; text-align: center; font-family: inherit; }
+    .btn-back:hover { color: var(--wine); }
+
+    /* Success */
+    .success-icon { width: 64px; height: 64px; border-radius: 50%; background: var(--green-soft); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .success-icon svg { width: 32px; height: 32px; color: var(--green); }
+
+    .hidden { display: none !important; }
+    @media (max-width: 540px) {
+      .card { padding: 24px 16px; }
+      .form-row, .form-row-3 { grid-template-columns: 1fr; }
+      .steps { gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="navbar scrolled" style="position:relative">
+      <div class="container navbar-content">
+        <a href="/" class="logo">
+          <img src="/vivas-branco.svg" alt="vivas" class="logo-img" style="filter: brightness(0) saturate(100%) invert(15%) sepia(50%) saturate(3000%) hue-rotate(320deg);" />
+        </a>
+        <div class="nav-actions">
+          <a href="https://vivas.digital/login" class="btn btn-ghost btn-sm">Entrar</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main">
+      <div class="card">
+        <div class="card-header">
+          <h1>Cadastro de Profissional de Saúde</h1>
+          <p>Complete seu cadastro em 4 etapas simples</p>
+        </div>
+
+        <div class="steps">
+          <div class="step-item active" id="si1"><div class="step-num">1</div><div class="step-label">Dados</div></div>
+          <div class="step-item" id="si2"><div class="step-num">2</div><div class="step-label">Identidade</div></div>
+          <div class="step-item" id="si3"><div class="step-num">3</div><div class="step-label">Contrato</div></div>
+          <div class="step-item" id="si4"><div class="step-num">4</div><div class="step-label">Confirmação</div></div>
+        </div>
+
+        <!-- Step 1: Personal + Professional Data -->
+        <div id="step1">
+          <div class="form-group">
+            <label>Tipo de profissional <span class="req">*</span></label>
+            <div class="radio-group">
+              <div class="radio-card selected" data-value="medico" onclick="selectType(this)">
+                <div class="rc-label">Médico(a)</div>
+                <div class="rc-sub">CRM</div>
+              </div>
+              <div class="radio-card" data-value="psicologo" onclick="selectType(this)">
+                <div class="rc-label">Psicólogo(a)</div>
+                <div class="rc-sub">CRP</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nome <span class="req">*</span></label>
+              <input type="text" id="nome" placeholder="Seu nome" />
+            </div>
+            <div class="form-group">
+              <label>Sobrenome <span class="req">*</span></label>
+              <input type="text" id="sobrenome" placeholder="Seu sobrenome" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>E-mail <span class="req">*</span></label>
+            <input type="email" id="email" placeholder="profissional@email.com" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Data de Nascimento <span class="req">*</span></label>
+              <input type="date" id="nascimento" />
+            </div>
+            <div class="form-group">
+              <label>Celular <span class="req">*</span></label>
+              <input type="tel" id="celular" placeholder="(31) 99999-9999" />
+            </div>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label id="crmLabel">CRM <span class="req">*</span></label>
+              <input type="text" id="crm" placeholder="000000" />
+            </div>
+            <div class="form-group">
+              <label id="ufLabel">UF <span class="req">*</span></label>
+              <select id="crmUf">
+                <option value="">UF</option>
+                <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+                <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+                <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+                <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+                <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+                <option>SP</option><option>SE</option><option>TO</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>CPF <span class="req">*</span></label>
+              <input type="text" id="cpf" placeholder="000.000.000-00" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Especialidade <span class="req">*</span></label>
+            <select id="especialidade">
+              <option value="">Selecione sua especialidade</option>
+              <option value="Clínica Geral">Clínica Geral</option>
+              <option value="Cardiologia">Cardiologia</option>
+              <option value="Dermatologia">Dermatologia</option>
+              <option value="Endocrinologia">Endocrinologia</option>
+              <option value="Gastroenterologia">Gastroenterologia</option>
+              <option value="Geriatria">Geriatria</option>
+              <option value="Ginecologia">Ginecologia</option>
+              <option value="Neurologia">Neurologia</option>
+              <option value="Ortopedia">Ortopedia</option>
+              <option value="Pediatria">Pediatria</option>
+              <option value="Pneumologia">Pneumologia</option>
+              <option value="Psiquiatria">Psiquiatria</option>
+              <option value="Urologia">Urologia</option>
+              <option value="Medicina de Família">Medicina de Família</option>
+              <option value="Psicologia Clínica">Psicologia Clínica</option>
+              <option value="Neuropsicologia">Neuropsicologia</option>
+              <option value="Psicologia Organizacional">Psicologia Organizacional</option>
+              <option value="Terapia Cognitivo-Comportamental">Terapia Cognitivo-Comportamental</option>
+              <option value="Psicanálise">Psicanálise</option>
+              <option value="Psicologia Infantil">Psicologia Infantil</option>
+              <option value="Outra">Outra</option>
+            </select>
+          </div>
+
+          <button class="btn-primary" onclick="goToStep(2)">Próxima Etapa &rarr;</button>
+        </div>
+
+        <!-- Step 2: Identity Validation -->
+        <div id="step2" class="hidden">
+          <div class="form-group" style="text-align:center;margin-bottom:20px">
+            <p style="font-size:14px;color:var(--muted)">Para sua segurança, precisamos validar sua identidade. Tire uma foto ou faça upload de um documento com foto.</p>
+          </div>
+
+          <div class="form-group">
+            <label>Documento com foto (RG, CNH ou CRM/CRP) <span class="req">*</span></label>
+            <div class="upload-area" id="docUpload">
+              <div class="upload-default">
+                <div class="ua-icon">📄</div>
+                <div class="ua-text"><strong>Clique para enviar</strong> ou tire uma foto</div>
+                <div class="ua-text" style="margin-top:4px">JPG, PNG ou PDF - máx. 5MB</div>
+              </div>
+              <div class="upload-preview">
+                <img id="docPreview" src="" alt="Preview" />
+                <div class="up-name" id="docName"></div>
+              </div>
+              <input type="file" id="docFile" accept="image/*,.pdf" capture="environment" onchange="handleDocUpload(this)" />
+            </div>
+            <div id="docQuality" class="hidden"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Selfie para comparação <span class="req">*</span></label>
+            <div class="upload-area" id="selfieUpload">
+              <div class="upload-default">
+                <div class="ua-text"><strong>Tire uma selfie</strong> para validação facial</div>
+                <div class="ua-text" style="margin-top:4px">Use boa iluminação e fundo neutro</div>
+              </div>
+              <div class="upload-preview">
+                <img id="selfiePreview" src="" alt="Selfie" />
+                <div class="up-name" id="selfieName"></div>
+              </div>
+              <input type="file" id="selfieFile" accept="image/*" capture="user" onchange="handleSelfieUpload(this)" />
+            </div>
+            <div id="selfieQuality" class="hidden"></div>
+          </div>
+
+          <button class="btn-primary" id="btnValidate" onclick="validateIdentity()" disabled>Validar identidade e continuar &rarr;</button>
+          <button class="btn-back" onclick="goToStep(1)">&larr; Voltar</button>
+        </div>
+
+        <!-- Step 3: Contract + Signature -->
+        <div id="step3" class="hidden">
+          <div class="contract-box" id="contractBox">
+            <h3 id="contractTitle">CONTRATO DE CREDENCIAMENTO E PRESTACAO DE SERVICOS</h3>
+            <div class="clause" id="contractSubtitle" style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:12px"></div>
+            <div class="clause"><strong>CONTRATANTE:</strong> CROSSGEO LTDA, inscrita no CNPJ sob o n. 56.195.515/0001-49, com sede na R. da Patagonia, 404, Sion, Belo Horizonte/MG, CEP 30.320-135, neste ato representando a plataforma VivaS Saude Inteligente.</div>
+            <div class="clause"><strong>CONTRATADO(A):</strong> <span id="contractName">___</span>, inscrito(a) no CPF sob o n. <span id="contractCPF">___</span>, portador(a) do <span id="contractCRM">CRM/CRP</span> n. <span id="contractCRMNum">___</span>/<span id="contractUF">__</span>, especialidade <span id="contractEsp">___</span>.</div>
+            <div class="clause" id="contractClauses"></div>
+            <p style="margin-top:16px;text-align:center;font-size:11px;color:var(--muted)">Belo Horizonte, <span id="contractDate">__/__/____</span></p>
+          </div>
+
+          <div class="form-group">
+            <label>Sua assinatura digital</label>
+            <div class="sig-area" id="sigArea">
+              <canvas id="sigCanvas"></canvas>
+              <button class="sig-clear" onclick="clearSignature()">Limpar</button>
+            </div>
+            <div class="sig-label">Desenhe sua assinatura acima com o dedo ou mouse</div>
+          </div>
+
+          <div class="checkbox-row">
+            <input type="checkbox" id="acceptTerms" onchange="checkContract()" />
+            <label for="acceptTerms">Li e aceito os termos do contrato de credenciamento e prestacao de servicos profissionais com a VivaS.</label>
+          </div>
+
+          <button class="btn-primary" id="btnSign" onclick="submitContract()" disabled>Assinar contrato eletronicamente</button>
+          <button class="btn-back" onclick="goToStep(2)">&larr; Voltar</button>
+        </div>
+
+        <!-- Step 4: Confirmation -->
+        <div id="step4" class="hidden">
+          <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div style="text-align:center">
+            <h2 style="font-size:22px;font-weight:800;color:var(--wine-deep);margin-bottom:8px">Cadastro realizado com sucesso!</h2>
+            <p style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:16px">Seu contrato assinado foi enviado para <strong id="emailConfirm"></strong>. Você já pode acessar a plataforma VivaS como profissional de saúde.</p>
+            <div style="background:var(--wine-soft);border-radius:12px;padding:16px;margin-bottom:20px;text-align:left">
+              <p style="font-size:13px;font-weight:600;color:var(--wine-deep);margin-bottom:6px">Próximos passos:</p>
+              <p style="font-size:13px;color:var(--muted)">1. Acesse vivas.digital com seu email e senha temporária (enviada por email)</p>
+              <p style="font-size:13px;color:var(--muted)">2. Complete seu perfil e configure sua agenda</p>
+              <p style="font-size:13px;color:var(--muted)">3. Comece a atender pacientes pela plataforma</p>
+            </div>
+            <a href="https://vivas.digital/login" class="btn-primary" style="display:inline-block;text-decoration:none;padding:14px 32px;border-radius:12px">Acessar a plataforma</a>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001/api' : '/api';
+    let state = { type: 'medico', docFile: null, selfieFile: null, signatureData: null };
+
+    function selectType(el) {
+      document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      state.type = el.dataset.value;
+      const label = state.type === 'medico' ? 'CRM' : 'CRP';
+      document.getElementById('crmLabel').innerHTML = `${label} <span class="req">*</span>`;
+    }
+
+    function goToStep(n) {
+      if (n === 2) {
+        const nome = document.getElementById('nome').value;
+        const sobrenome = document.getElementById('sobrenome').value;
+        const email = document.getElementById('email').value;
+        const crm = document.getElementById('crm').value;
+        const cpf = document.getElementById('cpf').value;
+        if (!nome || !sobrenome || !email || !crm || !cpf) {
+          alert('Preencha todos os campos obrigatórios.');
+          return;
+        }
+      }
+      if (n === 3) {
+        if (!state.docFile || !state.selfieFile) {
+          alert('Envie o documento e a selfie para continuar.');
+          return;
+        }
+        fillContract();
+        initSignature();
+      }
+      for (let i = 1; i <= 4; i++) document.getElementById('step' + i).classList.toggle('hidden', i !== n);
+      for (let i = 1; i <= 4; i++) {
+        const si = document.getElementById('si' + i);
+        si.classList.toggle('active', i === n);
+        si.classList.toggle('done', i < n);
+      }
+    }
+
+    function handleDocUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+      state.docFile = file;
+      const area = document.getElementById('docUpload');
+      area.classList.add('has-file');
+      document.getElementById('docName').textContent = file.name;
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = e => document.getElementById('docPreview').src = e.target.result;
+        reader.readAsDataURL(file);
+      }
+      validateImage(file, 'docQuality');
+      checkStep2();
+    }
+
+    function handleSelfieUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+      state.selfieFile = file;
+      const area = document.getElementById('selfieUpload');
+      area.classList.add('has-file');
+      document.getElementById('selfieName').textContent = file.name;
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = e => document.getElementById('selfiePreview').src = e.target.result;
+        reader.readAsDataURL(file);
+      }
+      validateImage(file, 'selfieQuality');
+      checkStep2();
+    }
+
+    function validateImage(file, targetId) {
+      const el = document.getElementById(targetId);
+      el.classList.remove('hidden');
+      if (file.size > 5 * 1024 * 1024) {
+        el.innerHTML = '<div class="quality-badge bad">&#10006; Arquivo muito grande (max 5MB)</div>';
+        return false;
+      }
+      if (file.type.startsWith('image/')) {
+        const img = new Image();
+        img.onload = () => {
+          if (img.width < 300 || img.height < 300) {
+            el.innerHTML = '<div class="quality-badge bad">&#10006; Resolução muito baixa. Tire outra foto.</div>';
+          } else {
+            el.innerHTML = '<div class="quality-badge good">&#10004; Imagem validada com sucesso</div>';
+          }
+        };
+        img.src = URL.createObjectURL(file);
+      } else {
+        el.innerHTML = '<div class="quality-badge good">&#10004; Documento recebido</div>';
+      }
+      return true;
+    }
+
+    function checkStep2() {
+      document.getElementById('btnValidate').disabled = !(state.docFile && state.selfieFile);
+    }
+
+    function validateIdentity() {
+      goToStep(3);
+    }
+
+    function fillContract() {
+      const nome = document.getElementById('nome').value;
+      const sobrenome = document.getElementById('sobrenome').value;
+      const cpf = document.getElementById('cpf').value;
+      const crm = document.getElementById('crm').value;
+      const uf = document.getElementById('crmUf').value;
+      const esp = document.getElementById('especialidade').value;
+      const label = state.type === 'medico' ? 'CRM' : 'CRP';
+      const isMedico = state.type === 'medico';
+
+      document.getElementById('contractName').textContent = `${nome} ${sobrenome}`;
+      document.getElementById('contractCPF').textContent = cpf;
+      document.getElementById('contractCRM').textContent = label;
+      document.getElementById('contractCRMNum').textContent = crm;
+      document.getElementById('contractUF').textContent = uf;
+      document.getElementById('contractEsp').textContent = esp || 'N/A';
+      const now = new Date();
+      document.getElementById('contractDate').textContent = now.toLocaleDateString('pt-BR');
+
+      const title = isMedico
+        ? 'CONTRATO DE CREDENCIAMENTO E PRESTACAO DE SERVICOS MEDICOS'
+        : 'CONTRATO DE CREDENCIAMENTO E PRESTACAO DE SERVICOS PSICOLOGICOS';
+      document.getElementById('contractTitle').textContent = title;
+
+      const subtitle = isMedico
+        ? 'Profissional Medico x Plataforma VivaS - Telemedicina (Resolucao CFM n. 2.314/2022)'
+        : 'Profissional de Psicologia x Plataforma VivaS - Atendimento mediado por TDICs (Resolucao CFP n. 09/2024)';
+      document.getElementById('contractSubtitle').textContent = subtitle;
+
+      const prof = isMedico ? 'MEDICO' : 'PSICOLOGO';
+      const clauses = isMedico ? [
+        ['1a - DAS DEFINICOES', 'Plataforma: ambiente tecnologico da VivaS que viabiliza triagem inteligente, organizacao de historico clinico, interpretacao de exames, alertas preditivos e teleconsultas. Teleconsulta: consulta medica nao presencial (Resolucao CFM n. 2.314/2022). SRES: Sistema de Registro Eletronico de Saude.'],
+        ['2a - DO OBJETO', 'Credenciamento do MEDICO na Plataforma e regulacao da prestacao de servicos medicos na modalidade de teleconsulta. A Plataforma atua como meio tecnologico, nao exercendo a Medicina nem interferindo na autonomia tecnica do MEDICO. A consulta presencial e o padrao-ouro de referencia.'],
+        ['3a - DA HABILITACAO', 'O MEDICO declara que possui inscricao ativa no CRM; detem titulo de especialista compativel; mantem certificado digital ICP-Brasil; e mantera seus dados permanentemente atualizados.'],
+        ['4a - DA NATUREZA DA RELACAO', 'O MEDICO presta servicos com plena autonomia tecnica e profissional, sem subordinacao, habitualidade obrigatoria ou exclusividade. Nao se estabelece vinculo empregaticio entre as Partes.'],
+        ['5a - DAS OBRIGACOES DO MEDICO', 'Atender com zelo segundo o Codigo de Etica Medica; obter consentimento do paciente; registrar atendimento em prontuario eletronico; assinar prescricoes com certificado ICP-Brasil; indicar atendimento presencial quando necessario; realizar atendimento em local privativo.'],
+        ['6a - DAS OBRIGACOES DA VIVAS', 'Disponibilizar ambiente tecnologico adequado; manter sede em territorio nacional e inscricao no CRM; efetuar repasses devidos; adotar medidas de seguranca; disponibilizar suporte tecnico.'],
+        ['7a - DA REMUNERACAO', 'Credenciamento gratuito. Remuneracao por teleconsulta conforme tabela vigente. Repasses em ate 7 dias uteis apos fechamento do ciclo mensal.'],
+        ['8a - DA AGENDA', 'O MEDICO gerencia sua propria agenda. Cancelamentos com 24h de antecedencia minima. Faltas reiteradas poderao ensejar descredenciamento.'],
+        ['9a - PROTECAO DE DADOS (LGPD)', 'Tratamento conforme Lei n. 13.709/2018. O MEDICO e controlador dos dados clinicos; a VivaS e operadora quanto a infraestrutura.'],
+        ['10a - PROPRIEDADE INTELECTUAL', 'Plataforma, software e marcas sao de titularidade exclusiva da VivaS.'],
+        ['11a - RESPONSABILIDADE', 'O MEDICO responde pessoalmente por todos os atos profissionais. A VivaS responde por falhas da infraestrutura tecnologica.'],
+        ['12a - VIGENCIA E RESCISAO', 'Prazo indeterminado. Rescisao imotivada com 30 dias de aviso previo. Rescisao imediata em caso de irregularidade profissional.'],
+        ['13a - CONFIDENCIALIDADE', 'Sigilo sobre informacoes da VivaS por 2 anos apos o termino.'],
+        ['14a - DISPOSICOES GERAIS', 'Tolerancia nao implica novacao. VivaS podera alterar o Contrato mediante comunicacao previa.'],
+        ['15a - DO FORO', 'Comarca de Belo Horizonte/MG.'],
+        ['16a - DO ACEITE ELETRONICO', 'O aceite eletronico constitui assinatura eletronica com plena validade juridica, registrada com data, hora e endereco IP.']
+      ] : [
+        ['1a - DAS DEFINICOES', 'Plataforma: ambiente tecnologico da VivaS para servicos psicologicos mediados por TDICs. TDICs: Tecnologias Digitais da Informacao e da Comunicacao (Resolucao CFP n. 09/2024). Atendimento on-line: servico psicologico prestado a distancia.'],
+        ['2a - DO OBJETO', 'Credenciamento do PSICOLOGO na Plataforma e regulacao da prestacao de servicos psicologicos na modalidade mediada por TDICs, observado o CEPP e a Resolucao CFP n. 09/2024. A Plataforma nao interfere na autonomia tecnica do PSICOLOGO.'],
+        ['3a - CARACTERISTICAS DO SERVICO (Art. 7, CFP 09/2024)', 'Natureza: atendimento psicologico (psicoterapia, orientacao, avaliacao). Recursos: videochamada criptografada, chat seguro e registro documental. Especificidades: dependencia de conexao estavel; necessidade de ambiente privativo.'],
+        ['4a - DA HABILITACAO', 'O PSICOLOGO declara que possui inscricao ativa no CRP; reside em territorio nacional; e capacitado para servicos via TDICs; utilizara instrumentos psicologicos somente quando regulamentados e com parecer do SATEPSI.'],
+        ['5a - DAS OBRIGACOES DO PSICOLOGO', 'Avaliar viabilidade do atendimento on-line; obter consentimento; manter registro documental com sigilo; manter referencia de rede de apoio; realizar atendimento em ambiente privativo; responder integralmente pelo ato profissional.'],
+        ['6a - DAS OBRIGACOES DA VIVAS', 'Disponibilizar ambiente seguro; manter plano de contingencia; efetuar repasses; tratar dados conforme LGPD; disponibilizar suporte tecnico. A VivaS nao garante volume minimo de atendimentos.'],
+        ['7a - DA NATUREZA DA RELACAO', 'O PSICOLOGO atua com autonomia tecnica, sem subordinacao ou exclusividade. Nao se estabelece vinculo empregaticio.'],
+        ['8a - DA REMUNERACAO', 'Credenciamento gratuito. Remuneracao por atendimento conforme tabela vigente. Repasses em ate 7 dias uteis. Reajustes com 30 dias de antecedencia.'],
+        ['9a - DA AGENDA', 'O PSICOLOGO gerencia a propria agenda. Cancelamentos com 24h de antecedencia. Faltas reiteradas poderao ensejar descredenciamento.'],
+        ['10a - PROTECAO DE DADOS (LGPD)', 'Tratamento conforme LGPD. O PSICOLOGO e controlador dos dados de atendimento; a VivaS e operadora.'],
+        ['11a - PROPRIEDADE INTELECTUAL', 'Plataforma, software e marcas sao de titularidade exclusiva da VivaS.'],
+        ['12a - RESPONSABILIDADE', 'O PSICOLOGO responde pessoalmente pelos atos profissionais. A VivaS responde por falhas da infraestrutura.'],
+        ['13a - VIGENCIA E RESCISAO', 'Prazo indeterminado. Rescisao imotivada com 30 dias de aviso previo. Rescisao imediata em caso de irregularidade.'],
+        ['14a - CONFIDENCIALIDADE', 'Sigilo sobre informacoes da VivaS por 2 anos apos o termino.'],
+        ['15a - DISPOSICOES GERAIS E FORO', 'Tolerancia nao implica novacao. Foro: Comarca de Belo Horizonte/MG.'],
+        ['16a - DO ACEITE ELETRONICO', 'O aceite eletronico constitui assinatura eletronica com plena validade juridica, registrada com data, hora e endereco IP.']
+      ];
+
+      const clauseHtml = clauses.map(([t, c]) =>
+        `<div class="clause"><strong>CLAUSULA ${t}:</strong> ${c}</div>`
+      ).join('');
+      document.getElementById('contractClauses').innerHTML = clauseHtml;
+    }
+
+    // Signature canvas
+    let sigCanvas, sigCtx, drawing = false;
+    function initSignature() {
+      sigCanvas = document.getElementById('sigCanvas');
+      const rect = sigCanvas.parentElement.getBoundingClientRect();
+      sigCanvas.width = rect.width;
+      sigCanvas.height = rect.height;
+      sigCtx = sigCanvas.getContext('2d');
+      sigCtx.strokeStyle = '#1A1A2E';
+      sigCtx.lineWidth = 2;
+      sigCtx.lineCap = 'round';
+
+      sigCanvas.addEventListener('mousedown', startDraw);
+      sigCanvas.addEventListener('mousemove', draw);
+      sigCanvas.addEventListener('mouseup', stopDraw);
+      sigCanvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e.touches[0]); });
+      sigCanvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e.touches[0]); });
+      sigCanvas.addEventListener('touchend', stopDraw);
+    }
+    function startDraw(e) { drawing = true; sigCtx.beginPath(); const r = sigCanvas.getBoundingClientRect(); sigCtx.moveTo(e.clientX - r.left, e.clientY - r.top); }
+    function draw(e) { if (!drawing) return; const r = sigCanvas.getBoundingClientRect(); sigCtx.lineTo(e.clientX - r.left, e.clientY - r.top); sigCtx.stroke(); state.signatureData = sigCanvas.toDataURL(); checkContract(); }
+    function stopDraw() { drawing = false; }
+    function clearSignature() { sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); state.signatureData = null; checkContract(); }
+
+    function checkContract() {
+      const accepted = document.getElementById('acceptTerms').checked;
+      document.getElementById('btnSign').disabled = !(accepted && state.signatureData);
+    }
+
+    async function submitContract() {
+      const btn = document.getElementById('btnSign');
+      btn.disabled = true;
+      btn.textContent = 'Processando...';
+
+      const formData = new FormData();
+      formData.append('type', state.type);
+      formData.append('nome', document.getElementById('nome').value);
+      formData.append('sobrenome', document.getElementById('sobrenome').value);
+      formData.append('email', document.getElementById('email').value);
+      formData.append('nascimento', document.getElementById('nascimento').value);
+      formData.append('celular', document.getElementById('celular').value);
+      formData.append('registro', document.getElementById('crm').value);
+      formData.append('registroUf', document.getElementById('crmUf').value);
+      formData.append('cpf', document.getElementById('cpf').value);
+      formData.append('especialidade', document.getElementById('especialidade').value);
+      formData.append('signature', state.signatureData);
+      if (state.docFile) formData.append('documento', state.docFile);
+      if (state.selfieFile) formData.append('selfie', state.selfieFile);
+
+      try {
+        const res = await fetch(API_BASE + '/professionals/onboarding', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro no cadastro');
+        document.getElementById('emailConfirm').textContent = document.getElementById('email').value;
+        goToStep(4);
+      } catch (err) {
+        alert(err.message);
+        btn.disabled = false;
+        btn.textContent = 'Assinar contrato eletronicamente';
+      }
+    }
+
+    // Phone mask
+    document.getElementById('celular').addEventListener('input', function(e) {
+      let v = e.target.value.replace(/\D/g, '');
+      if (v.length > 11) v = v.slice(0, 11);
+      if (v.length > 6) v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+      else if (v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
+      e.target.value = v;
+    });
+    // CPF mask
+    document.getElementById('cpf').addEventListener('input', function(e) {
+      let v = e.target.value.replace(/\D/g, '');
+      if (v.length > 11) v = v.slice(0, 11);
+      if (v.length > 9) v = `${v.slice(0,3)}.${v.slice(3,6)}.${v.slice(6,9)}-${v.slice(9)}`;
+      else if (v.length > 6) v = `${v.slice(0,3)}.${v.slice(3,6)}.${v.slice(6)}`;
+      else if (v.length > 3) v = `${v.slice(0,3)}.${v.slice(3)}`;
+      e.target.value = v;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VivaS - Cotação de Planos</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    body { background: var(--bg); min-height: 100vh; }
+    .page { display: flex; flex-direction: column; min-height: 100vh; }
+    .main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+    .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); max-width: 520px; width: 100%; padding: 40px 36px; border: 1px solid var(--line); }
+    .card h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 28px; font-weight: 800; color: var(--wine-deep); margin-bottom: 6px; letter-spacing: -0.5px; }
+    .card .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+    /* Steps indicator */
+    .steps-bar { display: flex; gap: 6px; margin-bottom: 28px; }
+    .steps-bar .step-dot { flex: 1; height: 4px; border-radius: 2px; background: var(--line); transition: background 0.3s; }
+    .steps-bar .step-dot.active { background: var(--wine); }
+    .steps-bar .step-dot.done { background: var(--green); }
+
+    /* Form */
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-weight: 600; font-size: 13px; color: var(--ink); margin-bottom: 8px; }
+    .form-group input, .form-group select { width: 100%; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 12px; font-size: 15px; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; background: var(--bg); color: var(--ink); }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--wine); box-shadow: 0 0 0 3px rgba(123,30,60,0.1); }
+    .form-group .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* Radio/option cards */
+    .option-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .option-card { border: 1.5px solid var(--line); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .option-card:hover { border-color: var(--wine-line); }
+    .option-card.selected { border-color: var(--wine); background: var(--wine-soft); }
+    .option-card .oc-label { font-weight: 600; font-size: 14px; }
+    .option-card .oc-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* Toggle */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 16px; border: 1.5px solid var(--line); border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
+    .toggle-row:hover { border-color: var(--wine-line); }
+    .toggle-row.active { border-color: var(--wine); background: var(--wine-soft); }
+    .toggle-row .tr-text { font-weight: 600; font-size: 14px; }
+    .toggle-row .tr-sub { font-size: 12px; color: var(--muted); }
+    .toggle-switch { width: 44px; height: 24px; border-radius: 12px; background: var(--line); position: relative; transition: background 0.2s; flex-shrink: 0; }
+    .toggle-switch::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: transform 0.2s; }
+    .toggle-row.active .toggle-switch { background: var(--wine); }
+    .toggle-row.active .toggle-switch::after { transform: translateX(20px); }
+
+    /* Buttons */
+    .btn-primary { display: block; width: 100%; padding: 16px; background: var(--wine); color: white; border: none; border-radius: 50px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+    .btn-primary:hover { background: var(--wine-deep); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(123,30,60,0.3); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-back { background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 12px; display: block; width: 100%; text-align: center; font-family: inherit; }
+    .btn-back:hover { color: var(--wine); }
+
+    /* Result */
+    .result-box { background: var(--wine-deep); border-radius: var(--radius); padding: 28px; color: white; margin-bottom: 20px; text-align: center; }
+    .result-box .rb-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; margin-bottom: 4px; }
+    .result-box .rb-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 42px; font-weight: 800; }
+    .result-box .rb-price small { font-size: 16px; opacity: 0.7; font-weight: 400; }
+    .result-box .rb-detail { font-size: 13px; opacity: 0.8; margin-top: 8px; }
+
+    .breakdown { margin-bottom: 24px; }
+    .breakdown .bk-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+    .breakdown .bk-row:last-child { border-bottom: none; }
+    .breakdown .bk-row .bk-label { color: var(--muted); }
+    .breakdown .bk-row .bk-value { font-weight: 600; }
+
+    /* Success */
+    .success-icon { width: 64px; height: 64px; border-radius: 50%; background: var(--green-soft); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .success-icon svg { width: 32px; height: 32px; color: var(--green); }
+    .success-text { text-align: center; }
+    .success-text h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 800; color: var(--wine-deep); margin-bottom: 8px; }
+    .success-text p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 540px) {
+      .card { padding: 28px 20px; }
+      .card h1 { font-size: 22px; }
+      .option-cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- NAVBAR -->
+    <nav class="navbar scrolled" style="position:relative">
+      <div class="container navbar-content">
+        <a href="/" class="logo">
+          <img src="/vivas-branco.svg" alt="vivas" class="logo-img" style="filter: brightness(0) saturate(100%) invert(15%) sepia(50%) saturate(3000%) hue-rotate(320deg);" />
+        </a>
+        <div class="nav-actions">
+          <a href="https://vivas.digital/login" class="btn btn-ghost btn-sm">Entrar</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main">
+      <div class="card">
+        <!-- Steps bar -->
+        <div class="steps-bar">
+          <div class="step-dot active" id="dot1"></div>
+          <div class="step-dot" id="dot2"></div>
+          <div class="step-dot" id="dot3"></div>
+          <div class="step-dot" id="dot4"></div>
+        </div>
+
+        <!-- Step 1: Type -->
+        <div id="step1">
+          <h1>Sua cotação VivaS</h1>
+          <p class="subtitle">Escolha o tipo de plano que melhor se encaixa para você.</p>
+          <div class="form-group">
+            <label>Tipo de plano</label>
+            <div class="option-cards">
+              <div class="option-card" data-value="individual" onclick="selectPlan(this)">
+                <div class="oc-label">Individual</div>
+                <div class="oc-desc">Apenas para mim</div>
+              </div>
+              <div class="option-card" data-value="familia" onclick="selectPlan(this)">
+                <div class="oc-label">Família</div>
+                <div class="oc-desc">Titular + dependentes</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group hidden" id="depGroup">
+            <label>Quantos dependentes?</label>
+            <select id="dependentes">
+              <option value="1">1 dependente</option>
+              <option value="2">2 dependentes</option>
+              <option value="3">3 dependentes</option>
+              <option value="4">4 dependentes</option>
+              <option value="5">5 ou mais dependentes</option>
+            </select>
+            <p class="hint">Cônjuge, filhos ou pais sob sua responsabilidade.</p>
+          </div>
+
+          <button class="btn-primary" id="btnStep1" disabled onclick="goStep(2)">Continuar</button>
+        </div>
+
+        <!-- Step 2: Add-ons -->
+        <div id="step2" class="hidden">
+          <h1>Personalize seu plano</h1>
+          <p class="subtitle">Adicione módulos extras conforme sua necessidade.</p>
+
+          <div class="toggle-row" id="toggleMental" onclick="toggleOption(this)">
+            <div>
+              <div class="tr-text">Saúde Mental</div>
+              <div class="tr-sub">Psicólogos, psiquiatras e terapeutas online</div>
+            </div>
+            <div class="toggle-switch"></div>
+          </div>
+
+          <div class="toggle-row" id="toggleEmpresa" onclick="toggleOption(this)">
+            <div>
+              <div class="tr-text">Empresarial</div>
+              <div class="tr-sub">Gestão de saúde corporativa com NR-1</div>
+            </div>
+            <div class="toggle-switch"></div>
+          </div>
+
+          <button class="btn-primary" onclick="goStep(3)">Ver minha cotação</button>
+          <button class="btn-back" onclick="goStep(1)">&larr; Voltar</button>
+        </div>
+
+        <!-- Step 3: Contact info -->
+        <div id="step3" class="hidden">
+          <h1>Seus dados</h1>
+          <p class="subtitle">Para enviarmos sua cotação personalizada.</p>
+
+          <div class="form-group">
+            <label>Nome completo</label>
+            <input type="text" id="nome" placeholder="Seu nome" required />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="seu@email.com" required />
+          </div>
+          <div class="form-group">
+            <label>Telefone</label>
+            <input type="tel" id="telefone" placeholder="(31) 99999-9999" />
+          </div>
+
+          <button class="btn-primary" id="btnCotacao" onclick="submitQuote()">Gerar minha cotação</button>
+          <button class="btn-back" onclick="goStep(2)">&larr; Voltar</button>
+        </div>
+
+        <!-- Step 4: Result -->
+        <div id="step4" class="hidden">
+          <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div class="success-text">
+            <h2>Cotação enviada!</h2>
+            <p id="successMsg">Enviamos os detalhes do seu plano para <strong id="emailSent"></strong>. Verifique sua caixa de entrada e clique no link para confirmar a contratação.</p>
+          </div>
+
+          <div class="result-box" style="margin-top: 24px;">
+            <div class="rb-label">Valor mensal</div>
+            <div class="rb-price" id="totalPrice">R$ 0<small>/mês</small></div>
+            <div class="rb-detail" id="totalDetail"></div>
+          </div>
+
+          <div class="breakdown" id="breakdown"></div>
+
+          <button class="btn-primary" id="btnConfirmar" onclick="confirmPlan()">Confirmar e contratar agora</button>
+          <button class="btn-back" onclick="window.location.href='https://vivasaudeinteligente.com.br'">&larr; Voltar ao site</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let state = { plan: '', dependentes: 0, mental: false, empresa: false, nome: '', email: '', telefone: '' };
+    const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001/api' : '/api';
+
+    function selectPlan(el) {
+      document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      state.plan = el.dataset.value;
+      document.getElementById('depGroup').classList.toggle('hidden', state.plan !== 'familia');
+      document.getElementById('btnStep1').disabled = false;
+    }
+
+    function toggleOption(el) {
+      el.classList.toggle('active');
+      if (el.id === 'toggleMental') state.mental = el.classList.contains('active');
+      if (el.id === 'toggleEmpresa') state.empresa = el.classList.contains('active');
+    }
+
+    function goStep(n) {
+      if (n === 2 && state.plan === 'familia') {
+        state.dependentes = parseInt(document.getElementById('dependentes').value);
+      }
+      for (let i = 1; i <= 4; i++) document.getElementById('step' + i).classList.toggle('hidden', i !== n);
+      for (let i = 1; i <= 4; i++) {
+        const dot = document.getElementById('dot' + i);
+        dot.classList.toggle('active', i === n);
+        dot.classList.toggle('done', i < n);
+      }
+    }
+
+    function calcPrice() {
+      let base = state.plan === 'individual' ? 49.90 : 89.90;
+      let mentalAdd = state.mental ? (state.plan === 'individual' ? 29.90 : 49.90) : 0;
+      let empresaAdd = state.empresa ? 29.90 : 0;
+      let depAdd = state.plan === 'familia' ? state.dependentes * 19.90 : 0;
+      return { base, mentalAdd, empresaAdd, depAdd, total: base + mentalAdd + empresaAdd + depAdd };
+    }
+
+    async function submitQuote() {
+      state.nome = document.getElementById('nome').value;
+      state.email = document.getElementById('email').value;
+      state.telefone = document.getElementById('telefone').value;
+
+      if (!state.nome || !state.email) { alert('Preencha nome e email.'); return; }
+
+      if (state.plan === 'familia') {
+        state.dependentes = parseInt(document.getElementById('dependentes').value);
+      }
+
+      const btn = document.getElementById('btnCotacao');
+      btn.disabled = true;
+      btn.textContent = 'Gerando cotação...';
+
+      try {
+        const res = await fetch(API_BASE + '/subscriptions/quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao gerar cotação');
+
+        const prices = calcPrice();
+        document.getElementById('emailSent').textContent = state.email;
+        document.getElementById('totalPrice').innerHTML = `R$ ${prices.total.toFixed(2).replace('.', ',')}<small>/mês</small>`;
+
+        let detail = state.plan === 'individual' ? 'Plano Individual' : `Plano Família (titular + ${state.dependentes} dep.)`;
+        if (state.mental) detail += ' + Saúde Mental';
+        if (state.empresa) detail += ' + Empresarial';
+        document.getElementById('totalDetail').textContent = detail;
+
+        let bk = '';
+        bk += `<div class="bk-row"><span class="bk-label">Plano ${state.plan === 'individual' ? 'Individual' : 'Família'}</span><span class="bk-value">R$ ${prices.base.toFixed(2).replace('.', ',')}</span></div>`;
+        if (prices.depAdd > 0) bk += `<div class="bk-row"><span class="bk-label">${state.dependentes} dependente(s)</span><span class="bk-value">+ R$ ${prices.depAdd.toFixed(2).replace('.', ',')}</span></div>`;
+        if (prices.mentalAdd > 0) bk += `<div class="bk-row"><span class="bk-label">Saúde Mental</span><span class="bk-value">+ R$ ${prices.mentalAdd.toFixed(2).replace('.', ',')}</span></div>`;
+        if (prices.empresaAdd > 0) bk += `<div class="bk-row"><span class="bk-label">Empresarial</span><span class="bk-value">+ R$ ${prices.empresaAdd.toFixed(2).replace('.', ',')}</span></div>`;
+        document.getElementById('breakdown').innerHTML = bk;
+
+        if (data.confirmUrl) {
+          document.getElementById('btnConfirmar').onclick = () => window.location.href = data.confirmUrl;
+        }
+
+        goStep(4);
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Gerar minha cotação';
+      }
+    }
+
+    function confirmPlan() {
+      window.location.href = API_BASE + '/subscriptions/confirm-quote?email=' + encodeURIComponent(state.email) + '&plan=' + state.plan + '&mental=' + state.mental + '&empresa=' + state.empresa + '&dependentes=' + state.dependentes;
+    }
+
+    // Phone mask
+    document.getElementById('telefone').addEventListener('input', function(e) {
+      let v = e.target.value.replace(/\D/g, '');
+      if (v.length > 11) v = v.slice(0, 11);
+      if (v.length > 6) v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+      else if (v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
+      e.target.value = v;
+    });
+  </script>
+
+  <!-- WhatsApp Widget -->
+  <div class="whatsapp-float" id="whatsappWidget">
+    <div class="whatsapp-bubble">
+      <button class="whatsapp-close" onclick="document.getElementById('whatsappWidget').classList.remove('open')">&times;</button>
+      <div class="whatsapp-bubble-header">
+        <div class="whatsapp-bubble-avatar">V</div>
+        <div>
+          <div class="whatsapp-bubble-name">VivaS Saude</div>
+          <div class="whatsapp-bubble-role">Atendimento</div>
+        </div>
+      </div>
+      <div class="whatsapp-bubble-msg">
+        Precisa de ajuda com sua cotacao? Posso te ajudar a escolher o melhor plano para voce e sua familia.
+      </div>
+      <div class="whatsapp-bubble-actions">
+        <a href="https://wa.me/5511947382375?text=Ol%C3%A1%2C%20estou%20fazendo%20uma%20cota%C3%A7%C3%A3o%20e%20tenho%20d%C3%BAvidas" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Tirar duvidas
+        </a>
+      </div>
+    </div>
+    <button class="whatsapp-btn" onclick="this.parentElement.classList.toggle('open')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <span>Fale conosco</span>
+    </button>
+  </div>
+  <script>
+    // Auto-show WhatsApp bubble after 20 seconds on cotacao page
+    setTimeout(() => {
+      const w = document.getElementById('whatsappWidget');
+      if (w && !sessionStorage.getItem('wa_shown')) {
+        w.classList.add('open');
+        sessionStorage.setItem('wa_shown', '1');
+      }
+    }, 20000);
+  </script>
+</body>
+</html>

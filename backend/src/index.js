@@ -16,16 +16,30 @@ const riskRouter = require('./routes/risk');
 const dashboardRouter = require('./routes/dashboard');
 const couponsRouter = require('./routes/coupons');
 const dicomRouter = require('./routes/dicom');
+const preventiveHealthRouter = require('./routes/preventiveHealth');
+const subscriptionsRouter = require('./routes/subscriptions');
+const companiesRouter = require('./routes/companies');
+const viviRouter = require('./routes/vivi');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
+
+// Stripe webhook needs raw body
+app.use('/api/subscriptions/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
 // API routes
 app.use('/api/auth', authRouter);
 app.use('/api/patients', authenticate, patientsRouter);
+// Public onboarding endpoint (no auth required)
+const multer = require('multer');
+const onboardingUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+app.post('/api/professionals/onboarding', onboardingUpload.fields([
+  { name: 'documento', maxCount: 1 },
+  { name: 'selfie', maxCount: 1 }
+]), require('./routes/professionals').onboardingHandler);
 app.use('/api/professionals', authenticate, professionalsRouter);
 app.use('/api/appointments', authenticate, appointmentsRouter);
 app.use('/api/medical-records', authenticate, medicalRecordsRouter);
@@ -37,6 +51,10 @@ app.use('/api/risk', authenticate, riskRouter);
 app.use('/api/dashboard', authenticate, dashboardRouter);
 app.use('/api/coupons', authenticate, couponsRouter);
 app.use('/api/dicom', dicomRouter); // DICOM routes handle their own auth + role checks
+app.use('/api/preventive-health', preventiveHealthRouter); // handles own auth
+app.use('/api/subscriptions', subscriptionsRouter); // handles own auth per route
+app.use('/api/companies', companiesRouter); // handles own auth per route
+app.use('/api/vivi', authenticate, viviRouter);
 
 // Serve institutional site for vivasaudeinteligente.com.br
 const INSTITUTIONAL_HOSTS = ['vivasaudeinteligente.com.br', 'www.vivasaudeinteligente.com.br'];
@@ -45,6 +63,22 @@ const institutionalDir = path.join(__dirname, '../../institutional');
 app.use((req, res, next) => {
   const host = (req.headers.host || '').split(':')[0];
   if (INSTITUTIONAL_HOSTS.includes(host) && !req.path.startsWith('/api/')) {
+    // Serve /empresas page
+    if (req.path === '/empresas' || req.path === '/empresas/') {
+      return res.sendFile(path.join(institutionalDir, 'empresas.html'));
+    }
+    // Serve /mental page
+    if (req.path === '/mental' || req.path === '/mental/') {
+      return res.sendFile(path.join(institutionalDir, 'mental.html'));
+    }
+    // Serve /cotacao page
+    if (req.path === '/cotacao' || req.path === '/cotacao/') {
+      return res.sendFile(path.join(institutionalDir, 'cotacao.html'));
+    }
+    // Serve /profissionais page
+    if (req.path === '/profissionais' || req.path === '/profissionais/') {
+      return res.sendFile(path.join(institutionalDir, 'profissionais.html'));
+    }
     express.static(institutionalDir)(req, res, () => {
       res.sendFile(path.join(institutionalDir, 'index.html'));
     });

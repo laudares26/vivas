@@ -18,7 +18,7 @@ const DRUG_INTERACTIONS = [
 
 export default function Assistente() {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { from: 'ai', text: 'Olá! Sou o assistente médico IA do VIVAS. Posso ajudar com:\n\n• Informações sobre medicamentos\n• Verificação de interações medicamentosas\n• Suporte a decisões clínicas\n• Consultas sobre protocolos\n\nComo posso ajudá-lo?' },
+    { from: 'ai', text: 'Olá! Sou o assistente inteligente do vivas. Posso ajudar com:\n\n• Informações sobre medicamentos\n• Verificação de interações medicamentosas\n• Suporte a decisões clínicas\n• Consultas sobre protocolos\n\nComo posso ajudá-lo?' },
   ])
   const [input, setInput] = useState('')
   const [aiTyping, setAiTyping] = useState(false)
@@ -78,7 +78,7 @@ export default function Assistente() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Assistente Médico IA</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Assistente Médico Inteligente</h1>
         <p className="text-gray-500 text-sm mt-1">Suporte clínico inteligente e verificação de interações</p>
       </div>
 
@@ -86,13 +86,13 @@ export default function Assistente() {
         {/* Chat */}
         <div className="lg:col-span-2 card flex flex-col h-[600px]">
           <div className="flex items-center gap-3 pb-3 border-b border-gray-100 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-vivas-blue to-vivas-green flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-wine to-wine-deep flex items-center justify-center">
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Assistente Clínico VIVAS</h3>
+              <h3 className="font-semibold text-gray-900">Assistente Clínico vivas</h3>
               <div className="flex items-center gap-1 text-xs text-green-500">
-                <Sparkles className="w-3 h-3" /> IA Ativa
+                <Sparkles className="w-3 h-3" /> Ativo
               </div>
             </div>
           </div>
@@ -132,7 +132,7 @@ export default function Assistente() {
           <div className="flex gap-2 pt-3 border-t border-gray-100">
             <input
               className="input-field flex-1"
-              placeholder="Pergunte sobre medicamentos, protocolos, diagnósticos..."
+              placeholder="Pergunte sobre medicamentos, protocolos, condutas..."
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage()}

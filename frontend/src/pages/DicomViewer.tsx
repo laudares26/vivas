@@ -44,14 +44,14 @@ const DEFAULT_STATE: ViewerState = {
 }
 
 const WINDOW_PRESETS = [
-  { name: 'CT Abdômen', wc: 40, ww: 400, icon: '🫁' },
-  { name: 'CT Pulmão', wc: -600, ww: 1500, icon: '🫁' },
-  { name: 'CT Osso', wc: 300, ww: 1500, icon: '🦴' },
-  { name: 'CT Cérebro', wc: 40, ww: 80, icon: '🧠' },
-  { name: 'CT Fígado', wc: 60, ww: 150, icon: '🫀' },
-  { name: 'CT Mediastino', wc: 50, ww: 350, icon: '💊' },
-  { name: 'Raio-X Tórax', wc: 1024, ww: 4096, icon: '📷' },
-  { name: 'Mamografia', wc: 2048, ww: 4096, icon: '🩺' },
+  { name: 'CT Abdômen', wc: 40, ww: 400, icon: '' },
+  { name: 'CT Pulmão', wc: -600, ww: 1500, icon: '' },
+  { name: 'CT Osso', wc: 300, ww: 1500, icon: '' },
+  { name: 'CT Cérebro', wc: 40, ww: 80, icon: '' },
+  { name: 'CT Fígado', wc: 60, ww: 150, icon: '' },
+  { name: 'CT Mediastino', wc: 50, ww: 350, icon: '' },
+  { name: 'Raio-X Tórax', wc: 1024, ww: 4096, icon: '' },
+  { name: 'Mamografia', wc: 2048, ww: 4096, icon: '' },
 ]
 
 // Generate sample DICOM data for demo
@@ -703,7 +703,7 @@ export default function DicomViewer() {
           </div>
           <div>
             <h1 className="text-lg font-bold">Isis DICOM Viewer</h1>
-            <p className="text-xs text-gray-400">Visualizador de Imagens Médicas — VIVAS Saúde</p>
+            <p className="text-xs text-gray-400">Visualizador de Imagens Médicas | VIVAS Saúde</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -743,7 +743,7 @@ export default function DicomViewer() {
                   className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
-              <label className="flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white rounded-lg cursor-pointer hover:bg-blue-700 text-sm font-medium transition">
+              <label className="flex items-center gap-2 px-4 py-2 bg-[#7B1E3C] text-white rounded-lg cursor-pointer hover:bg-[#5E1730] text-sm font-medium transition">
                 <Upload size={16} />
                 {uploading ? 'Importando...' : 'Importar DICOM'}
                 <input type="file" multiple accept=".dcm,.dicom,.zip,application/dicom,application/octet-stream" onChange={handleFileUpload} className="hidden" />
@@ -860,7 +860,7 @@ export default function DicomViewer() {
                           <div className="mt-3 flex gap-2">
                             <button
                               onClick={() => openStudyInViewer(study)}
-                              className="px-4 py-2 bg-[#0057B8] text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-1.5"
+                              className="px-4 py-2 bg-[#7B1E3C] text-white rounded-lg text-sm font-medium hover:bg-[#5E1730] transition flex items-center gap-1.5"
                             >
                               <Eye size={14} /> Abrir Visualizador Clínico
                             </button>
@@ -958,7 +958,7 @@ export default function DicomViewer() {
                 <div className="absolute top-3 right-3 text-green-400 text-xs font-mono space-y-0.5 pointer-events-none text-right">
                   <div>{selectedStudy.study_description || ''}</div>
                   <div>{formatDicomDate(selectedStudy.study_date)} {formatDicomTime(selectedStudy.study_time)}</div>
-                  <div>{selectedStudy.modality} — {selectedStudy.accession_number || ''}</div>
+                  <div>{selectedStudy.modality} | {selectedStudy.accession_number || ''}</div>
                 </div>
 
                 {/* Active tool indicator */}
@@ -1037,7 +1037,7 @@ export default function DicomViewer() {
                 </div>
                 <button
                   onClick={() => setShowAddPacs(true)}
-                  className="px-4 py-2 bg-[#0057B8] text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-1.5"
+                  className="px-4 py-2 bg-[#7B1E3C] text-white rounded-lg text-sm font-medium hover:bg-[#5E1730] transition flex items-center gap-1.5"
                 >
                   <Plus size={16} /> Adicionar Fonte
                 </button>
@@ -1127,7 +1127,7 @@ export default function DicomViewer() {
 
               {/* Feature parity section */}
               <div className="mt-6 bg-white rounded-xl border border-gray-200 p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">Paridade de Funcionalidades — Isis DICOM Viewer</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">Paridade de Funcionalidades - Isis DICOM Viewer</h3>
                 <p className="text-xs text-gray-500 mb-4">Baseado nas bibliotecas DICOM-Swift, MTKDicomBridge e MTK</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                   {[
@@ -1220,7 +1220,7 @@ export default function DicomViewer() {
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowAddPacs(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancelar</button>
-                <button type="submit" className="flex-1 px-4 py-2 bg-[#0057B8] text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">Adicionar</button>
+                <button type="submit" className="flex-1 px-4 py-2 bg-[#7B1E3C] text-white rounded-lg text-sm font-medium hover:bg-[#5E1730] transition">Adicionar</button>
               </div>
             </form>
           </div>
