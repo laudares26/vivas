@@ -328,7 +328,7 @@ function computeComparativeAnalysis(history) {
         name, label, unit,
         value: latest.value,
         status: currentStatus === 'normal' ? 'atencao' : currentStatus,
-        previous_value: previous ? previous.value : null,
+        previous_value: previousValue,
         delta, direction, worsening,
       });
     }
