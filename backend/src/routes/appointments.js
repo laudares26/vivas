@@ -2,6 +2,17 @@ const router = require('express').Router();
 const pool = require('../config/database');
 const { sendInvitePatientEmail } = require('../services/notifications');
 
+// Health-professional roles create appointments only for themselves.
+const PROFESSIONAL_ROLES = ['medico', 'psicologo'];
+
+// Resolve the professionals row that belongs to a logged-in professional user.
+// Professional users authenticate against `users`; appointments reference `professionals`.
+// They are linked by email (see professionals onboarding/creation).
+async function resolveProfessionalId(user) {
+  const byEmail = await pool.query('SELECT id FROM professionals WHERE email = $1 ORDER BY created_at ASC LIMIT 1', [user.email]);
+  return byEmail.rows.length ? byEmail.rows[0].id : null;
+}
+
 let schemaReady = null;
 // Lazily ensure the invite/first-free columns and the invites table exist.
 function ensureSchema() {
@@ -85,6 +96,11 @@ router.get('/', async (req, res) => {
       const ownPatientId = await resolvePatientId(req.user);
       params.push(ownPatientId);
       conditions.push(`a.patient_id = $${params.length}`);
+    } else if (PROFESSIONAL_ROLES.includes(req.user.role)) {
+      // A professional only ever sees their own appointments.
+      const ownProfessionalId = await resolveProfessionalId(req.user);
+      params.push(ownProfessionalId || '00000000-0000-0000-0000-000000000000');
+      conditions.push(`a.professional_id = $${params.length}`);
     }
 
     if (date) {
@@ -125,6 +141,14 @@ router.post('/', async (req, res) => {
     if (req.user.role === 'paciente') {
       patient_id = await resolvePatientId(req.user);
       invite_new_patient = false;
+    }
+
+    // A professional is always the professional of their own appointments:
+    // force professional_id to the logged-in professional, ignoring the body.
+    if (PROFESSIONAL_ROLES.includes(req.user.role)) {
+      const ownProfessionalId = await resolveProfessionalId(req.user);
+      if (!ownProfessionalId) return res.status(400).json({ error: 'Seu cadastro de profissional não foi encontrado' });
+      professional_id = ownProfessionalId;
     }
 
     const isInvite = !!invite_new_patient;
@@ -172,7 +196,14 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     await ensureSchema();
-    const { patient_id, professional_id, date_time, duration_minutes, type, status, notes } = req.body;
+    let { patient_id, professional_id, date_time, duration_minutes, type, status, notes } = req.body;
+
+    // A professional cannot reassign an appointment to another professional.
+    if (PROFESSIONAL_ROLES.includes(req.user.role)) {
+      const ownProfessionalId = await resolveProfessionalId(req.user);
+      professional_id = ownProfessionalId;
+    }
+
     const result = await pool.query(
       `UPDATE appointments SET patient_id=$1, professional_id=$2, date_time=$3, duration_minutes=$4,
        type=$5, status=$6, notes=$7, updated_at=NOW() WHERE id=$8 RETURNING *`,

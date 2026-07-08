@@ -25,6 +25,9 @@ export default function Agendamentos() {
   const { addToast } = useToast()
   const { user } = useAuth()
   const isPatient = user?.role === 'paciente'
+  // Health professionals are always the professional of their own appointments;
+  // they must not see or pick another professional.
+  const isProfessional = user?.role === 'medico' || user?.role === 'psicologo'
 
   const load = async () => {
     setLoading(true)
@@ -38,11 +41,14 @@ export default function Agendamentos() {
   useEffect(() => { load() }, [selectedDate])
 
   useEffect(() => {
-    api.getProfessionals().then(setProfessionals).catch(() => {})
+    // Professionals never pick another professional, so we don't load the list for them.
+    if (!isProfessional) {
+      api.getProfessionals().then(setProfessionals).catch(() => {})
+    }
     if (!isPatient) {
       api.getPatients('limit=100').then(r => setPatients(r.data)).catch(() => {})
     }
-  }, [isPatient])
+  }, [isPatient, isProfessional])
 
   const handleCreate = async () => {
     try {
@@ -189,13 +195,15 @@ export default function Agendamentos() {
               )}
             </>
           )}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Profissional *</label>
-            <select className="input-field" value={form.professional_id} onChange={e => setForm(f => ({ ...f, professional_id: e.target.value }))}>
-              <option value="">Selecione</option>
-              {professionals.map(p => <option key={p.id} value={p.id}>{p.full_name} - {p.specialty}</option>)}
-            </select>
-          </div>
+          {!isProfessional && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Profissional *</label>
+              <select className="input-field" value={form.professional_id} onChange={e => setForm(f => ({ ...f, professional_id: e.target.value }))}>
+                <option value="">Selecione</option>
+                {professionals.map(p => <option key={p.id} value={p.id}>{p.full_name} - {p.specialty}</option>)}
+              </select>
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Data e Hora *</label>
             <input type="datetime-local" className="input-field" value={form.date_time} onChange={e => setForm(f => ({ ...f, date_time: e.target.value }))} />
