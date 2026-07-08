@@ -274,21 +274,31 @@ function computeComparativeAnalysis(history) {
     const unit = threshold ? threshold.unit : (series[series.length - 1].unit || '');
 
     const latest = series[series.length - 1];
-    const previous = series.length >= 2 ? series[series.length - 2] : null;
     const first = series[0];
 
+    // Historical baseline vs recent window (robust to single-reading noise):
+    // average the earliest and latest few readings so a long-term trajectory
+    // across many exams is captured, not just the last two adjacent readings.
+    const win = Math.max(1, Math.min(3, Math.floor(series.length / 2)));
+    const avg = (arr) => arr.reduce((s, x) => s + x.value, 0) / arr.length;
+    const baselineVal = series.length >= 2 ? +avg(series.slice(0, win)).toFixed(2) : null;
+
+    // "anterior" shown to the user is the historical baseline; when there is
+    // only a single reading there is no comparison.
+    const previousValue = baselineVal;
+
     const currentStatus = classifyIndicator(name, latest.value);
-    const previousStatus = previous ? classifyIndicator(name, previous.value) : null;
+    const previousStatus = baselineVal != null ? classifyIndicator(name, baselineVal) : null;
 
     let direction = 'estavel';
     let worsening = false;
     let delta = null;
     let deltaPct = null;
-    if (previous) {
-      delta = +(latest.value - previous.value).toFixed(2);
-      const base = previous.value !== 0 ? previous.value : 1;
-      deltaPct = +(((latest.value - previous.value) / base) * 100).toFixed(1);
-      const eps = Math.abs(previous.value) * 0.02; // ignore <2% noise
+    if (baselineVal != null) {
+      delta = +(latest.value - baselineVal).toFixed(2);
+      const base = baselineVal !== 0 ? baselineVal : 1;
+      deltaPct = +(((latest.value - baselineVal) / base) * 100).toFixed(1);
+      const eps = Math.abs(baselineVal) * 0.02; // ignore <2% noise
       if (delta > eps) direction = 'subiu';
       else if (delta < -eps) direction = 'desceu';
       const higherWorse = HIGHER_IS_WORSE[name] !== false;
@@ -301,7 +311,7 @@ function computeComparativeAnalysis(history) {
       name, label, unit,
       count: series.length,
       first_value: first.value, first_date: first.recorded_at,
-      previous_value: previous ? previous.value : null,
+      previous_value: previousValue,
       current_value: latest.value, current_date: latest.recorded_at,
       delta, delta_pct: deltaPct, direction,
       worsening,
