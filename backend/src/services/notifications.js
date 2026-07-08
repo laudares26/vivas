@@ -475,7 +475,68 @@ async function sendComparativeReport(patientUserId, comparative, aiText) {
   };
 }
 
+const PLATFORM_URL = 'https://vivas.digital';
+const SITE_URL = 'https://vivasaudeinteligente.com.br';
+
+function emailShell(title, subtitle, innerHtml) {
+  return `
+    <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: linear-gradient(135deg, #7B1E3C, #5E1730); padding: 24px; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 800;">vivas</h1>
+        <p style="color: #E9C4BE; margin: 6px 0 0; font-size: 14px;">${subtitle}</p>
+      </div>
+      <div style="padding: 28px; background: white; color: #1f2937;">
+        ${innerHtml}
+      </div>
+      <div style="padding: 16px; background: #f8fafc; text-align: center; font-size: 12px; color: #6b7280;">
+        <p>vivas Saúde Inteligente${title ? ' — ' + title : ''}</p>
+      </div>
+    </div>`;
+}
+
+// Invite email for an unregistered patient — first consultation is free.
+async function sendInvitePatientEmail({ patientName, patientEmail, professionalName, specialty, dateTime, notes }) {
+  const when = dateTime
+    ? new Date(dateTime).toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' })
+    : 'a combinar';
+  const inner = `
+    <p>Olá <strong>${patientName || 'paciente'}</strong>,</p>
+    <p>Você foi convidado(a) por <strong>${professionalName}</strong>${specialty ? ` (${specialty})` : ''} para uma consulta na vivas — e a sua <strong>primeira consulta é gratuita</strong>.</p>
+    <div style="background:#F6E7E1;border-left:4px solid #7B1E3C;padding:16px;margin:18px 0;border-radius:6px;">
+      <p style="margin:0 0 6px;"><strong>Profissional:</strong> ${professionalName}${specialty ? ' · ' + specialty : ''}</p>
+      <p style="margin:0 0 6px;"><strong>Data e hora:</strong> ${when}</p>
+      ${notes ? `<p style="margin:0;"><strong>Observações:</strong> ${notes}</p>` : ''}
+      <p style="margin:8px 0 0;color:#7B1E3C;font-weight:700;">1ª consulta gratuita</p>
+    </div>
+    <p>Para acessar a plataforma e acompanhar sua consulta, crie seu acesso gratuito:</p>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${PLATFORM_URL}/register?convite=${encodeURIComponent(patientEmail || '')}" style="display:inline-block;background:#7B1E3C;color:white;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:600;">Acessar a vivas</a>
+    </div>
+    <p style="color:#6B5B62;font-size:13px;">Após a sua primeira consulta, você receberá um convite especial com <strong>5% de desconto</strong> no plano que escolher.</p>`;
+  return sendEmail(patientEmail, 'Você foi convidado(a) para uma consulta gratuita na vivas', emailShell('Convite de consulta', 'Convite de consulta', inner));
+}
+
+// Post-consultation email offering 5% discount to subscribe to any plan.
+async function sendPostConsultDiscountEmail({ patientName, patientEmail, discountCode, discountPercent = 5 }) {
+  const link = `${SITE_URL}/?desconto=${encodeURIComponent(discountCode)}#planos`;
+  const inner = `
+    <p>Olá <strong>${patientName || 'paciente'}</strong>,</p>
+    <p>Esperamos que sua primeira consulta na vivas tenha sido ótima! Para você continuar cuidando da sua saúde de forma preventiva, preparamos um presente:</p>
+    <div style="background:#F6E7E1;border:2px dashed #7B1E3C;padding:20px;margin:20px 0;border-radius:10px;text-align:center;">
+      <p style="margin:0;color:#7B1E3C;font-size:15px;">Desconto exclusivo</p>
+      <p style="margin:6px 0;font-size:34px;font-weight:800;color:#7B1E3C;">${discountPercent}% OFF</p>
+      <p style="margin:0;font-size:13px;color:#6B5B62;">no plano que você escolher · use o código</p>
+      <p style="margin:8px 0 0;font-size:20px;font-weight:800;letter-spacing:2px;color:#1f2937;">${discountCode}</p>
+    </div>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${link}" style="display:inline-block;background:#7B1E3C;color:white;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:600;">Escolher meu plano com ${discountPercent}%</a>
+    </div>
+    <p style="color:#6B5B62;font-size:13px;">O desconto é aplicado automaticamente ao concluir sua inscrição por este link.</p>`;
+  return sendEmail(patientEmail, `Seu presente vivas: ${discountPercent}% de desconto no plano`, emailShell('Convite para assinar', 'Bem-vindo(a) à vivas', inner));
+}
+
 module.exports = {
   checkAndNotify, classifyIndicator, THRESHOLDS, sendEmail,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
+  sendInvitePatientEmail, sendPostConsultDiscountEmail,
 };

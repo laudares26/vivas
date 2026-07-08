@@ -157,7 +157,8 @@ export interface Professional {
 export interface Appointment {
   id: string; patient_id: string; professional_id: string; date_time: string; duration_minutes: number;
   type: string; status: string; notes: string; patient_name: string; professional_name: string;
-  specialty: string; created_at: string;
+  specialty: string; created_at: string; is_first_free?: boolean;
+  invite_new_patient?: boolean; patient_email?: string;
 }
 
 export interface MedicalRecord {

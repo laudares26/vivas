@@ -21,7 +21,7 @@ export default function Agendamentos() {
   const [calendarMonth, setCalendarMonth] = useState(new Date())
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
-  const [form, setForm] = useState({ patient_id: '', professional_id: '', date_time: '', type: 'Consulta', notes: '' })
+  const [form, setForm] = useState({ patient_id: '', professional_id: '', date_time: '', type: 'Consulta', notes: '', invite_new_patient: false, patient_name: '', patient_email: '' })
   const { addToast } = useToast()
   const { user } = useAuth()
   const isPatient = user?.role === 'paciente'
@@ -47,7 +47,7 @@ export default function Agendamentos() {
   const handleCreate = async () => {
     try {
       await api.createAppointment(form)
-      addToast('success', 'Agendamento criado')
+      addToast('success', form.invite_new_patient ? 'Convite enviado ao paciente' : 'Agendamento criado')
       setModalOpen(false); load()
     } catch (err) { addToast('error', err instanceof Error ? err.message : 'Erro') }
   }
@@ -79,7 +79,7 @@ export default function Agendamentos() {
           <h1 className="text-2xl font-bold text-gray-900">{isPatient ? 'Minha Agenda' : 'Agendamentos'}</h1>
           <p className="text-gray-500 text-sm mt-1">{appointments.length} agendamentos para {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
         </div>
-        <button onClick={() => { setForm({ patient_id: '', professional_id: '', date_time: `${selectedDate}T08:00`, type: 'Consulta', notes: '' }); setModalOpen(true) }} className="btn-primary flex items-center gap-2">
+        <button onClick={() => { setForm({ patient_id: '', professional_id: '', date_time: `${selectedDate}T08:00`, type: 'Consulta', notes: '', invite_new_patient: false, patient_name: '', patient_email: '' }); setModalOpen(true) }} className="btn-primary flex items-center gap-2">
           <Plus className="w-4 h-4" /> Novo Agendamento
         </button>
       </div>
@@ -133,8 +133,11 @@ export default function Agendamentos() {
                   <span className="font-semibold text-sm">{new Date(apt.date_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 <div className="flex-1 min-w-[200px]">
-                  <p className="font-medium text-gray-900">{apt.patient_name}</p>
-                  <p className="text-sm text-gray-500">{apt.professional_name} • {apt.specialty || apt.type}</p>
+                  <p className="font-medium text-gray-900 flex items-center gap-2">
+                    {isPatient ? apt.professional_name : apt.patient_name}
+                    {apt.is_first_free && <span className="badge bg-wine-soft text-wine">1ª grátis</span>}
+                  </p>
+                  <p className="text-sm text-gray-500">{isPatient ? (apt.specialty || apt.type) : `${apt.professional_name} • ${apt.specialty || apt.type}`}</p>
                 </div>
                 <span className={`badge ${STATUS_COLORS[apt.status] || 'bg-gray-100 text-gray-700'}`}>{apt.status}</span>
                 {!isPatient && (
@@ -159,13 +162,32 @@ export default function Agendamentos() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Novo Agendamento">
         <div className="space-y-4">
           {!isPatient && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Paciente *</label>
-              <select className="input-field" value={form.patient_id} onChange={e => setForm(f => ({ ...f, patient_id: e.target.value }))}>
-                <option value="">Selecione</option>
-                {patients.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
-              </select>
-            </div>
+            <>
+              <label className="flex items-center gap-2 text-sm text-gray-700 bg-wine-soft/60 rounded-lg px-3 py-2 cursor-pointer">
+                <input type="checkbox" checked={form.invite_new_patient} onChange={e => setForm(f => ({ ...f, invite_new_patient: e.target.checked }))} />
+                Convidar paciente ainda não cadastrado (1ª consulta gratuita)
+              </label>
+              {form.invite_new_patient ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome do paciente</label>
+                    <input type="text" className="input-field" placeholder="Nome completo" value={form.patient_name} onChange={e => setForm(f => ({ ...f, patient_name: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">E-mail do paciente *</label>
+                    <input type="email" className="input-field" placeholder="email@exemplo.com" value={form.patient_email} onChange={e => setForm(f => ({ ...f, patient_email: e.target.value }))} />
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Paciente *</label>
+                  <select className="input-field" value={form.patient_id} onChange={e => setForm(f => ({ ...f, patient_id: e.target.value }))}>
+                    <option value="">Selecione</option>
+                    {patients.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+                  </select>
+                </div>
+              )}
+            </>
           )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Profissional *</label>

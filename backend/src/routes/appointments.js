@@ -1,5 +1,52 @@
 const router = require('express').Router();
 const pool = require('../config/database');
+const { sendInvitePatientEmail } = require('../services/notifications');
+
+let schemaReady = null;
+// Lazily ensure the invite/first-free columns and the invites table exist.
+function ensureSchema() {
+  if (!schemaReady) {
+    schemaReady = (async () => {
+      await pool.query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS is_first_free BOOLEAN DEFAULT false`);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS patient_invites (
+          id SERIAL PRIMARY KEY,
+          appointment_id UUID,
+          patient_id UUID,
+          patient_name VARCHAR(255),
+          patient_email VARCHAR(255) NOT NULL,
+          professional_id UUID,
+          invited_by_user_id UUID,
+          discount_code VARCHAR(40) UNIQUE NOT NULL,
+          discount_percent INT DEFAULT 5,
+          invite_email_sent BOOLEAN DEFAULT false,
+          followup_email_sent BOOLEAN DEFAULT false,
+          status VARCHAR(20) DEFAULT 'invited',
+          created_at TIMESTAMP DEFAULT NOW(),
+          attended_at TIMESTAMP,
+          registered_at TIMESTAMP
+        )`);
+    })().catch(e => { schemaReady = null; throw e; });
+  }
+  return schemaReady;
+}
+
+function generateDiscountCode() {
+  return 'VIVAS5-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+// Find or create a patients row for an invited (not-yet-registered) patient by email.
+async function resolveInvitedPatient(name, email) {
+  const existing = await pool.query('SELECT id FROM patients WHERE email = $1 ORDER BY created_at ASC LIMIT 1', [email]);
+  if (existing.rows.length) return existing.rows[0].id;
+  const created = await pool.query(
+    `INSERT INTO patients (full_name, cpf, birth_date, gender, email, convenio, status)
+     VALUES ($1, $2, NOW(), 'Não informado', $3, 'VivaS', 'Ativo')
+     RETURNING id`,
+    [name || email, 'inv-' + Math.random().toString(36).slice(2, 10), email]
+  );
+  return created.rows[0].id;
+}
 
 // Resolve (or lazily create) the patients row for a logged-in patient user.
 // Patient users authenticate against `users`; appointments reference `patients`.
@@ -70,11 +117,20 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    let { patient_id, professional_id, date_time, duration_minutes, type, status, notes } = req.body;
+    await ensureSchema();
+    let { patient_id, professional_id, date_time, duration_minutes, type, status, notes,
+          invite_new_patient, patient_name, patient_email } = req.body;
 
     // A patient books only for themselves: ignore any patient_id from the body.
     if (req.user.role === 'paciente') {
       patient_id = await resolvePatientId(req.user);
+      invite_new_patient = false;
+    }
+
+    const isInvite = !!invite_new_patient;
+    if (isInvite) {
+      if (!patient_email) return res.status(400).json({ error: 'Informe o e-mail do paciente convidado' });
+      patient_id = await resolveInvitedPatient(patient_name, patient_email);
     }
 
     if (!patient_id) return res.status(400).json({ error: 'Paciente é obrigatório' });
@@ -82,11 +138,31 @@ router.post('/', async (req, res) => {
     if (!date_time) return res.status(400).json({ error: 'Informe a data e hora' });
 
     const result = await pool.query(
-      `INSERT INTO appointments (patient_id, professional_id, date_time, duration_minutes, type, status, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [patient_id, professional_id, date_time, duration_minutes || 30, type || 'Consulta', status || 'agendado', notes]
+      `INSERT INTO appointments (patient_id, professional_id, date_time, duration_minutes, type, status, notes, is_first_free)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [patient_id, professional_id, date_time, duration_minutes || 30, type || 'Consulta', status || 'agendado', notes, isInvite]
     );
-    res.status(201).json(result.rows[0]);
+    const appointment = result.rows[0];
+
+    if (isInvite) {
+      const prof = await pool.query('SELECT full_name, specialty FROM professionals WHERE id = $1', [professional_id]);
+      const professionalName = prof.rows[0]?.full_name || 'seu profissional';
+      const specialty = prof.rows[0]?.specialty || '';
+
+      const discountCode = generateDiscountCode();
+      await pool.query(
+        `INSERT INTO patient_invites (appointment_id, patient_id, patient_name, patient_email, professional_id, invited_by_user_id, discount_code, invite_email_sent, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,true,'invited')`,
+        [appointment.id, patient_id, patient_name || null, patient_email, professional_id, req.user.id, discountCode]
+      );
+
+      sendInvitePatientEmail({
+        patientName: patient_name, patientEmail: patient_email,
+        professionalName, specialty, dateTime: date_time, notes,
+      }).catch(e => console.error('[appointments] invite email failed:', e.message));
+    }
+
+    res.status(201).json(appointment);
   } catch (err) {
     console.error('[appointments] create error:', err.message);
     res.status(500).json({ error: 'Erro ao criar agendamento' });
@@ -95,6 +171,7 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
+    await ensureSchema();
     const { patient_id, professional_id, date_time, duration_minutes, type, status, notes } = req.body;
     const result = await pool.query(
       `UPDATE appointments SET patient_id=$1, professional_id=$2, date_time=$3, duration_minutes=$4,
@@ -102,11 +179,38 @@ router.put('/:id', async (req, res) => {
       [patient_id, professional_id, date_time, duration_minutes, type, status, notes, req.params.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Agendamento não encontrado' });
+
+    // When an invited patient's first free consultation is concluded, send the 5% discount email once.
+    if (status === 'concluido' && result.rows[0].is_first_free) {
+      await maybeSendDiscountFollowup(req.params.id);
+    }
+
     res.json(result.rows[0]);
   } catch (err) {
+    console.error('[appointments] update error:', err.message);
     res.status(500).json({ error: 'Erro ao atualizar agendamento' });
   }
 });
+
+async function maybeSendDiscountFollowup(appointmentId) {
+  const invite = await pool.query(
+    `SELECT * FROM patient_invites WHERE appointment_id = $1 AND followup_email_sent = false LIMIT 1`,
+    [appointmentId]
+  );
+  if (!invite.rows.length) return;
+  const inv = invite.rows[0];
+  await pool.query(
+    `UPDATE patient_invites SET followup_email_sent = true, status = 'attended', attended_at = NOW() WHERE id = $1`,
+    [inv.id]
+  );
+  const { sendPostConsultDiscountEmail } = require('../services/notifications');
+  sendPostConsultDiscountEmail({
+    patientName: inv.patient_name,
+    patientEmail: inv.patient_email,
+    discountCode: inv.discount_code,
+    discountPercent: inv.discount_percent || 5,
+  }).catch(e => console.error('[appointments] discount email failed:', e.message));
+}
 
 router.delete('/:id', async (req, res) => {
   try {
