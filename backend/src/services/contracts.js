@@ -63,7 +63,7 @@ function generateMedicoContract(data) {
     <p><strong>CONTRATADO(A):</strong> ${fullName}, CPF ${cpf}, ${crmDoc}, Especialidade: ${especialidade || 'Geral'}.</p>
 
     ${clause('1a', 'DAS DEFINICOES',
-      '1.1. Plataforma: ambiente tecnologico (web e aplicativos) de titularidade da VivaS que viabiliza triagem por inteligencia artificial, organizacao de historico clinico, interpretacao de exames com analise de tendencias, geracao de alertas preditivos e a realizacao de teleconsultas entre o MEDICO e os USUARIOS.<br>1.2. Teleconsulta: consulta medica nao presencial, mediada por TDICs, nos termos da Resolucao CFM n. 2.314/2022 e da Lei n. 14.510/2022.<br>1.3. Usuario/Paciente: pessoa fisica que utiliza a Plataforma e que podera ser atendida pelo MEDICO.<br>1.4. SRES: Sistema de Registro Eletronico de Saude.'
+      '1.1. Plataforma: ambiente tecnologico (web e aplicativos) de titularidade da VivaS que viabiliza triagem por tecnologia inteligente, organizacao de historico clinico, interpretacao de exames com analise de tendencias, geracao de alertas preditivos e a realizacao de teleconsultas entre o MEDICO e os USUARIOS.<br>1.2. Teleconsulta: consulta medica nao presencial, mediada por TDICs, nos termos da Resolucao CFM n. 2.314/2022 e da Lei n. 14.510/2022.<br>1.3. Usuario/Paciente: pessoa fisica que utiliza a Plataforma e que podera ser atendida pelo MEDICO.<br>1.4. SRES: Sistema de Registro Eletronico de Saude.'
     )}
 
     ${clause('2a', 'DO OBJETO',
@@ -253,11 +253,11 @@ function generatePacienteTerms(data) {
     )}
 
     ${clause('2a', 'DO OBJETO E DOS SERVICOS',
-      '2.1. A VivaS oferece uma plataforma de saude preventiva inteligente, que pode incluir: (i) triagem inicial por inteligencia artificial; (ii) organizacao do historico clinico e da linha do tempo de saude; (iii) interpretacao de exames com analise de tendencias; (iv) alertas preditivos que identificam sinais e antecipam riscos; (v) teleconsultas com profissionais credenciados, sob modelo subsidiado; e (vi) beneficios e descontos junto a parceiros.<br>2.2. A VivaS atua como intermediadora e provedora de tecnologia, conectando o Usuario a Profissionais e parceiros independentes.'
+      '2.1. A VivaS oferece uma plataforma de saude preventiva inteligente, que pode incluir: (i) triagem inicial por tecnologia inteligente; (ii) organizacao do historico clinico e da linha do tempo de saude; (iii) interpretacao de exames com analise de tendencias; (iv) alertas preditivos que identificam sinais e antecipam riscos; (v) teleconsultas com profissionais credenciados, sob modelo subsidiado; e (vi) beneficios e descontos junto a parceiros.<br>2.2. A VivaS atua como intermediadora e provedora de tecnologia, conectando o Usuario a Profissionais e parceiros independentes.'
     )}
 
     ${clause('3a', 'DA NATUREZA E DAS LIMITACOES DO SERVICO',
-      '3.1. A VivaS nao e operadora de plano de saude nem de seguro-saude e nao oferece cobertura de internacao, cirurgia, procedimentos hospitalares ou reembolso assistencial.<br>3.2. Os alertas e analises gerados por inteligencia artificial tem carater informativo e preventivo, nao constituem diagnostico e nao substituem a avaliacao de um profissional de saude.<br>3.3. A teleconsulta e ato complementar e nao substitui o atendimento presencial.<br>3.4. A Plataforma nao e um servico de urgencia ou emergencia. Em caso de emergencia, procure o pronto-socorro mais proximo ou acione o SAMU (192) ou os Bombeiros (193).'
+      '3.1. A VivaS nao e operadora de plano de saude nem de seguro-saude e nao oferece cobertura de internacao, cirurgia, procedimentos hospitalares ou reembolso assistencial.<br>3.2. Os alertas e analises gerados por tecnologia inteligente tem carater informativo e preventivo, nao constituem diagnostico e nao substituem a avaliacao de um profissional de saude.<br>3.3. A teleconsulta e ato complementar e nao substitui o atendimento presencial.<br>3.4. A Plataforma nao e um servico de urgencia ou emergencia. Em caso de emergencia, procure o pronto-socorro mais proximo ou acione o SAMU (192) ou os Bombeiros (193).'
     )}
 
     ${clause('4a', 'DO CADASTRO E DA CONTA',
@@ -289,7 +289,7 @@ function generatePacienteTerms(data) {
     )}
 
     ${clause('11a', 'DA PROPRIEDADE INTELECTUAL',
-      '11.1. Todo o conteudo, software, marcas, modelos de IA e materiais da Plataforma pertencem a VivaS.'
+      '11.1. Todo o conteudo, software, marcas, modelos de tecnologia inteligente e materiais da Plataforma pertencem a VivaS.'
     )}
 
     ${clause('12a', 'DO SUPORTE E DOS CANAIS DE ATENDIMENTO',

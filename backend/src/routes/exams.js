@@ -83,7 +83,7 @@ function generateAiAnalysis(indicators) {
   }
 
   lines.push('');
-  lines.push('IMPORTANTE: Esta analise e um suporte preventivo baseado em IA e nao constitui diagnostico medico. ' +
+  lines.push('IMPORTANTE: Esta analise e um suporte preventivo inteligente e nao constitui diagnostico medico. ' +
     'Consulte seu profissional de saude para orientacoes clinicas.');
 
   return lines.join('\n');

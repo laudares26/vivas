@@ -152,7 +152,7 @@ export default function SaudePreventiva() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900">Saúde Preventiva</h1>
-        <p className="text-gray-500 text-sm mt-1">Monitoramento contínuo da sua saúde com apoio de IA preventiva</p>
+        <p className="text-gray-500 text-sm mt-1">Monitoramento contínuo da sua saúde com suporte preventivo inteligente</p>
       </div>
 
       {/* Tabs */}
@@ -289,7 +289,7 @@ export default function SaudePreventiva() {
                 </AreaChart>
               </ResponsiveContainer>
               <div className="mt-2 p-2 bg-amber-50 rounded-lg">
-                <p className="text-xs text-amber-700"><strong>Apoio IA:</strong> Tendência de elevação gradual. Recomenda-se aumentar atividade física e reduzir carboidratos refinados.</p>
+                <p className="text-xs text-amber-700"><strong>Apoio preventivo:</strong> Tendência de elevação gradual. Recomenda-se aumentar atividade física e reduzir carboidratos refinados.</p>
               </div>
             </div>
 
@@ -308,7 +308,7 @@ export default function SaudePreventiva() {
                 </LineChart>
               </ResponsiveContainer>
               <div className="mt-2 p-2 bg-green-50 rounded-lg">
-                <p className="text-xs text-green-700"><strong>Apoio IA:</strong> Perda de peso progressiva e saudável. Continue com a rotina atual de exercícios.</p>
+                <p className="text-xs text-green-700"><strong>Apoio preventivo:</strong> Perda de peso progressiva e saudável. Continue com a rotina atual de exercícios.</p>
               </div>
             </div>
 
@@ -328,7 +328,7 @@ export default function SaudePreventiva() {
                 </LineChart>
               </ResponsiveContainer>
               <div className="mt-2 p-2 bg-red-50 rounded-lg">
-                <p className="text-xs text-red-700"><strong>Apoio IA:</strong> LDL ainda acima do recomendado, mas com tendência de melhora. HDL subindo gradualmente. Manter dieta e exercícios.</p>
+                <p className="text-xs text-red-700"><strong>Apoio preventivo:</strong> LDL ainda acima do recomendado, mas com tendência de melhora. HDL subindo gradualmente. Manter dieta e exercícios.</p>
               </div>
             </div>
           </div>
@@ -337,7 +337,7 @@ export default function SaudePreventiva() {
           <div className="card bg-gradient-to-r from-vivas-green-light to-green-50 border border-vivas-green/20">
             <h3 className="font-semibold text-vivas-green-dark mb-3 flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
-              Recomendações Preventivas (Apoio IA)
+              Recomendações Preventivas (Apoio Inteligente)
             </h3>
             <p className="text-xs text-gray-500 mb-3">As recomendações abaixo são geradas como suporte preventivo e não substituem orientação médica.</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -404,7 +404,7 @@ export default function SaudePreventiva() {
             <div className="card h-fit sticky top-4">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <Heart className="w-5 h-5 text-vivas-blue" />
-                Análise Preventiva (Apoio IA)
+                Análise Preventiva (Apoio Inteligente)
               </h3>
               {selectedExam ? (
                 <div className="space-y-3">
@@ -433,7 +433,7 @@ export default function SaudePreventiva() {
               Enviar Exames para Análise Preventiva
             </h3>
             <p className="text-sm text-gray-500 mb-6">
-              Envie um ou vários exames (PDF, imagens) de uma só vez. Nossa IA faz a análise preventiva de cada um
+              Envie um ou vários exames (PDF, imagens) de uma só vez. Nossa tecnologia faz a análise preventiva de cada um
               e uma <strong>análise comparativa e histórica</strong> da evolução dos seus indicadores, gerando alertas
               enviados por email para você e seu médico quando necessário.
             </p>
@@ -523,7 +523,7 @@ export default function SaudePreventiva() {
 
                 {batchResult.comparative?.analysis && (
                   <div className="p-4 bg-wine-soft border border-wine-line rounded-lg">
-                    <p className="font-semibold text-sm text-gray-900 mb-2">Interpretação preventiva (IA):</p>
+                    <p className="font-semibold text-sm text-gray-900 mb-2">Interpretação preventiva:</p>
                     <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{batchResult.comparative.analysis}</p>
                   </div>
                 )}
@@ -547,7 +547,7 @@ export default function SaudePreventiva() {
 
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
               <p className="text-xs text-gray-500">
-                <strong>Importante:</strong> A analise por IA e utilizada exclusivamente como suporte preventivo e apoio ao monitoramento da sua saude.
+                <strong>Importante:</strong> A analise inteligente e utilizada exclusivamente como suporte preventivo e apoio ao monitoramento da sua saude.
                 Nao constitui diagnostico medico. Consulte sempre seu profissional de saude para orientacoes clinicas.
               </p>
             </div>

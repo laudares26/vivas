@@ -150,7 +150,7 @@ export default function PatientDashboard() {
       <section className="px-5 -mt-4">
         <div className="bg-white rounded-2xl shadow-card p-5">
           <h2 className="font-display font-extrabold text-lg text-ink">Como você está hoje?</h2>
-          <p className="text-sm text-muted mt-1">Conte o que sente e a Vivi (nossa IA) te orienta em segundos.</p>
+          <p className="text-sm text-muted mt-1">Conte o que sente e a Vivi te orienta em segundos.</p>
           <button onClick={() => navigate('/vivi')} className="mt-4 w-full bg-gradient-to-r from-wine to-wine-deep text-white rounded-2xl px-5 py-4 flex items-center justify-between transition-transform hover:scale-[1.01]">
             <span className="flex items-center gap-3">
               <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
@@ -221,7 +221,7 @@ export default function PatientDashboard() {
               </span>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm text-ink">
-                  Hemograma <span className="text-xs font-bold text-success bg-success-soft px-2 py-0.5 rounded-full ml-1">IA pronta</span>
+                  Hemograma <span className="text-xs font-bold text-success bg-success-soft px-2 py-0.5 rounded-full ml-1">Análise pronta</span>
                 </p>
                 <p className="text-xs text-muted mt-0.5">Interpretação explicada em linguagem simples</p>
               </div>
@@ -334,7 +334,7 @@ export default function PatientDashboard() {
               <div className="flex flex-col items-center gap-3 p-6">
                 <Loader2 className="w-8 h-8 text-wine animate-spin" />
                 <p className="text-sm text-wine font-semibold">Enviando e analisando seu exame...</p>
-                <p className="text-xs text-muted">A IA esta extraindo indicadores do seu exame</p>
+                <p className="text-xs text-muted">Estamos extraindo os indicadores do seu exame</p>
               </div>
             )}
             {uploadState === 'result' && uploadResult && (

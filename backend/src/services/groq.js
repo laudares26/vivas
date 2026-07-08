@@ -104,7 +104,7 @@ REGRAS:
 3. Sugira acoes preventivas gerais (habitos, acompanhamento) sem prescrever medicamentos ou doses.
 4. Sempre reforce que o paciente deve confirmar com um profissional de saude (medico) pela VivaS.
 5. Seja objetivo e estruturado. Use no maximo ~250 palavras.
-6. Finalize com a frase: "Esta analise e um suporte preventivo baseado em IA e nao substitui a avaliacao de um profissional de saude."`,
+6. Finalize com a frase: "Esta analise e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
     },
     {
       role: 'user',
@@ -140,7 +140,7 @@ REGRAS:
 4. Sugira acoes preventivas gerais (habitos, acompanhamento) sem prescrever medicamentos ou doses.
 5. Reforce que o paciente deve confirmar com um profissional de saude (medico) pela VivaS.
 6. Seja objetivo e estruturado. Use no maximo ~280 palavras.
-7. Finalize com: "Esta analise comparativa e um suporte preventivo baseado em IA e nao substitui a avaliacao de um profissional de saude."`,
+7. Finalize com: "Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
     },
     {
       role: 'user',

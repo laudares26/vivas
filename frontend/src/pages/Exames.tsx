@@ -95,8 +95,8 @@ export default function Exames() {
                   <div className="flex items-center gap-2">
                     <span className={`badge ${status.color}`}>{status.label}</span>
                     {exam.ai_analysis && (
-                      <span className="badge bg-gradient-to-r from-purple-500 to-pink-500 text-white flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" /> IA
+                      <span className="badge bg-gradient-to-r from-wine to-wine-deep text-white flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" /> Análise
                       </span>
                     )}
                   </div>

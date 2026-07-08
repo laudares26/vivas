@@ -31,7 +31,7 @@ const clinicalLinks: NavItem[] = [
 
 const aiLinks: NavItem[] = [
   { to: '/triagem', icon: Brain, label: 'Triagem Inteligente', roles: ['admin', 'medico', 'psicologo'] },
-  { to: '/assistente', icon: Bot, label: 'Assistente IA (Apoio)', roles: ['admin', 'medico'] },
+  { to: '/assistente', icon: Bot, label: 'Assistente Inteligente (Apoio)', roles: ['admin', 'medico'] },
   { to: '/predicao', icon: Activity, label: 'Suporte Preventivo', roles: ['admin', 'medico'] },
   { to: '/saude-preventiva', icon: Heart, label: 'Saude Preventiva' },
 ]
@@ -160,7 +160,7 @@ export default function Sidebar({ collapsed, onToggle, mobileHidden }: SidebarPr
         {filteredAI.length > 0 && (
           <>
             <div className="my-3 mx-3 border-t border-white/10" />
-            {!collapsed && <p className={`${textSection} text-[10px] font-semibold uppercase tracking-wider px-3 mb-2`}>IA - Suporte e Apoio</p>}
+            {!collapsed && <p className={`${textSection} text-[10px] font-semibold uppercase tracking-wider px-3 mb-2`}>Saúde Inteligente</p>}
             {filteredAI.map(renderLink)}
           </>
         )}

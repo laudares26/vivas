@@ -9,7 +9,7 @@ const PLANS = {
     price: 4990, // cents
     oldPrice: 7990,
     maxMembers: 1,
-    features: ['Linha do tempo de saúde', 'Interpretação de exames por IA', 'Alertas preventivos 24h', 'Triagem inteligente', 'Teleconsultas incluídas']
+    features: ['Linha do tempo de saúde', 'Interpretação inteligente de exames', 'Alertas preventivos 24h', 'Triagem inteligente', 'Teleconsultas incluídas']
   },
   familia: {
     name: 'Família',

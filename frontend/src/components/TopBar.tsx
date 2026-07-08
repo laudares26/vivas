@@ -7,7 +7,7 @@ const BREADCRUMBS: Record<string, string> = {
   '/agendamentos': 'Agendamentos', '/atendimento': 'Atendimento Médico',
   '/prontuario': 'Prontuário Eletrônico', '/exames': 'Exames e Laudos',
   '/prescricoes': 'Receitas e Prescrições', '/teleconsulta': 'Teleconsulta',
-  '/triagem': 'Triagem Inteligente', '/assistente': 'Assistente IA (Apoio)',
+  '/triagem': 'Triagem Inteligente', '/assistente': 'Assistente Inteligente (Apoio)',
   '/predicao': 'Suporte Preventivo', '/cupons': 'Cupons e Promoções',
   '/configuracoes': 'Configurações', '/usuarios': 'Gerenciamento de Usuários',
   '/saude-preventiva': 'Saúde Preventiva', '/dicom': 'Isis DICOM Viewer',

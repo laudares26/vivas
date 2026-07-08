@@ -125,7 +125,7 @@ const seedData = async () => {
           patients.rows[i].id,
           manchesterColors[i],
           'Sintomas reportados pelo paciente durante triagem',
-          'Avaliação IA: classificação baseada em protocolo Manchester',
+          'Avaliação inteligente: classificação baseada em protocolo Manchester',
           (5 - i),
           i * 15,
           triageStatuses[i]

@@ -101,7 +101,7 @@ function buildPatientAlertEmail(patientName, alerts) {
           <tbody>${alertRows}</tbody>
         </table>
         <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 12px; margin: 16px 0; border-radius: 4px;">
-          <p style="margin: 0; font-size: 13px;"><strong>Apoio Preventivo IA:</strong> Estes dados são suporte preventivo e não constituem diagnóstico médico. Consulte seu profissional de saúde para orientações clínicas.</p>
+          <p style="margin: 0; font-size: 13px;"><strong>Apoio Preventivo:</strong> Estes dados são suporte preventivo e não constituem diagnóstico médico. Consulte seu profissional de saúde para orientações clínicas.</p>
         </div>
         <p>Recomendamos agendar uma consulta com seu profissional de saúde para avaliação.</p>
         <a href="https://vivas.digital/login" style="display: inline-block; background: #7B1E3C; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; margin-top: 12px;">Acessar VIVAS</a>
@@ -380,7 +380,7 @@ function buildComparativePatientEmail(patientName, trends, aiText) {
         </table>
         ${aiText ? `<div style="background:#F6E9ED;border-left:4px solid #7B1E3C;padding:12px;margin:16px 0;border-radius:4px;"><p style="margin:0;font-size:13px;white-space:pre-line;">${aiText}</p></div>` : ''}
         <div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:12px;margin:16px 0;border-radius:4px;">
-          <p style="margin:0;font-size:13px;"><strong>Apoio Preventivo IA:</strong> Esta análise comparativa é um suporte preventivo e não constitui diagnóstico médico. Consulte seu profissional de saúde.</p>
+          <p style="margin:0;font-size:13px;"><strong>Apoio Preventivo:</strong> Esta análise comparativa é um suporte preventivo e não constitui diagnóstico médico. Consulte seu profissional de saúde.</p>
         </div>
         <a href="https://vivas.digital/login" style="display:inline-block;background:#7B1E3C;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;margin-top:12px;">Acessar VIVAS</a>
       </div>

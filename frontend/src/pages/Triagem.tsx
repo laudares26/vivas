@@ -71,7 +71,7 @@ export default function Triagem() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Triagem Inteligente</h1>
-        <p className="text-gray-500 text-sm mt-1">Classificação de risco com IA, Protocolo de Manchester</p>
+        <p className="text-gray-500 text-sm mt-1">Classificação de risco inteligente, Protocolo de Manchester</p>
       </div>
 
       {/* Manchester legend */}

@@ -48,7 +48,7 @@ export default function Login() {
           <h1 className="font-display text-5xl font-extrabold mb-3">vivas</h1>
           <p className="text-xl text-white/70 mb-8">Saúde preventiva inteligente</p>
           <div className="max-w-md text-center text-white/60 space-y-2">
-            <p>Cuide da sua saúde com inteligência artificial como suporte preventivo</p>
+            <p>Cuide da sua saúde com suporte preventivo inteligente</p>
             <p className="text-sm">Dashboard &middot; Exames &middot; Teleconsulta &middot; Triagem &middot; Saúde Preventiva</p>
           </div>
         </div>
