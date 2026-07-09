@@ -7,14 +7,37 @@ const {
 } = require('../services/notifications');
 const groq = require('../services/groq');
 
+const MAX_BATCH_FILES = 50;
+
 const examUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 25 * 1024 * 1024 },
+  limits: { fileSize: 25 * 1024 * 1024, files: MAX_BATCH_FILES },
   fileFilter: (req, file, cb) => {
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     cb(null, allowed.includes(file.mimetype));
   }
 });
+
+// Wraps a multer middleware so upload errors (too many files, file too large,
+// etc.) return a friendly JSON message instead of the default HTML 500 — which
+// the frontend cannot parse, making batch uploads appear to "fail silently".
+function withUploadErrors(mw) {
+  return (req, res, next) => {
+    mw(req, res, err => {
+      if (!err) return next();
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_COUNT') {
+          return res.status(400).json({ error: `Envie no máximo ${MAX_BATCH_FILES} arquivos por vez.` });
+        }
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ error: 'Cada arquivo deve ter no máximo 25MB.' });
+        }
+        return res.status(400).json({ error: 'Falha no envio dos arquivos: ' + err.message });
+      }
+      return res.status(400).json({ error: err.message || 'Falha no envio dos arquivos.' });
+    });
+  };
+}
 
 // Pattern-based indicator extraction from exam text/filename
 // In production this would use OCR + NLP; here we use regex patterns
@@ -240,7 +263,7 @@ async function updateTriageFromIndicators(patientId, userId, indicators, aiAnaly
 }
 
 // POST /api/exams/upload — patient uploads a single exam file for AI analysis
-router.post('/upload', examUpload.single('file'), async (req, res) => {
+router.post('/upload', withUploadErrors(examUpload.single('file')), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Arquivo e obrigatorio' });
@@ -277,7 +300,7 @@ router.post('/upload', examUpload.single('file'), async (req, res) => {
 // POST /api/exams/upload-batch — patient uploads MANY exams at once; the system
 // analyses each, then runs a comparative/historical analysis across the patient's
 // full indicator history and notifies patient + professionals when trends worsen.
-router.post('/upload-batch', examUpload.array('files', 20), async (req, res) => {
+router.post('/upload-batch', withUploadErrors(examUpload.array('files', MAX_BATCH_FILES)), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'Envie ao menos um arquivo' });
@@ -289,25 +312,39 @@ router.post('/upload-batch', examUpload.array('files', 20), async (req, res) => 
     );
     const patientId = patientResult.rows.length > 0 ? patientResult.rows[0].id : null;
 
-    const processed = [];
-    const allIndicators = [];
-    for (const file of req.files) {
-      try {
-        const result = await processExamFile(userId, patientId, file, {
-          notes: req.body.notes || null,
-        });
-        processed.push({
-          exam: result.exam,
-          file_name: file.originalname,
-          indicators_found: result.indicators.length,
-          indicators: result.indicators,
-          ai_analysis: result.aiAnalysis,
-        });
-        allIndicators.push(...result.indicators);
-      } catch (fileErr) {
-        console.error(`[EXAM BATCH] Failed to process ${file.originalname}:`, fileErr.message);
-        processed.push({ file_name: file.originalname, error: fileErr.message });
+    // Process files with limited concurrency so large batches don't run each
+    // (slow) LLM analysis strictly one-after-another and blow past the request
+    // timeout. Results are kept in the original upload order.
+    const CONCURRENCY = 4;
+    const processed = new Array(req.files.length);
+    let cursor = 0;
+    const worker = async () => {
+      while (true) {
+        const idx = cursor++;
+        if (idx >= req.files.length) break;
+        const file = req.files[idx];
+        try {
+          const result = await processExamFile(userId, patientId, file, {
+            notes: req.body.notes || null,
+          });
+          processed[idx] = {
+            exam: result.exam,
+            file_name: file.originalname,
+            indicators_found: result.indicators.length,
+            indicators: result.indicators,
+            ai_analysis: result.aiAnalysis,
+          };
+        } catch (fileErr) {
+          console.error(`[EXAM BATCH] Failed to process ${file.originalname}:`, fileErr.message);
+          processed[idx] = { file_name: file.originalname, error: fileErr.message };
+        }
       }
+    };
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, req.files.length) }, worker));
+
+    const allIndicators = [];
+    for (const p of processed) {
+      if (p && p.indicators) allIndicators.push(...p.indicators);
     }
 
     // Update triage from the combined set of indicators found across all files.
