@@ -23,13 +23,25 @@ export default function Prontuario() {
 
   useEffect(() => {
     const nome = searchParams.get('nome') || ''
-    api.getPatients('limit=100').then(r => {
+    const pid = searchParams.get('pid') || ''
+    api.getPatients('limit=100').then(async r => {
       setPatients(r.data)
-      if (nome) {
-        setSearchTerm(nome)
-        const match = r.data.find(p => p.full_name.toLowerCase() === nome.toLowerCase())
+      if (nome) setSearchTerm(nome)
+      // Prefer selecting by patient id (robust to duplicate names); fall back to name match.
+      let match = pid ? r.data.find(p => p.id === pid) : undefined
+      if (!match && nome) {
+        match = r.data.find(p => p.full_name.toLowerCase() === nome.toLowerCase())
           || r.data.find(p => p.full_name.toLowerCase().includes(nome.toLowerCase()))
-        if (match) { setSelectedPatient(match); loadEntries(match.id) }
+      }
+      if (match) { setSelectedPatient(match); loadEntries(match.id); return }
+      // Patient not in the list yet — fetch directly by id so the prontuário still opens.
+      if (pid) {
+        try {
+          const p = await api.getPatient(pid)
+          setPatients(prev => (prev.some(x => x.id === p.id) ? prev : [p, ...prev]))
+          setSelectedPatient(p)
+          loadEntries(p.id)
+        } catch { /* no access */ }
       }
     }).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps

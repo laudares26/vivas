@@ -98,7 +98,7 @@ export default function Atendimento() {
                   <div className="flex items-center gap-3 mb-1">
                     <button
                       type="button"
-                      onClick={() => navigate(`/prontuario?nome=${encodeURIComponent(record.patient_name || '')}`)}
+                      onClick={() => navigate(`/prontuario?pid=${record.patient_id}&nome=${encodeURIComponent(record.patient_name || '')}`)}
                       className="font-semibold text-gray-900 hover:text-wine hover:underline focus:outline-none focus:ring-2 focus:ring-wine rounded"
                     >
                       {record.patient_name}

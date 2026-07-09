@@ -13,11 +13,19 @@ router.get('/', async (req, res) => {
     const params = [];
     const conditions = [];
 
-    // Data isolation: professionals see only their linked patients, paciente sees only themselves
+    // Data isolation: professionals see patients linked via relationships OR
+    // patients they have clinical records with (consultas/agendamentos que criaram);
+    // paciente sees only themselves.
     if (PROFESSIONAL_ROLES.includes(req.user.role)) {
-      // Get patient emails linked to this professional via professional_patient_relationships
       params.push(req.user.id);
-      conditions.push(`email IN (SELECT u.email FROM users u JOIN professional_patient_relationships ppr ON ppr.patient_user_id = u.id WHERE ppr.professional_user_id = $${params.length})`);
+      const relParam = params.length;
+      params.push(req.user.email);
+      const emailParam = params.length;
+      conditions.push(`(
+        email IN (SELECT u.email FROM users u JOIN professional_patient_relationships ppr ON ppr.patient_user_id = u.id WHERE ppr.professional_user_id = $${relParam})
+        OR id IN (SELECT mr.patient_id FROM medical_records mr JOIN professionals pr ON pr.id = mr.professional_id WHERE pr.email = $${emailParam})
+        OR id IN (SELECT a.patient_id FROM appointments a JOIN professionals pr ON pr.id = a.professional_id WHERE pr.email = $${emailParam})
+      )`);
     } else if (req.user.role === 'paciente') {
       // Patient only sees themselves
       params.push(req.user.email);
@@ -65,13 +73,19 @@ router.get('/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Paciente não encontrado' });
     const patient = result.rows[0];
 
-    // Data isolation check
+    // Data isolation check: linked via relationship OR the professional has
+    // clinical records (consultas/agendamentos) with this patient.
     if (PROFESSIONAL_ROLES.includes(req.user.role)) {
       const check = await pool.query(
-        `SELECT 1 FROM professional_patient_relationships ppr
-         JOIN users u ON u.id = ppr.patient_user_id
-         WHERE ppr.professional_user_id = $1 AND u.email = $2`,
-        [req.user.id, patient.email]
+        `SELECT 1 WHERE
+           EXISTS (SELECT 1 FROM professional_patient_relationships ppr
+                   JOIN users u ON u.id = ppr.patient_user_id
+                   WHERE ppr.professional_user_id = $1 AND u.email = $2)
+           OR EXISTS (SELECT 1 FROM medical_records mr JOIN professionals pr ON pr.id = mr.professional_id
+                      WHERE pr.email = $3 AND mr.patient_id = $4)
+           OR EXISTS (SELECT 1 FROM appointments a JOIN professionals pr ON pr.id = a.professional_id
+                      WHERE pr.email = $3 AND a.patient_id = $4)`,
+        [req.user.id, patient.email, req.user.email, patient.id]
       );
       if (check.rows.length === 0) return res.status(403).json({ error: 'Acesso negado a este paciente' });
     } else if (req.user.role === 'paciente' && patient.email !== req.user.email) {

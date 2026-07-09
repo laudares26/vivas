@@ -9,13 +9,17 @@ router.get('/:patientId', async (req, res) => {
     // patients; a patient may only view their own. Admin sees everyone.
     if (['medico', 'psicologo'].includes(req.user.role)) {
       const allowed = await pool.query(
-        `SELECT 1 FROM patients p
-         WHERE p.id = $1 AND p.email IN (
-           SELECT u.email FROM users u
-           JOIN professional_patient_relationships ppr ON ppr.patient_user_id = u.id
-           WHERE ppr.professional_user_id = $2
-         ) LIMIT 1`,
-        [patientId, req.user.id]
+        `SELECT 1 WHERE
+           EXISTS (SELECT 1 FROM patients p WHERE p.id = $1 AND p.email IN (
+             SELECT u.email FROM users u
+             JOIN professional_patient_relationships ppr ON ppr.patient_user_id = u.id
+             WHERE ppr.professional_user_id = $2))
+           OR EXISTS (SELECT 1 FROM medical_records mr JOIN professionals pr ON pr.id = mr.professional_id
+                      WHERE pr.email = $3 AND mr.patient_id = $1)
+           OR EXISTS (SELECT 1 FROM appointments a JOIN professionals pr ON pr.id = a.professional_id
+                      WHERE pr.email = $3 AND a.patient_id = $1)
+         LIMIT 1`,
+        [patientId, req.user.id, req.user.email]
       );
       if (allowed.rowCount === 0) return res.json([]);
     } else if (req.user.role === 'paciente') {
