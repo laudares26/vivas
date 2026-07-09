@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Stethoscope, Plus, HeartPulse, Thermometer, Wind, Droplets } from 'lucide-react'
 import { api, type MedicalRecord, type Patient, type Professional } from '../services/api'
 import { useToast } from '../components/Toast'
@@ -19,6 +20,7 @@ export default function Atendimento() {
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const { addToast } = useToast()
+  const navigate = useNavigate()
   const [form, setForm] = useState({
     patient_id: '', professional_id: '', chief_complaint: '', manchester_priority: 'verde',
     systolic_bp: '', diastolic_bp: '', heart_rate: '', temperature: '', respiratory_rate: '',
@@ -94,7 +96,13 @@ export default function Atendimento() {
               <div className="flex items-start justify-between flex-wrap gap-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
-                    <h3 className="font-semibold text-gray-900">{record.patient_name}</h3>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/prontuario?nome=${encodeURIComponent(record.patient_name || '')}`)}
+                      className="font-semibold text-gray-900 hover:text-wine hover:underline focus:outline-none focus:ring-2 focus:ring-wine rounded"
+                    >
+                      {record.patient_name}
+                    </button>
                     <span className={`badge ${m.bg} ${m.text}`}>{m.label}</span>
                     {record.icd10_code && <span className="badge-cid">CID-10: {record.icd10_code}</span>}
                   </div>
