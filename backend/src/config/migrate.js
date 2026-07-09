@@ -400,8 +400,27 @@ CREATE TABLE IF NOT EXISTS company_leads (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ANVISA registered medications (loaded from official open data CSV)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE TABLE IF NOT EXISTS medicamentos_anvisa (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  nome_produto VARCHAR(255) NOT NULL,
+  principio_ativo TEXT,
+  classe_terapeutica VARCHAR(255),
+  categoria_regulatoria VARCHAR(100),
+  numero_registro VARCHAR(64),
+  empresa_detentora VARCHAR(255),
+  situacao_registro VARCHAR(50),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_med_anvisa_nome_trgm ON medicamentos_anvisa USING gin (nome_produto gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_med_anvisa_ativo_trgm ON medicamentos_anvisa USING gin (principio_ativo gin_trgm_ops);
+
 -- Add new columns if they don't exist (safe migration)
 DO $$ BEGIN
+  ALTER TABLE prescription_items ADD COLUMN IF NOT EXISTS active_ingredient TEXT;
+  ALTER TABLE prescription_items ADD COLUMN IF NOT EXISTS anvisa_registration VARCHAR(64);
+  ALTER TABLE prescription_items ADD COLUMN IF NOT EXISTS therapeutic_class VARCHAR(255);
   ALTER TABLE patients ADD COLUMN IF NOT EXISTS convenio VARCHAR(50) DEFAULT 'SUS';
   ALTER TABLE patients ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'Ativo';
   ALTER TABLE patients ADD COLUMN IF NOT EXISTS titular_id UUID REFERENCES patients(id) ON DELETE SET NULL;

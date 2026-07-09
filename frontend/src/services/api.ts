@@ -50,6 +50,7 @@ export const api = {
   getPrescription: (id: string) => request<Prescription>(`/prescriptions/${id}`),
   createPrescription: (data: CreatePrescriptionData) => request<Prescription>('/prescriptions', { method: 'POST', body: JSON.stringify(data) }),
   deletePrescription: (id: string) => request<void>(`/prescriptions/${id}`, { method: 'DELETE' }),
+  searchAnvisaMedications: (q: string) => request<AnvisaMedication[]>(`/medicamentos/anvisa?q=${encodeURIComponent(q)}`),
 
   // Exams
   getExams: (params?: string) => request<Exam[]>(`/exams${params ? `?${params}` : ''}`),
@@ -172,6 +173,13 @@ export interface MedicalRecord {
 export interface PrescriptionItem {
   id: string; medication_name: string; dosage: string; frequency: string; duration: string;
   route: string; instructions: string;
+  active_ingredient?: string; anvisa_registration?: string; therapeutic_class?: string;
+}
+
+export interface AnvisaMedication {
+  nome_produto: string; principio_ativo: string | null; classe_terapeutica: string | null;
+  categoria_regulatoria: string | null; numero_registro: string | null;
+  empresa_detentora: string | null; situacao_registro: string | null;
 }
 
 export interface Prescription {

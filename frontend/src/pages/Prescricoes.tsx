@@ -1,8 +1,89 @@
-import { useEffect, useState } from 'react'
-import { Plus, Eye, Trash2, Pill } from 'lucide-react'
-import { api, type Prescription, type Patient, type Professional, type PrescriptionItem } from '../services/api'
+import { useEffect, useRef, useState } from 'react'
+import { Plus, Eye, Trash2, Pill, Search, Loader2, ShieldCheck } from 'lucide-react'
+import { api, type Prescription, type Patient, type Professional, type PrescriptionItem, type AnvisaMedication } from '../services/api'
 import { useToast } from '../components/Toast'
 import Modal from '../components/Modal'
+
+function MedicationAutocomplete({ value, onSelect, onChange }: {
+  value: string
+  onChange: (v: string) => void
+  onSelect: (m: AnvisaMedication) => void
+}) {
+  const [results, setResults] = useState<AnvisaMedication[]>([])
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const boxRef = useRef<HTMLDivElement>(null)
+  const timer = useRef<ReturnType<typeof setTimeout>>()
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  const handleType = (v: string) => {
+    onChange(v)
+    if (timer.current) clearTimeout(timer.current)
+    if (v.trim().length < 2) { setResults([]); setOpen(false); return }
+    timer.current = setTimeout(async () => {
+      setLoading(true)
+      try {
+        const res = await api.searchAnvisaMedications(v.trim())
+        setResults(res)
+        setOpen(true)
+      } catch { setResults([]) }
+      finally { setLoading(false) }
+    }, 300)
+  }
+
+  return (
+    <div className="relative" ref={boxRef}>
+      <div className="relative">
+        <input
+          className="input-field pr-8"
+          placeholder="Nome do medicamento (ANVISA)"
+          value={value}
+          onChange={e => handleType(e.target.value)}
+          onFocus={() => { if (results.length) setOpen(true) }}
+          autoComplete="off"
+        />
+        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+        </span>
+      </div>
+      {open && results.length > 0 && (
+        <div className="absolute z-30 mt-1 w-full max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg">
+          {results.map((m, idx) => (
+            <button
+              type="button"
+              key={idx}
+              onClick={() => { onSelect(m); setOpen(false) }}
+              className="w-full text-left px-3 py-2 hover:bg-wine-soft border-b border-gray-100 last:border-0"
+            >
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-gray-900 text-sm">{m.nome_produto}</span>
+                {m.situacao_registro === 'Ativo' && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">Ativo</span>
+                )}
+              </div>
+              {m.principio_ativo && <p className="text-xs text-gray-500 truncate">{m.principio_ativo}</p>}
+              <p className="text-[11px] text-gray-400 truncate">
+                {m.classe_terapeutica || 'Classe não informada'}{m.numero_registro ? ` • Reg. ANVISA ${m.numero_registro}` : ''}
+              </p>
+            </button>
+          ))}
+        </div>
+      )}
+      {open && !loading && results.length === 0 && value.trim().length >= 2 && (
+        <div className="absolute z-30 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-xs text-gray-500">
+          Nenhum medicamento encontrado na base da ANVISA.
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function Prescricoes() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
@@ -27,6 +108,14 @@ export default function Prescricoes() {
   const addItem = () => setForm(f => ({ ...f, items: [...f.items, { medication_name: '', dosage: '', frequency: '', duration: '', route: 'Oral', instructions: '' }] }))
   const removeItem = (i: number) => setForm(f => ({ ...f, items: f.items.filter((_, idx) => idx !== i) }))
   const updateItem = (i: number, field: string, value: string) => setForm(f => ({ ...f, items: f.items.map((item, idx) => idx === i ? { ...item, [field]: value } : item) }))
+  const patchItem = (i: number, partial: Partial<PrescriptionItem>) => setForm(f => ({ ...f, items: f.items.map((item, idx) => idx === i ? { ...item, ...partial } : item) }))
+
+  const applyAnvisa = (i: number, m: AnvisaMedication) => patchItem(i, {
+    medication_name: m.nome_produto,
+    active_ingredient: m.principio_ativo || '',
+    anvisa_registration: m.numero_registro || '',
+    therapeutic_class: m.classe_terapeutica || '',
+  })
 
   const handleCreate = async () => {
     try {
@@ -122,7 +211,13 @@ export default function Prescricoes() {
                   {form.items.length > 1 && <button onClick={() => removeItem(i)} className="text-xs text-red-500 hover:underline">Remover</button>}
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  <input className="input-field" placeholder="Nome do medicamento" value={item.medication_name} onChange={e => updateItem(i, 'medication_name', e.target.value)} />
+                  <div className="col-span-2 md:col-span-1">
+                    <MedicationAutocomplete
+                      value={item.medication_name}
+                      onChange={v => updateItem(i, 'medication_name', v)}
+                      onSelect={m => applyAnvisa(i, m)}
+                    />
+                  </div>
                   <input className="input-field" placeholder="Dose" value={item.dosage} onChange={e => updateItem(i, 'dosage', e.target.value)} />
                   <input className="input-field" placeholder="Frequência" value={item.frequency} onChange={e => updateItem(i, 'frequency', e.target.value)} />
                   <input className="input-field" placeholder="Duração" value={item.duration} onChange={e => updateItem(i, 'duration', e.target.value)} />
@@ -131,6 +226,17 @@ export default function Prescricoes() {
                   </select>
                   <input className="input-field" placeholder="Instruções" value={item.instructions} onChange={e => updateItem(i, 'instructions', e.target.value)} />
                 </div>
+                {(item.active_ingredient || item.anvisa_registration || item.therapeutic_class) && (
+                  <div className="mt-2 flex items-start gap-1.5 text-xs text-wine bg-wine-soft rounded-md px-2 py-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                    <span>
+                      Dados ANVISA:
+                      {item.active_ingredient ? ` ${item.active_ingredient}` : ''}
+                      {item.therapeutic_class ? ` • ${item.therapeutic_class}` : ''}
+                      {item.anvisa_registration ? ` • Registro ${item.anvisa_registration}` : ''}
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -176,9 +282,11 @@ export default function Prescricoes() {
                   <span className="text-vivas-blue font-bold">{i + 1}.</span>
                   <div>
                     <p className="font-semibold">{item.medication_name}</p>
+                    {item.active_ingredient && <p className="text-sm text-gray-600">Princípio ativo: {item.active_ingredient}</p>}
                     <p className="text-sm text-gray-600">{item.dosage} | {item.frequency} | {item.duration}</p>
                     <p className="text-sm text-gray-500">Via: {item.route}</p>
                     {item.instructions && <p className="text-sm text-gray-400 italic">{item.instructions}</p>}
+                    {item.anvisa_registration && <p className="text-xs text-gray-400">Registro ANVISA: {item.anvisa_registration}</p>}
                   </div>
                 </div>
               ))}
