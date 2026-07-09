@@ -88,7 +88,7 @@ export default function InstallBanner() {
 
         {/* Content */}
         <h3 className="text-xl font-bold text-center text-ink mb-2">
-          Instale o app VivaS
+          Instale o app vivas
         </h3>
         <p className="text-sm text-muted text-center mb-4 leading-relaxed">
           Acesse sua saúde direto da tela inicial do seu celular ou computador. Sem precisar de loja de aplicativos.

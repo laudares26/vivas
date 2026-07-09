@@ -253,7 +253,7 @@ export default function Prescricoes() {
           <div className="border-2 border-gray-200 rounded-xl p-8 bg-white">
             {/* Header */}
             <div className="text-center border-b-2 border-vivas-blue pb-4 mb-6">
-              <h2 className="text-xl font-bold text-vivas-blue">VIVAS - Plataforma de Saúde</h2>
+              <h2 className="text-xl font-bold text-vivas-blue">vivas - Plataforma de Saúde</h2>
               <p className="text-sm text-gray-500">Receita Médica</p>
             </div>
 

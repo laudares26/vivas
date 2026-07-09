@@ -40,7 +40,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
             <Menu className="w-5 h-5" />
           </button>
         )}
-        <span className="text-gray-400 hidden sm:inline">VIVAS</span>
+        <span className="text-gray-400 hidden sm:inline">vivas</span>
         <span className="text-gray-300 hidden sm:inline">›</span>
         <span className="font-medium text-gray-900 truncate">{pageName}</span>
       </div>
