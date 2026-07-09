@@ -10,7 +10,7 @@ const BREADCRUMBS: Record<string, string> = {
   '/triagem': 'Triagem Inteligente', '/assistente': 'Assistente Inteligente (Apoio)',
   '/predicao': 'Suporte Preventivo', '/cupons': 'Cupons e Promoções',
   '/configuracoes': 'Configurações', '/usuarios': 'Gerenciamento de Usuários',
-  '/saude-preventiva': 'Saúde Preventiva', '/dicom': 'Isis DICOM Viewer',
+  '/saude-preventiva': 'Saúde Preventiva', '/dicom': 'vivas DICOM',
 }
 
 const ROLE_LABELS: Record<string, string> = {

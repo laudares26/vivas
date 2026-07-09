@@ -702,7 +702,7 @@ export default function DicomViewer() {
             <Layers size={18} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-lg font-bold truncate">Isis DICOM Viewer</h1>
+            <h1 className="text-lg font-bold truncate">vivas DICOM</h1>
             <p className="text-xs text-white/70 truncate">Visualizador de Imagens Médicas | vivas</p>
           </div>
         </div>
@@ -1127,7 +1127,7 @@ export default function DicomViewer() {
 
               {/* Feature parity section */}
               <div className="mt-6 bg-white rounded-xl border border-gray-200 p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">Paridade de Funcionalidades - Isis DICOM Viewer</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">Paridade de Funcionalidades - vivas DICOM</h3>
                 <p className="text-xs text-gray-500 mb-4">Baseado nas bibliotecas DICOM-Swift, MTKDicomBridge e MTK</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                   {[

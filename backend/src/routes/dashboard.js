@@ -8,24 +8,50 @@ router.get('/', async (req, res) => {
     const userId = req.user.id;
     const userRole = req.user.role;
     const userEmail = req.user.email;
+    const isProfessional = PROFESSIONAL_ROLES.includes(userRole);
+    const isPatient = userRole === 'paciente';
+
+    // Resolve the logged-in professional/patient record so appointment data can be isolated
+    let scopeProfessionalId = null;
+    let scopePatientId = null;
+    if (isProfessional) {
+      const pr = await pool.query('SELECT id FROM professionals WHERE email = $1 LIMIT 1', [userEmail]);
+      scopeProfessionalId = pr.rows[0]?.id || null;
+    } else if (isPatient) {
+      const pt = await pool.query('SELECT id FROM patients WHERE email = $1 LIMIT 1', [userEmail]);
+      scopePatientId = pt.rows[0]?.id || null;
+    }
+
+    // Build an appointment-scoping clause so a professional only sees their own appointments
+    // and a patient only sees their own. Admin/others see all.
+    let apptScope = '';
+    const apptScopeParams = [];
+    if (isProfessional) {
+      apptScope = scopeProfessionalId ? 'professional_id = $1' : 'false';
+      if (scopeProfessionalId) apptScopeParams.push(scopeProfessionalId);
+    } else if (isPatient) {
+      apptScope = scopePatientId ? 'patient_id = $1' : 'false';
+      if (scopePatientId) apptScopeParams.push(scopePatientId);
+    }
+    const apptAnd = apptScope ? ` AND ${apptScope}` : '';
 
     const [patients, professionals, appointmentsToday, triageQueue, recentAppointments, specialtyStats] = await Promise.all([
       pool.query('SELECT COUNT(*) FROM patients WHERE active = true'),
       pool.query('SELECT COUNT(*) FROM professionals WHERE active = true'),
-      pool.query("SELECT COUNT(*) FROM appointments WHERE DATE(date_time) = CURRENT_DATE"),
+      pool.query(`SELECT COUNT(*) FROM appointments WHERE DATE(date_time) = CURRENT_DATE${apptAnd}`, apptScopeParams),
       pool.query("SELECT COUNT(*) FROM triage_records WHERE status IN ('aguardando', 'em_atendimento')"),
       pool.query(`SELECT a.*, p.full_name as patient_name, pr.full_name as professional_name, pr.specialty
                   FROM appointments a
                   LEFT JOIN patients p ON a.patient_id = p.id
                   LEFT JOIN professionals pr ON a.professional_id = pr.id
-                  WHERE a.date_time >= NOW()
-                  ORDER BY a.date_time ASC LIMIT 5`),
+                  WHERE a.date_time >= NOW()${apptScope ? ` AND a.${apptScope}` : ''}
+                  ORDER BY a.date_time ASC LIMIT 5`, apptScopeParams),
       pool.query(`SELECT pr.specialty, COUNT(*) as count
                   FROM appointments a
                   LEFT JOIN professionals pr ON a.professional_id = pr.id
-                  WHERE pr.specialty IS NOT NULL
+                  WHERE pr.specialty IS NOT NULL${apptScope ? ` AND a.${apptScope}` : ''}
                   GROUP BY pr.specialty
-                  ORDER BY count DESC LIMIT 6`),
+                  ORDER BY count DESC LIMIT 6`, apptScopeParams),
     ]);
 
     const manchesterStats = await pool.query(`
@@ -40,10 +66,10 @@ router.get('/', async (req, res) => {
     const weeklyRaw = await pool.query(`
       SELECT EXTRACT(DOW FROM date_time)::int as dow, COUNT(*) as count
       FROM appointments
-      WHERE date_time >= NOW() - INTERVAL '7 days'
+      WHERE date_time >= NOW() - INTERVAL '7 days'${apptAnd}
       GROUP BY EXTRACT(DOW FROM date_time)::int, DATE(date_time)
       ORDER BY DATE(date_time)
-    `);
+    `, apptScopeParams);
     const weeklyStats = { rows: weeklyRaw.rows.map(r => ({ day: PT_DAYS[r.dow] || r.dow, count: r.count })) };
 
     // Health alerts for this user

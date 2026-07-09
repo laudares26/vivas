@@ -44,14 +44,22 @@ const upload = multer({
 router.get('/studies', authenticate, authorize(...MEDICAL_ROLES), async (req, res) => {
   try {
     const { search } = req.query;
-    let query = `SELECT * FROM dicom_studies ORDER BY study_date DESC, created_at DESC`;
-    let params = [];
-    if (search) {
-      query = `SELECT * FROM dicom_studies 
-               WHERE patient_name ILIKE $1 OR patient_id ILIKE $1 OR study_description ILIKE $1 OR modality ILIKE $1
-               ORDER BY study_date DESC, created_at DESC`;
-      params = [`%${search}%`];
+    const params = [];
+    const conditions = [];
+
+    // Data isolation: a professional only sees studies they imported. Admin sees all.
+    if (['medico', 'psicologo'].includes(req.user.role)) {
+      params.push(req.user.id);
+      conditions.push(`uploaded_by = $${params.length}`);
     }
+    if (search) {
+      params.push(`%${search}%`);
+      const s = params.length;
+      conditions.push(`(patient_name ILIKE $${s} OR patient_id ILIKE $${s} OR study_description ILIKE $${s} OR modality ILIKE $${s})`);
+    }
+    let query = `SELECT * FROM dicom_studies`;
+    if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');
+    query += ' ORDER BY study_date DESC, created_at DESC';
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
@@ -140,20 +148,20 @@ router.post('/upload', authenticate, authorize(...MEDICAL_ROLES), upload.array('
         } else {
           const studyResult = await pool.query(
             `INSERT INTO dicom_studies (study_instance_uid, patient_name, patient_id, patient_birth_date, patient_sex,
-             study_date, study_time, study_description, accession_number, modality)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+             study_date, study_time, study_description, accession_number, modality, uploaded_by)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
             [metadata.study_instance_uid, metadata.patient_name, metadata.patient_id,
              metadata.patient_birth_date, metadata.patient_sex, metadata.study_date,
              metadata.study_time, metadata.study_description, metadata.accession_number,
-             metadata.modality]
+             metadata.modality, req.user.id]
           );
           studyId = studyResult.rows[0].id;
         }
       } else {
         const studyResult = await pool.query(
-          `INSERT INTO dicom_studies (study_instance_uid, patient_name, modality, study_description)
-           VALUES ($1, $2, $3, $4) RETURNING id`,
-          [`local-${Date.now()}`, metadata.patient_name || 'Desconhecido', metadata.modality || 'OT', 'Upload Local']
+          `INSERT INTO dicom_studies (study_instance_uid, patient_name, modality, study_description, uploaded_by)
+           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+          [`local-${Date.now()}`, metadata.patient_name || 'Desconhecido', metadata.modality || 'OT', 'Upload Local', req.user.id]
         );
         studyId = studyResult.rows[0].id;
       }

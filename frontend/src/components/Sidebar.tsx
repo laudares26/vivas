@@ -22,7 +22,7 @@ const clinicalLinks: NavItem[] = [
   { to: '/atendimento', icon: Stethoscope, label: 'Atendimento Medico', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/prontuario', icon: FileText, label: 'Prontuario Eletronico', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/exames', icon: TestTubeDiagonal, label: 'Exames e Laudos', roles: ['admin', 'medico', 'psicologo'] },
-  { to: '/dicom', icon: Layers, label: 'Isis DICOM Viewer', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/dicom', icon: Layers, label: 'vivas DICOM', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/prescricoes', icon: ClipboardList, label: 'Receitas e Prescricoes', roles: ['admin', 'medico'] },
   { to: '/teleconsulta', icon: Video, label: 'Teleconsulta' },
   { to: '/vivi', icon: Bot, label: 'Vivi', roles: ['paciente'] },

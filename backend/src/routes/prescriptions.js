@@ -12,7 +12,19 @@ router.get('/', async (req, res) => {
                  LEFT JOIN professionals prof ON pr.professional_id = prof.id
                  LEFT JOIN prescription_items pi ON pi.prescription_id = pr.id`;
     const params = [];
-    if (patient_id) { params.push(patient_id); query += ` WHERE pr.patient_id = $1`; }
+    const conditions = [];
+
+    // Data isolation: professional sees prescriptions they issued; patient only their own
+    if (['medico', 'psicologo'].includes(req.user.role)) {
+      params.push(req.user.email);
+      conditions.push(`pr.professional_id IN (SELECT id FROM professionals WHERE email = $${params.length})`);
+    } else if (req.user.role === 'paciente') {
+      params.push(req.user.email);
+      conditions.push(`pr.patient_id IN (SELECT id FROM patients WHERE email = $${params.length})`);
+    }
+
+    if (patient_id) { params.push(patient_id); conditions.push(`pr.patient_id = $${params.length}`); }
+    if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');
     query += ' GROUP BY pr.id, p.full_name, prof.full_name ORDER BY pr.date_time DESC';
 
     const result = await pool.query(query, params);

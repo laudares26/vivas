@@ -380,6 +380,16 @@ router.get('/', async (req, res) => {
                  LEFT JOIN professionals pr ON e.professional_id = pr.id`;
     const params = [];
     const conditions = [];
+
+    // Data isolation: professional sees only exams of their linked patients; patient only their own
+    if (['medico', 'psicologo'].includes(req.user.role)) {
+      params.push(req.user.id);
+      conditions.push(`e.patient_id IN (SELECT p2.id FROM patients p2 WHERE p2.email IN (SELECT u.email FROM users u JOIN professional_patient_relationships ppr ON ppr.patient_user_id = u.id WHERE ppr.professional_user_id = $${params.length}))`);
+    } else if (req.user.role === 'paciente') {
+      params.push(req.user.email);
+      conditions.push(`e.patient_id IN (SELECT id FROM patients WHERE email = $${params.length})`);
+    }
+
     if (patient_id) { params.push(patient_id); conditions.push(`e.patient_id = $${params.length}`); }
     if (status) { params.push(status); conditions.push(`e.status = $${params.length}`); }
     if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');

@@ -290,6 +290,8 @@ CREATE TABLE IF NOT EXISTS dicom_pacs_sources (
 );
 
 -- DICOM Indexes
+ALTER TABLE dicom_studies ADD COLUMN IF NOT EXISTS uploaded_by UUID REFERENCES users(id);
+CREATE INDEX IF NOT EXISTS idx_dicom_studies_uploaded_by ON dicom_studies(uploaded_by);
 CREATE INDEX IF NOT EXISTS idx_dicom_studies_patient ON dicom_studies(patient_name);
 CREATE INDEX IF NOT EXISTS idx_dicom_studies_date ON dicom_studies(study_date);
 CREATE INDEX IF NOT EXISTS idx_dicom_studies_modality ON dicom_studies(modality);
