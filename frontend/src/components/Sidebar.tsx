@@ -17,7 +17,7 @@ interface NavItem {
 const clinicalLinks: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/pacientes', icon: Users, label: 'Pacientes', roles: ['admin', 'medico', 'psicologo'] },
-  { to: '/profissionais', icon: UserCog, label: 'Profissionais', roles: ['admin', 'medico', 'psicologo'] },
+  { to: '/profissionais', icon: UserCog, label: 'Profissionais', roles: ['admin'] },
   { to: '/agendamentos', icon: CalendarDays, label: 'Agendamentos' },
   { to: '/atendimento', icon: Stethoscope, label: 'Atendimento Medico', roles: ['admin', 'medico', 'psicologo'] },
   { to: '/prontuario', icon: FileText, label: 'Prontuario Eletronico', roles: ['admin', 'medico', 'psicologo'] },
