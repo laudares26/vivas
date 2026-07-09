@@ -19,6 +19,7 @@ export default function Exames() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [detailExam, setDetailExam] = useState<Exam | null>(null)
   const [form, setForm] = useState({ patient_id: '', professional_id: '', loinc_code: '', exam_name: '', category: 'Laboratorial' })
   const { addToast } = useToast()
 
@@ -53,6 +54,15 @@ export default function Exames() {
     !search || e.exam_name.toLowerCase().includes(search.toLowerCase()) || e.patient_name?.toLowerCase().includes(search.toLowerCase())
   )
 
+  // Result may be a JSON array of { name, value, unit } or plain text.
+  const parseResult = (result: string): { name: string; value: string; unit?: string }[] | null => {
+    try {
+      const parsed = JSON.parse(result)
+      if (Array.isArray(parsed) && parsed.length && parsed[0] && 'name' in parsed[0]) return parsed
+      return null
+    } catch { return null }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -86,13 +96,18 @@ export default function Exames() {
           {filteredExams.map(exam => {
             const status = STATUS_MAP[exam.status] || STATUS_MAP.solicitado
             return (
-              <div key={exam.id} className="card">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
+              <button
+                type="button"
+                key={exam.id}
+                onClick={() => setDetailExam(exam)}
+                className="card text-left w-full cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-wine"
+              >
+                <div className="flex items-start justify-between mb-3 gap-2">
+                  <div className="min-w-0">
                     <h3 className="font-semibold text-gray-900">{exam.exam_name}</h3>
-                    <p className="text-sm text-gray-500">{exam.patient_name}</p>
+                    <p className="text-sm text-gray-500 truncate">{exam.patient_name}</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                     <span className={`badge ${status.color}`}>{status.label}</span>
                     {exam.ai_analysis && (
                       <span className="badge bg-gradient-to-r from-wine to-wine-deep text-white flex items-center gap-1">
@@ -107,12 +122,12 @@ export default function Exames() {
                 </div>
                 {exam.result && (
                   <div className="mt-3 p-3 bg-green-50 rounded-lg text-sm">
-                    <p className="font-medium text-green-800">Resultado: {exam.result}</p>
-                    {exam.ai_analysis && <p className="text-green-600 mt-1 text-xs">{exam.ai_analysis}</p>}
+                    <p className="font-medium text-green-800 line-clamp-2">Resultado: {exam.result}</p>
+                    <p className="text-wine text-xs mt-1 font-medium">Toque para ver detalhes</p>
                   </div>
                 )}
                 <p className="text-xs text-gray-400 mt-3">Solicitado em {new Date(exam.created_at).toLocaleDateString('pt-BR')}</p>
-              </div>
+              </button>
             )
           })}
         </div>
@@ -155,6 +170,76 @@ export default function Exames() {
           <button onClick={() => setModalOpen(false)} className="btn-ghost">Cancelar</button>
           <button onClick={handleCreate} className="btn-primary">Solicitar</button>
         </div>
+      </Modal>
+
+      <Modal open={!!detailExam} onClose={() => setDetailExam(null)} title={detailExam?.exam_name || 'Exame'}>
+        {detailExam && (() => {
+          const status = STATUS_MAP[detailExam.status] || STATUS_MAP.solicitado
+          const rows = detailExam.result ? parseResult(detailExam.result) : null
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`badge ${status.color}`}>{status.label}</span>
+                <span className="badge bg-gray-100 text-gray-600">{detailExam.category}</span>
+                {detailExam.loinc_code && <span className="badge-loinc">LOINC: {detailExam.loinc_code}</span>}
+              </div>
+              <div className="text-sm text-gray-600">
+                <p><span className="font-medium text-gray-800">Paciente:</span> {detailExam.patient_name}</p>
+                {detailExam.professional_name && <p><span className="font-medium text-gray-800">Solicitante:</span> {detailExam.professional_name}</p>}
+                <p><span className="font-medium text-gray-800">Solicitado em:</span> {new Date(detailExam.created_at).toLocaleDateString('pt-BR')}</p>
+                {detailExam.result_date && <p><span className="font-medium text-gray-800">Resultado em:</span> {new Date(detailExam.result_date).toLocaleDateString('pt-BR')}</p>}
+              </div>
+
+              {detailExam.result ? (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Resultado</h4>
+                  {rows ? (
+                    <div className="overflow-x-auto rounded-lg border border-gray-100">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-gray-50 text-left text-gray-500">
+                            <th className="px-3 py-2 font-medium">Indicador</th>
+                            <th className="px-3 py-2 font-medium">Valor</th>
+                            <th className="px-3 py-2 font-medium">Unidade</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map((r, i) => (
+                            <tr key={i} className="border-t border-gray-100">
+                              <td className="px-3 py-2 text-gray-800 capitalize">{r.name.replace(/_/g, ' ')}</td>
+                              <td className="px-3 py-2 font-medium text-gray-900">{r.value}</td>
+                              <td className="px-3 py-2 text-gray-500">{r.unit || '-'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-700 bg-green-50 p-3 rounded-lg whitespace-pre-wrap break-words">{detailExam.result}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400">Resultado ainda não disponível.</p>
+              )}
+
+              {detailExam.ai_analysis && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-1">
+                    <Sparkles className="w-4 h-4 text-wine" /> Análise
+                  </h4>
+                  <p className="text-sm text-gray-700 bg-wine-soft p-3 rounded-lg whitespace-pre-wrap break-words">{detailExam.ai_analysis}</p>
+                </div>
+              )}
+
+              {detailExam.notes && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Observações</h4>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">{detailExam.notes}</p>
+                </div>
+              )}
+            </div>
+          )
+        })()}
       </Modal>
     </div>
   )

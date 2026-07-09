@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { FileText, Search, Stethoscope, TestTubeDiagonal, Pill, Syringe, AlertTriangle, User } from 'lucide-react'
 import { api, type Patient, type EHREntry } from '../services/api'
 import { useToast } from '../components/Toast'
@@ -18,9 +19,20 @@ export default function Prontuario() {
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
   const { addToast } = useToast()
+  const [searchParams] = useSearchParams()
 
   useEffect(() => {
-    api.getPatients('limit=100').then(r => setPatients(r.data)).catch(() => {})
+    const nome = searchParams.get('nome') || ''
+    api.getPatients('limit=100').then(r => {
+      setPatients(r.data)
+      if (nome) {
+        setSearchTerm(nome)
+        const match = r.data.find(p => p.full_name.toLowerCase() === nome.toLowerCase())
+          || r.data.find(p => p.full_name.toLowerCase().includes(nome.toLowerCase()))
+        if (match) { setSelectedPatient(match); loadEntries(match.id) }
+      }
+    }).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadEntries = async (patientId: string) => {
@@ -35,6 +47,15 @@ export default function Prontuario() {
   const selectPatient = (p: Patient) => {
     setSelectedPatient(p)
     loadEntries(p.id)
+  }
+
+  const parseResultRows = (result?: string): { name: string; value: string; unit?: string }[] | null => {
+    if (!result) return null
+    try {
+      const parsed = JSON.parse(result)
+      if (Array.isArray(parsed) && parsed.length && parsed[0] && 'name' in parsed[0]) return parsed
+      return null
+    } catch { return null }
   }
 
   const filteredPatients = patients.filter(p =>
@@ -114,17 +135,28 @@ export default function Prontuario() {
                       {entries.map(entry => {
                         const config = TYPE_CONFIG[entry.entry_type] || TYPE_CONFIG.consulta
                         const Icon = config.icon
+                        const rows = entry.entry_type === 'exame' ? parseResultRows(entry.metadata?.result) : null
                         return (
                           <div key={entry.id} className="relative flex gap-4 pl-2">
                             <div className={`w-8 h-8 rounded-full ${config.bg} flex items-center justify-center z-10 flex-shrink-0`}>
                               <Icon className={`w-4 h-4 ${config.color}`} />
                             </div>
-                            <div className="flex-1 pb-2">
-                              <div className="flex items-center gap-2 mb-1">
+                            <div className="flex-1 pb-2 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <h4 className="font-medium text-gray-900 text-sm">{entry.title}</h4>
                                 <span className={`badge ${config.bg} ${config.color}`}>{entry.entry_type}</span>
                               </div>
-                              <p className="text-sm text-gray-600">{entry.description}</p>
+                              {rows ? (
+                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                  {rows.map((r, i) => (
+                                    <span key={i} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded capitalize">
+                                      {r.name.replace(/_/g, ' ')}: <strong>{r.value}</strong>{r.unit ? ` ${r.unit}` : ''}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-600 break-words">{entry.description}</p>
+                              )}
                               <p className="text-xs text-gray-400 mt-1">{new Date(entry.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                             </div>
                           </div>

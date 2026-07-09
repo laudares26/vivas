@@ -73,13 +73,13 @@ export default function Atendimento() {
       </div>
 
       {/* Manchester Queue */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
         {MANCHESTER.map(m => {
           const count = records.filter(r => r.manchester_priority === m.color).length
           return (
-            <div key={m.color} className={`rounded-xl p-4 ${m.bg} ${m.text} text-center`}>
-              <p className="text-2xl font-bold">{count}</p>
-              <p className="text-xs font-medium opacity-90">{m.label}</p>
+            <div key={m.color} className={`rounded-xl p-2 sm:p-4 ${m.bg} ${m.text} text-center flex flex-col items-center justify-center min-w-0`}>
+              <p className="text-xl sm:text-2xl font-bold leading-none">{count}</p>
+              <p className="text-[10px] sm:text-xs font-medium opacity-90 leading-tight mt-1 break-words hyphens-auto">{m.label}</p>
             </div>
           )
         })}
