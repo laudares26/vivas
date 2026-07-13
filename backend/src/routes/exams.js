@@ -2,7 +2,7 @@ const router = require('express').Router();
 const pool = require('../config/database');
 const multer = require('multer');
 const {
-  checkAndNotify, THRESHOLDS, classifyIndicator,
+  THRESHOLDS, classifyIndicator,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
 } = require('../services/notifications');
 const groq = require('../services/groq');
@@ -236,6 +236,27 @@ async function processExamFile(userId, patientId, file, opts = {}) {
   return { exam, indicators, aiAnalysis };
 }
 
+// Runs the Groq-powered comparative analysis over the patient's ENTIRE exam
+// history (all indicators from every uploaded/seeded exam) and notifies the
+// patient + linked professionals when a worsening/out-of-range trend is found.
+// Used by both single and batch uploads so alerts always consider all exams.
+async function analyzeHistoryAndNotify(userId) {
+  const history = await getIndicatorHistory(userId);
+  const comparative = computeComparativeAnalysis(history);
+
+  let comparativeAnalysisText = null;
+  if (groq.isConfigured() && comparative.trends.length > 0) {
+    try {
+      comparativeAnalysisText = await groq.analyzeExamComparison(comparative.trends);
+    } catch (llmErr) {
+      console.warn('[EXAM] Groq comparative analysis failed:', llmErr.message);
+    }
+  }
+
+  const notifications = await sendComparativeReport(userId, comparative, comparativeAnalysisText);
+  return { comparative, comparativeAnalysisText, notifications };
+}
+
 // Create/update a Manchester triage entry when indicators are in alert (non-blocking).
 async function updateTriageFromIndicators(patientId, userId, indicators, aiAnalysis) {
   try {
@@ -299,11 +320,13 @@ router.post('/upload', withUploadErrors(examUpload.single('file')), async (req, 
 
     const { exam, indicators, aiAnalysis } = await processExamFile(userId, patientId, req.file, req.body);
 
-    let notificationResult = null;
     if (indicators.length > 0) {
-      notificationResult = await checkAndNotify(userId, indicators);
       await updateTriageFromIndicators(patientId, userId, indicators, aiAnalysis);
     }
+
+    // Alert analysis integrates the patient's ENTIRE exam history (all exams),
+    // not just this single upload.
+    const { comparative, notifications } = await analyzeHistoryAndNotify(userId);
 
     res.json({
       success: true,
@@ -311,7 +334,11 @@ router.post('/upload', withUploadErrors(examUpload.single('file')), async (req, 
       indicators_found: indicators.length,
       indicators,
       ai_analysis: aiAnalysis,
-      notifications: notificationResult
+      comparative: {
+        trends: comparative.trends,
+        alerts: comparative.alerts,
+      },
+      notifications
     });
   } catch (err) {
     console.error('[EXAM UPLOAD] Error:', err);
@@ -378,22 +405,9 @@ router.post('/upload-batch', withUploadErrors(examUpload.array('files', MAX_BATC
       await updateTriageFromIndicators(patientId, userId, allIndicators, combinedAnalysis);
     }
 
-    // Comparative / historical analysis over the full indicator history.
-    const history = await getIndicatorHistory(userId);
-    const comparative = computeComparativeAnalysis(history);
-
-    // LLM comparative narrative (optional — falls back silently).
-    let comparativeAnalysisText = null;
-    if (groq.isConfigured() && comparative.trends.length > 0) {
-      try {
-        comparativeAnalysisText = await groq.analyzeExamComparison(comparative.trends);
-      } catch (llmErr) {
-        console.warn('[EXAM BATCH] Groq comparative analysis failed:', llmErr.message);
-      }
-    }
-
-    // Notify patient + professionals when the comparative analysis found alerts.
-    const notifications = await sendComparativeReport(userId, comparative, comparativeAnalysisText);
+    // Comparative / historical analysis over the patient's ENTIRE exam history
+    // (all exams), with Groq narrative + notification when trends worsen.
+    const { comparative, comparativeAnalysisText, notifications } = await analyzeHistoryAndNotify(userId);
 
     res.json({
       success: true,
