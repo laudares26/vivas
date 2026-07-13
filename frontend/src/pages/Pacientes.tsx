@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, Eye, Upload } from 'lucide-react'
 import { api, type Patient } from '../services/api'
 import { useToast } from '../components/Toast'
@@ -38,6 +39,11 @@ export default function Pacientes() {
   const [editing, setEditing] = useState<Partial<Patient>>(EMPTY_PATIENT)
   const [isEdit, setIsEdit] = useState(false)
   const { addToast } = useToast()
+  const navigate = useNavigate()
+
+  const openProntuario = (p: Patient) => {
+    navigate(`/prontuario?pid=${encodeURIComponent(p.id)}&nome=${encodeURIComponent(p.full_name || '')}`)
+  }
   const limit = 10
 
   const loadPatients = useCallback(async () => {
@@ -177,7 +183,7 @@ export default function Pacientes() {
                     </td>
                     <td className="px-6 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600"><Eye className="w-4 h-4" /></button>
+                        <button onClick={() => openProntuario(p)} title="Ver prontuário" className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600"><Eye className="w-4 h-4" /></button>
                         <button onClick={() => openEdit(p)} className="p-2 rounded-lg hover:bg-wine-soft text-gray-400 hover:text-vivas-blue"><Edit2 className="w-4 h-4" /></button>
                         <button onClick={() => handleDelete(p.id)} className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                       </div>
