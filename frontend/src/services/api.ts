@@ -87,7 +87,13 @@ export const api = {
     }
     return res.json();
   },
-  getExamComparative: () => request<ExamComparative>('/exams/comparative'),
+  getExamComparative: (opts?: { analyze?: boolean; patientId?: string }) => {
+    const p = new URLSearchParams()
+    if (opts?.analyze) p.set('analyze', '1')
+    if (opts?.patientId) p.set('patientId', opts.patientId)
+    const qs = p.toString()
+    return request<ExamComparative>(`/exams/comparative${qs ? `?${qs}` : ''}`)
+  },
   // Fetches the original uploaded exam file (with auth) and returns an object URL.
   fetchExamFileUrl: async (examId: string): Promise<string> => {
     const res = await fetch(`${API_BASE}/exams/${examId}/file`, { headers: { ...getAuthHeaders() } });
@@ -240,6 +246,7 @@ export interface ExamComparative {
   trends: ExamTrend[];
   alerts: Array<{ label: string; value: number; unit: string; status: string; delta: number | null; direction: string; worsening: boolean }>;
   history?: Record<string, Array<{ value: number; unit: string; recorded_at: string }>>;
+  analysis?: string | null;
 }
 
 export interface ExamBatchResult {

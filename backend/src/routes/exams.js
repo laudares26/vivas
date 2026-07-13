@@ -428,16 +428,58 @@ router.post('/upload-batch', withUploadErrors(examUpload.array('files', MAX_BATC
   }
 });
 
-// GET /api/exams/comparative — comparative/historical view of the patient's indicators
+// Resolves whose indicator history the current user may read: patients read
+// their own; a professional (or admin) may read a linked patient's history when
+// a patientId (patients.id) is provided. Returns the target user id or null.
+async function resolveHistoryUserId(req, patientId) {
+  if (!patientId) return req.user.id;
+  if (req.user.role === 'paciente') return req.user.id;
+
+  const params = [patientId];
+  let accessSql = '';
+  if (['medico', 'psicologo'].includes(req.user.role)) {
+    params.push(req.user.id);
+    accessSql = `AND u.email IN (
+      SELECT u2.email FROM users u2
+      JOIN professional_patient_relationships ppr ON ppr.patient_user_id = u2.id
+      WHERE ppr.professional_user_id = $2
+    )`;
+  } else if (req.user.role !== 'admin') {
+    return null;
+  }
+  const { rows } = await pool.query(
+    `SELECT u.id FROM patients p JOIN users u ON u.email = p.email
+     WHERE p.id = $1 ${accessSql} LIMIT 1`,
+    params
+  );
+  return rows.length ? rows[0].id : null;
+}
+
+// GET /api/exams/comparative — comparative/historical view over the patient's
+// ENTIRE exam history. Pass ?analyze=1 to also get the Groq narrative, and
+// ?patientId=<id> so a linked professional can view a specific patient.
 router.get('/comparative', async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = await resolveHistoryUserId(req, req.query.patientId);
+    if (!userId) return res.status(403).json({ error: 'Sem acesso ao histórico deste paciente' });
+
     const history = await getIndicatorHistory(userId);
     const comparative = computeComparativeAnalysis(history);
+
+    let analysis = null;
+    if (req.query.analyze === '1' && groq.isConfigured() && comparative.trends.length > 0) {
+      try {
+        analysis = await groq.analyzeExamComparison(comparative.trends, { history });
+      } catch (llmErr) {
+        console.warn('[EXAM COMPARATIVE] Groq analysis failed:', llmErr.message);
+      }
+    }
+
     res.json({
       trends: comparative.trends,
       alerts: comparative.alerts,
       history,
+      analysis,
     });
   } catch (err) {
     console.error('[EXAM COMPARATIVE] Error:', err);

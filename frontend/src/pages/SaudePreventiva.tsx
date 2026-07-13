@@ -3,7 +3,7 @@ import { Upload, FileText, Activity, Heart, Droplets, TrendingUp, TrendingDown, 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../contexts/AuthContext'
-import { api, type ExamBatchResult, type Exam } from '../services/api'
+import { api, type ExamBatchResult, type Exam, type ExamComparative } from '../services/api'
 
 interface HealthExam {
   id: number
@@ -75,11 +75,20 @@ export default function SaudePreventiva() {
   const [batchResult, setBatchResult] = useState<ExamBatchResult | null>(null)
   const [myExams, setMyExams] = useState<Exam[]>([])
   const [openingFileId, setOpeningFileId] = useState<string | null>(null)
+  const [comparative, setComparative] = useState<ExamComparative | null>(null)
+  const [loadingComparative, setLoadingComparative] = useState(true)
 
   const loadMyExams = () => {
     api.getExams().then(setMyExams).catch(() => {})
   }
-  useEffect(() => { loadMyExams() }, [])
+  const loadComparative = () => {
+    setLoadingComparative(true)
+    api.getExamComparative({ analyze: true })
+      .then(setComparative)
+      .catch(() => setComparative(null))
+      .finally(() => setLoadingComparative(false))
+  }
+  useEffect(() => { loadMyExams(); loadComparative() }, [])
 
   const openExamFile = async (examId: string) => {
     setOpeningFileId(examId)
@@ -121,6 +130,7 @@ export default function SaudePreventiva() {
       }
       setUploadFiles([])
       loadMyExams()
+      loadComparative()
     } catch (err) {
       addToast('error', err instanceof Error ? err.message : 'Erro ao enviar exames')
     } finally {
@@ -196,6 +206,59 @@ export default function SaudePreventiva() {
 
       {activeTab === 'overview' && (
         <div className="space-y-6">
+          {/* Análise histórica com IA — considera TODOS os exames enviados */}
+          <div className="card border border-wine-line">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="w-5 h-5 text-wine" />
+              <h3 className="text-lg font-semibold text-gray-900">Análise histórica com IA</h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Interpretação da sua evolução considerando <strong>todos os exames enviados</strong> — não apenas o último.
+            </p>
+
+            {loadingComparative ? (
+              <div className="flex items-center gap-3 p-4 bg-wine-soft rounded-lg">
+                <Loader2 className="w-5 h-5 text-wine animate-spin" />
+                <span className="text-sm font-medium text-wine">Analisando todo o seu histórico de exames...</span>
+              </div>
+            ) : comparative && comparative.trends.length > 0 ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  {comparative.trends.map(t => {
+                    const Icon = t.direction === 'estavel' ? Minus : (t.direction === 'subiu' ? TrendingUp : TrendingDown)
+                    const color = t.worsening ? 'text-red-600' : (t.direction === 'estavel' ? 'text-gray-400' : 'text-green-600')
+                    return (
+                      <div key={t.name} className="flex items-center justify-between text-xs sm:text-sm border-b border-gray-100 pb-2">
+                        <span className="font-medium text-gray-700">{t.label}</span>
+                        <div className="flex items-center gap-2">
+                          {t.first_value != null && <span className="text-gray-400">{t.first_value}→</span>}
+                          <span className="font-semibold text-gray-900">{t.current_value} {t.unit}</span>
+                          {t.count > 1 && <span className="text-gray-400">({t.count} exames)</span>}
+                          <span className={`flex items-center gap-0.5 ${color}`}>
+                            <Icon className="w-3.5 h-3.5" />
+                            {t.delta_pct != null && t.direction !== 'estavel' ? `${t.delta_pct > 0 ? '+' : ''}${t.delta_pct}%` : ''}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                {comparative.analysis ? (
+                  <div className="p-4 bg-wine-soft border border-wine-line rounded-lg">
+                    <p className="font-semibold text-sm text-gray-900 mb-2">Interpretação preventiva (todo o histórico):</p>
+                    <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{comparative.analysis}</p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400">Análise textual indisponível no momento.</p>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-500">
+                Envie seus exames na aba <strong>Enviar Exame</strong> para gerar a análise histórica com IA.
+              </div>
+            )}
+          </div>
+
           {/* Health Score */}
           <div className="card bg-gradient-to-r from-wine-soft to-green-50 border border-wine-line">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">

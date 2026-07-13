@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { FileText, Search, Stethoscope, TestTubeDiagonal, Pill, Syringe, AlertTriangle, User } from 'lucide-react'
-import { api, type Patient, type EHREntry } from '../services/api'
+import { FileText, Search, Stethoscope, TestTubeDiagonal, Pill, Syringe, AlertTriangle, User, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react'
+import { api, type Patient, type EHREntry, type ExamComparative } from '../services/api'
 import { useToast } from '../components/Toast'
 
 const TYPE_CONFIG: Record<string, { icon: typeof FileText; color: string; bg: string }> = {
@@ -18,6 +18,8 @@ export default function Prontuario() {
   const [entries, setEntries] = useState<EHREntry[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
+  const [comparative, setComparative] = useState<ExamComparative | null>(null)
+  const [loadingComparative, setLoadingComparative] = useState(false)
   const { addToast } = useToast()
   const [searchParams] = useSearchParams()
 
@@ -49,11 +51,21 @@ export default function Prontuario() {
 
   const loadEntries = async (patientId: string) => {
     setLoading(true)
+    loadComparative(patientId)
     try {
       const res = await api.getEHR(patientId)
       setEntries(res)
     } catch { addToast('error', 'Erro ao carregar prontuário') }
     finally { setLoading(false) }
+  }
+
+  const loadComparative = (patientId: string) => {
+    setLoadingComparative(true)
+    setComparative(null)
+    api.getExamComparative({ analyze: true, patientId })
+      .then(setComparative)
+      .catch(() => setComparative(null))
+      .finally(() => setLoadingComparative(false))
   }
 
   const selectPatient = (p: Patient) => {
@@ -130,6 +142,56 @@ export default function Prontuario() {
                     <AlertTriangle className="w-4 h-4" />
                     <span><strong>Alergias:</strong> {selectedPatient.allergies}</span>
                   </div>
+                )}
+              </div>
+
+              {/* Historical AI analysis — considers ALL of the patient's exams */}
+              <div className="card">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp className="w-5 h-5 text-wine" />
+                  <h3 className="font-semibold text-gray-900">Análise histórica com IA</h3>
+                </div>
+                <p className="text-sm text-gray-500 mb-4">
+                  Evolução considerando <strong>todos os exames do paciente</strong> — não apenas o último.
+                </p>
+                {loadingComparative ? (
+                  <div className="flex items-center gap-3 p-4 bg-wine-soft rounded-lg">
+                    <Loader2 className="w-5 h-5 text-wine animate-spin" />
+                    <span className="text-sm font-medium text-wine">Analisando todo o histórico de exames...</span>
+                  </div>
+                ) : comparative && comparative.trends.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      {comparative.trends.map(t => {
+                        const Icon = t.direction === 'estavel' ? Minus : (t.direction === 'subiu' ? TrendingUp : TrendingDown)
+                        const color = t.worsening ? 'text-red-600' : (t.direction === 'estavel' ? 'text-gray-400' : 'text-green-600')
+                        return (
+                          <div key={t.name} className="flex items-center justify-between text-xs sm:text-sm border-b border-gray-100 pb-2">
+                            <span className="font-medium text-gray-700">{t.label}</span>
+                            <div className="flex items-center gap-2">
+                              {t.first_value != null && <span className="text-gray-400">{t.first_value}→</span>}
+                              <span className="font-semibold text-gray-900">{t.current_value} {t.unit}</span>
+                              {t.count > 1 && <span className="text-gray-400">({t.count} exames)</span>}
+                              <span className={`flex items-center gap-0.5 ${color}`}>
+                                <Icon className="w-3.5 h-3.5" />
+                                {t.delta_pct != null && t.direction !== 'estavel' ? `${t.delta_pct > 0 ? '+' : ''}${t.delta_pct}%` : ''}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {comparative.analysis ? (
+                      <div className="p-4 bg-wine-soft border border-wine-line rounded-lg">
+                        <p className="font-semibold text-sm text-gray-900 mb-2">Interpretação preventiva (todo o histórico):</p>
+                        <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{comparative.analysis}</p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400">Análise textual indisponível no momento.</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-400 text-sm text-center py-6">Sem exames com indicadores para este paciente.</p>
                 )}
               </div>
 
