@@ -4,6 +4,7 @@ const multer = require('multer');
 const {
   THRESHOLDS, classifyIndicator,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
+  buildFallbackComparativeText,
 } = require('../services/notifications');
 const {
   extractIndicatorsFromText, extractCollectionDate, extractCriticalFindings, extractTextFromFile,
@@ -222,6 +223,11 @@ async function analyzeHistoryAndNotify(userId) {
       console.warn('[EXAM] Groq comparative analysis failed:', llmErr.message);
     }
   }
+  // Deterministic fallback so the interpretation (incl. hematologic/leukemia
+  // signal) is never empty when Groq is unavailable (quota/rate limit).
+  if (!comparativeAnalysisText && comparative.trends.length > 0) {
+    comparativeAnalysisText = buildFallbackComparativeText(comparative.trends, criticalFindings);
+  }
 
   const notifications = await sendComparativeReport(userId, comparative, comparativeAnalysisText);
   return { comparative, comparativeAnalysisText, notifications };
@@ -437,12 +443,19 @@ router.get('/comparative', async (req, res) => {
     const comparative = computeComparativeAnalysis(history);
 
     let analysis = null;
-    if (req.query.analyze === '1' && groq.isConfigured() && comparative.trends.length > 0) {
-      try {
-        const criticalFindings = await getCriticalFindingsForUser(userId);
-        analysis = await groq.analyzeExamComparison(comparative.trends, { history, criticalFindings });
-      } catch (llmErr) {
-        console.warn('[EXAM COMPARATIVE] Groq analysis failed:', llmErr.message);
+    if (req.query.analyze === '1' && comparative.trends.length > 0) {
+      const criticalFindings = await getCriticalFindingsForUser(userId);
+      if (groq.isConfigured()) {
+        try {
+          analysis = await groq.analyzeExamComparison(comparative.trends, { history, criticalFindings });
+        } catch (llmErr) {
+          console.warn('[EXAM COMPARATIVE] Groq analysis failed:', llmErr.message);
+        }
+      }
+      // Deterministic fallback so the panel narrative is never empty when Groq
+      // is unavailable (quota/rate limit) — still surfaces the leukemia signal.
+      if (!analysis) {
+        analysis = buildFallbackComparativeText(comparative.trends, criticalFindings);
       }
     }
 

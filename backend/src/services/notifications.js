@@ -380,6 +380,65 @@ function computeComparativeAnalysis(history) {
   return { trends, alerts };
 }
 
+// Deterministic, non-LLM comparative narrative used as a fallback whenever the
+// Groq analysis is unavailable (e.g. API quota/rate limit). It still surfaces
+// the preventive signals — including the classic hematologic/leukemia pattern —
+// so the panel and alert emails are never left without an interpretation.
+const HEMA_NAMES = ['hemoglobina', 'leucocitos', 'linfocitos', 'neutrofilos', 'plaquetas'];
+
+function buildFallbackComparativeText(trends, criticalFindings = []) {
+  const list = Array.isArray(trends) ? trends : [];
+  const byName = Object.fromEntries(list.map(t => [t.name, t]));
+  const parts = [];
+
+  const worsened = list.filter(t => t.worsening && (t.current_status === 'alerta' || t.current_status === 'atencao'));
+  if (worsened.length) {
+    parts.push('Ao considerar toda a trajetória dos exames enviados, os seguintes indicadores merecem atenção preventiva: ' +
+      worsened.map(t => `${t.label} (${t.first_value != null ? t.first_value + '→' : ''}${t.current_value} ${t.unit})`).join('; ') + '.');
+  } else {
+    parts.push('Ao considerar toda a trajetória dos exames enviados, não há indicadores em piora relevante no momento.');
+  }
+
+  // Hematologic pattern: leucocitose + linfocitose + anemia + plaquetopenia.
+  const isAlert = (n) => byName[n] && (byName[n].current_status === 'alerta' || byName[n].current_status === 'atencao');
+  const hemaAlerts = HEMA_NAMES.filter(isAlert);
+  const findings = Array.isArray(criticalFindings) ? criticalFindings : [];
+  const hasLeukemiaKeyword = findings.some(f => ['leucemia', 'monoclonal', 'blastos'].includes(f));
+  const leucoHigh = isAlert('leucocitos');
+  const linfoHigh = isAlert('linfocitos');
+  const hemoLow = isAlert('hemoglobina');
+  const plaqLow = isAlert('plaquetas');
+  const hemaPatternScore = [leucoHigh, linfoHigh, hemoLow, plaqLow].filter(Boolean).length;
+
+  if (hemaPatternScore >= 2 || (hemaPatternScore >= 1 && hasLeukemiaKeyword)) {
+    let p = 'Foi identificado um conjunto de alterações hematológicas ao longo dos exames';
+    const bits = [];
+    if (leucoHigh) bits.push('leucócitos elevados (leucocitose)');
+    if (linfoHigh) bits.push('linfócitos elevados (linfocitose)');
+    if (hemoLow) bits.push('hemoglobina baixa (anemia)');
+    if (plaqLow) bits.push('plaquetas baixas (plaquetopenia)');
+    if (bits.length) p += ': ' + bits.join(', ');
+    p += '. Esse conjunto é um padrão de ALERTA que pode indicar risco de uma condição hematológica, incluindo uma possível leucemia (por exemplo, leucemia linfocítica crônica).';
+    if (hasLeukemiaKeyword) {
+      p += ' Há ainda achados textuais relevantes em laudos do paciente (ex.: imunofenotipagem/morfologia) que reforçam a necessidade de investigação hematológica.';
+    }
+    p += ' Estes resultados NÃO permitem confirmar diagnóstico e precisam de correlação clínica. Recomenda-se avaliação HEMATOLÓGICA URGENTE com um médico/hematologista.';
+    parts.push(p);
+  } else if (hemaAlerts.length) {
+    parts.push('Há indicadores hematológicos fora da faixa de referência (' +
+      hemaAlerts.map(n => byName[n].label).join(', ') + '). Recomenda-se avaliação médica para investigação.');
+  }
+
+  // Metabolic/cardiovascular/renal preventive hints.
+  const metabWorse = worsened.filter(t => ['glicemia_jejum', 'hemoglobina_glicada', 'colesterol_ldl', 'triglicerideos', 'creatinina', 'pressao_sistolica', 'pressao_diastolica', 'imc'].includes(t.name));
+  if (metabWorse.length) {
+    parts.push('No eixo metabólico/cardiovascular/renal, mantenha acompanhamento e hábitos preventivos (alimentação equilibrada, atividade física regular) e converse com seu médico sobre os indicadores em elevação.');
+  }
+
+  parts.push('Esta análise comparativa é um suporte preventivo inteligente e não substitui a avaliação de um profissional de saúde.');
+  return parts.join('\n\n');
+}
+
 function trendArrow(direction, worsening) {
   if (direction === 'estavel') return '→ estável';
   const arrow = direction === 'subiu' ? '↑' : '↓';
@@ -580,6 +639,7 @@ async function sendPostConsultDiscountEmail({ patientName, patientEmail, discoun
 module.exports = {
   checkAndNotify, classifyIndicator, THRESHOLDS, sendEmail,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
+  buildFallbackComparativeText,
   sendInvitePatientEmail, sendPostConsultDiscountEmail,
   getTransporter, getFromAddress, sendRawEmail,
 };
