@@ -218,6 +218,11 @@ export interface ExamUploadResult {
   indicators_found: number;
   indicators: Array<{ name: string; value: number }>;
   ai_analysis: string;
+  comparative?: {
+    trends: ExamTrend[];
+    alerts: Array<{ label: string; value: number; unit: string; status: string; delta: number | null; direction: string; worsening: boolean }>;
+    analysis: string | null;
+  };
   notifications: { notified: boolean; alerts?: Array<{ label: string; value: number; unit: string; status: string }>; } | null;
 }
 

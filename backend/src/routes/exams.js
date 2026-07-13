@@ -247,7 +247,7 @@ async function analyzeHistoryAndNotify(userId) {
   let comparativeAnalysisText = null;
   if (groq.isConfigured() && comparative.trends.length > 0) {
     try {
-      comparativeAnalysisText = await groq.analyzeExamComparison(comparative.trends);
+      comparativeAnalysisText = await groq.analyzeExamComparison(comparative.trends, { history });
     } catch (llmErr) {
       console.warn('[EXAM] Groq comparative analysis failed:', llmErr.message);
     }
@@ -326,7 +326,7 @@ router.post('/upload', withUploadErrors(examUpload.single('file')), async (req, 
 
     // Alert analysis integrates the patient's ENTIRE exam history (all exams),
     // not just this single upload.
-    const { comparative, notifications } = await analyzeHistoryAndNotify(userId);
+    const { comparative, comparativeAnalysisText, notifications } = await analyzeHistoryAndNotify(userId);
 
     res.json({
       success: true,
@@ -337,6 +337,7 @@ router.post('/upload', withUploadErrors(examUpload.single('file')), async (req, 
       comparative: {
         trends: comparative.trends,
         alerts: comparative.alerts,
+        analysis: comparativeAnalysisText,
       },
       notifications
     });

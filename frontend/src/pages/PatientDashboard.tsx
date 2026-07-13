@@ -410,10 +410,31 @@ export default function PatientDashboard() {
                     <p className="text-xs opacity-80">{uploadResult.indicators_found} indicador(es) extraido(s)</p>
                   </div>
                 </div>
-                {uploadResult.ai_analysis && (
+                {uploadResult.comparative?.analysis ? (
+                  <div className="bg-wine-soft p-4 rounded-xl">
+                    <p className="font-semibold text-sm text-wine mb-2">Analise preventiva (todo o seu historico de exames):</p>
+                    <p className="text-xs text-ink whitespace-pre-line leading-relaxed">{uploadResult.comparative.analysis}</p>
+                  </div>
+                ) : uploadResult.ai_analysis && (
                   <div className="bg-wine-soft p-4 rounded-xl">
                     <p className="font-semibold text-sm text-wine mb-2">Analise preventiva:</p>
                     <p className="text-xs text-ink whitespace-pre-line leading-relaxed">{uploadResult.ai_analysis}</p>
+                  </div>
+                )}
+                {uploadResult.comparative?.trends && uploadResult.comparative.trends.length > 0 && (
+                  <div className="bg-white border border-wine-line p-4 rounded-xl">
+                    <p className="font-semibold text-sm text-ink mb-2">Evolucao dos seus indicadores:</p>
+                    <div className="space-y-1.5">
+                      {uploadResult.comparative.trends.map(t => (
+                        <div key={t.name} className="flex items-center justify-between text-xs">
+                          <span className="text-muted">{t.label}</span>
+                          <span className={t.worsening ? 'text-red-600 font-semibold' : 'text-ink'}>
+                            {t.previous_value != null ? `${t.previous_value}→` : ''}{t.current_value} {t.unit}
+                            {t.count > 1 ? ` (${t.count} exames)` : ''}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {uploadResult.notifications?.notified && (

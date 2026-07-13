@@ -115,40 +115,68 @@ REGRAS:
   return chatCompletion(messages, { temperature: 0.4, maxTokens: 800 });
 }
 
+// Build a compact per-indicator timeline (todos os exames), downsampled so the
+// prompt stays bounded even with dozens of exams.
+function buildHistoryTimeline(history) {
+  if (!history || typeof history !== 'object') return '';
+  const fmt = (d) => {
+    try { return new Date(d).toLocaleDateString('pt-BR'); } catch { return String(d); }
+  };
+  const blocks = [];
+  for (const [name, series] of Object.entries(history)) {
+    if (!Array.isArray(series) || series.length === 0) continue;
+    // Keep at most ~12 points, evenly sampled, always including first and last.
+    let pts = series;
+    if (series.length > 12) {
+      const step = (series.length - 1) / 11;
+      pts = Array.from({ length: 12 }, (_, i) => series[Math.round(i * step)]);
+    }
+    const seq = pts.map(p => `${fmt(p.recorded_at)}: ${p.value}${p.unit ? ' ' + p.unit : ''}`).join(' | ');
+    blocks.push(`- ${name} (${series.length} medições): ${seq}`);
+  }
+  return blocks.join('\n');
+}
+
 // LLM-generated comparative/historical analysis across multiple exams over time.
-async function analyzeExamComparison(trends) {
+// `options.history` (the full per-indicator series) is included so the model
+// reasons over EVERY exam, not just the latest reading.
+async function analyzeExamComparison(trends, options = {}) {
   const lines = (trends || []).map(t => {
     const prev = t.previous_value != null ? `${t.previous_value} ${t.unit}` : 'sem histórico';
     const dir = t.direction === 'estavel' ? 'estável' : (t.direction === 'subiu' ? 'subiu' : 'desceu');
     const trendTxt = t.previous_value != null
       ? `${dir}${t.delta_pct != null ? ` (${t.delta_pct > 0 ? '+' : ''}${t.delta_pct}%)` : ''}${t.worsening ? ', PIORA' : (t.direction !== 'estavel' ? ', melhora' : '')}`
       : 'primeira medição';
-    return `- ${t.label}: anterior ${prev} -> atual ${t.current_value} ${t.unit} [${t.count} medição(ões), ${trendTxt}, classificação atual: ${t.current_status}]`;
+    return `- ${t.label}: primeiro ${t.first_value != null ? t.first_value + ' ' + t.unit : '—'}, media inicial ${prev} -> atual ${t.current_value} ${t.unit} [${t.count} medição(ões), ${trendTxt}, classificação atual: ${t.current_status}]`;
   }).join('\n');
+
+  const timeline = buildHistoryTimeline(options.history);
+  const totalMeasurements = (trends || []).reduce((s, t) => s + (t.count || 0), 0);
 
   const messages = [
     {
       role: 'system',
       content: `Voce e um assistente de analise preventiva da plataforma VivaS, especializado em saude.
-Voce recebe a EVOLUCAO HISTORICA e COMPARATIVA de indicadores de exames de um paciente (varios exames ao longo do tempo).
-Gere uma analise comparativa educativa em portugues do Brasil.
+Voce recebe TODO O HISTORICO de exames de um paciente (varios exames ao longo do tempo, com a serie completa de cada indicador).
+Gere uma analise comparativa educativa em portugues do Brasil que considere TODOS os exames — a trajetoria completa, nao apenas o ultimo resultado.
 
 REGRAS:
 1. NAO forneca diagnostico medico definitivo — apenas orientacao preventiva educativa.
-2. Destaque as TENDENCIAS (melhora, piora ou estabilidade) e o que uma variacao pode significar de forma preventiva.
-3. Priorize os indicadores que pioraram ou estao fora da faixa de referencia.
-4. Sugira acoes preventivas gerais (habitos, acompanhamento) sem prescrever medicamentos ou doses.
-5. Reforce que o paciente deve confirmar com um profissional de saude (medico) pela VivaS.
-6. Seja objetivo e estruturado. Use no maximo ~280 palavras.
-7. Finalize com: "Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
+2. Analise a EVOLUCAO ao longo de TODO o periodo (do primeiro ao ultimo exame), destacando tendencias sustentadas de piora/melhora e nao so a ultima medicao.
+3. Quando um padrao ao longo dos exames sugerir RISCO aumentado de uma condicao (ex.: pre-diabetes/diabetes, risco cardiovascular, alteracao renal), sinalize esse risco de forma preventiva e educativa (como "possivel risco", nunca como diagnostico fechado).
+4. Priorize os indicadores que pioraram de forma consistente ou estao fora da faixa de referencia.
+5. Sugira acoes preventivas gerais (habitos, acompanhamento) sem prescrever medicamentos ou doses.
+6. Reforce que o paciente deve confirmar com um profissional de saude (medico) pela VivaS.
+7. Seja objetivo e estruturado. Use no maximo ~300 palavras.
+8. Finalize com: "Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
     },
     {
       role: 'user',
-      content: `Evolucao dos indicadores do paciente:\n${lines || '(sem indicadores estruturados)'}\n\nGere a analise comparativa preventiva.`,
+      content: `Resumo por indicador (${totalMeasurements} medições no total):\n${lines || '(sem indicadores estruturados)'}\n\nSerie historica completa (todos os exames):\n${timeline || '(sem série detalhada)'}\n\nGere a analise comparativa preventiva considerando TODOS os exames.`,
     },
   ];
 
-  return chatCompletion(messages, { temperature: 0.4, maxTokens: 900 });
+  return chatCompletion(messages, { temperature: 0.4, maxTokens: 1000 });
 }
 
 module.exports = {
