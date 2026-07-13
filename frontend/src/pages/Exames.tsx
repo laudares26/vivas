@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Search, Sparkles } from 'lucide-react'
+import { Plus, Search, Sparkles, FileText } from 'lucide-react'
 import { api, type Exam, type Patient, type Professional } from '../services/api'
 import { useToast } from '../components/Toast'
 import Modal from '../components/Modal'
@@ -20,8 +20,21 @@ export default function Exames() {
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [detailExam, setDetailExam] = useState<Exam | null>(null)
+  const [openingFile, setOpeningFile] = useState(false)
   const [form, setForm] = useState({ patient_id: '', professional_id: '', loinc_code: '', exam_name: '', category: 'Laboratorial' })
   const { addToast } = useToast()
+
+  const openExamFile = async (examId: string) => {
+    setOpeningFile(true)
+    try {
+      const url = await api.fetchExamFileUrl(examId)
+      window.open(url, '_blank')
+    } catch (err) {
+      addToast('error', err instanceof Error ? err.message : 'Erro ao abrir arquivo')
+    } finally {
+      setOpeningFile(false)
+    }
+  }
 
   const load = async () => {
     setLoading(true)
@@ -236,6 +249,18 @@ export default function Exames() {
                   <h4 className="font-semibold text-gray-900 mb-1">Observações</h4>
                   <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">{detailExam.notes}</p>
                 </div>
+              )}
+
+              {detailExam.has_file && (
+                <button
+                  type="button"
+                  onClick={() => openExamFile(detailExam.id)}
+                  disabled={openingFile}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-wine text-white rounded-lg font-semibold text-sm disabled:opacity-60"
+                >
+                  <FileText className="w-4 h-4" />
+                  {openingFile ? 'Abrindo...' : 'Ver arquivo original'}
+                </button>
               )}
             </div>
           )

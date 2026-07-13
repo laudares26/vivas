@@ -154,6 +154,17 @@ async function ensureExamColumns() {
     ALTER TABLE exams ADD COLUMN IF NOT EXISTS file_size INTEGER;
     ALTER TABLE exams ADD COLUMN IF NOT EXISTS source VARCHAR(30) DEFAULT 'manual';
   `);
+  // Store the original uploaded file so patient and professional can reopen it anytime.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS exam_files (
+      exam_id UUID PRIMARY KEY REFERENCES exams(id) ON DELETE CASCADE,
+      file_name VARCHAR(255),
+      mime_type VARCHAR(100),
+      file_size INTEGER,
+      data BYTEA NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
   examColumnsEnsured = true;
 }
 
@@ -200,6 +211,17 @@ async function processExamFile(userId, patientId, file, opts = {}) {
     ]
   );
   const exam = examResult.rows[0];
+
+  // Persist the original file so patient and professional can reopen it anytime.
+  if (file.buffer && file.buffer.length > 0) {
+    await pool.query(
+      `INSERT INTO exam_files (exam_id, file_name, mime_type, file_size, data)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (exam_id) DO UPDATE SET file_name = EXCLUDED.file_name, mime_type = EXCLUDED.mime_type, file_size = EXCLUDED.file_size, data = EXCLUDED.data`,
+      [exam.id, file.originalname, file.mimetype, file.size, file.buffer]
+    );
+    exam.has_file = true;
+  }
 
   // Store each extracted indicator in the longitudinal history table.
   for (const ind of indicators) {
@@ -408,10 +430,54 @@ router.get('/comparative', async (req, res) => {
   }
 });
 
+// Returns the SQL condition (and pushes params) restricting exam access to the
+// current user: patients see their own, professionals see their linked patients'.
+function examAccessCondition(req, params) {
+  if (req.user.role === 'admin') return null;
+  if (['medico', 'psicologo'].includes(req.user.role)) {
+    params.push(req.user.id);
+    return `e.patient_id IN (SELECT p2.id FROM patients p2 WHERE p2.email IN (SELECT u.email FROM users u JOIN professional_patient_relationships ppr ON ppr.patient_user_id = u.id WHERE ppr.professional_user_id = $${params.length}))`;
+  }
+  if (req.user.role === 'paciente') {
+    params.push(req.user.email);
+    return `e.patient_id IN (SELECT id FROM patients WHERE email = $${params.length})`;
+  }
+  // Other roles: no access to exam files.
+  return 'FALSE';
+}
+
+// GET /api/exams/:id/file — download the original uploaded exam file. Access is
+// restricted to the exam's patient, their linked professionals, and admins.
+router.get('/:id/file', async (req, res) => {
+  try {
+    await ensureExamColumns();
+    const params = [req.params.id];
+    let query = `SELECT ef.file_name, ef.mime_type, ef.data
+                 FROM exam_files ef JOIN exams e ON e.id = ef.exam_id
+                 WHERE ef.exam_id = $1`;
+    const cond = examAccessCondition(req, params);
+    if (cond) query += ` AND ${cond}`;
+    const result = await pool.query(query, params);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Arquivo do exame não encontrado' });
+    }
+    const f = result.rows[0];
+    res.setHeader('Content-Type', f.mime_type || 'application/octet-stream');
+    const disposition = req.query.download === '1' ? 'attachment' : 'inline';
+    res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(f.file_name || 'exame')}"`);
+    res.send(f.data);
+  } catch (err) {
+    console.error('[EXAM FILE] Error:', err);
+    res.status(500).json({ error: 'Erro ao buscar arquivo do exame' });
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
+    await ensureExamColumns();
     const { patient_id, status } = req.query;
-    let query = `SELECT e.*, p.full_name as patient_name, pr.full_name as professional_name
+    let query = `SELECT e.*, p.full_name as patient_name, pr.full_name as professional_name,
+                 EXISTS(SELECT 1 FROM exam_files ef WHERE ef.exam_id = e.id) AS has_file
                  FROM exams e
                  LEFT JOIN patients p ON e.patient_id = p.id
                  LEFT JOIN professionals pr ON e.professional_id = pr.id`;

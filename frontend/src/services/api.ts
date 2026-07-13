@@ -88,6 +88,16 @@ export const api = {
     return res.json();
   },
   getExamComparative: () => request<ExamComparative>('/exams/comparative'),
+  // Fetches the original uploaded exam file (with auth) and returns an object URL.
+  fetchExamFileUrl: async (examId: string): Promise<string> => {
+    const res = await fetch(`${API_BASE}/exams/${examId}/file`, { headers: { ...getAuthHeaders() } });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Erro ao abrir arquivo' }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+  },
 
   // EHR
   getEHR: (patientId: string) => request<EHREntry[]>(`/ehr/${patientId}`),
@@ -199,6 +209,7 @@ export interface Exam {
   loinc_code: string; exam_name: string; category: string; status: string; result: string;
   result_date: string; ai_analysis: string; notes: string; patient_name: string;
   professional_name: string; created_at: string; updated_at: string;
+  has_file?: boolean; file_name?: string; file_type?: string;
 }
 
 export interface ExamUploadResult {
