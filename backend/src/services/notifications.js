@@ -51,6 +51,9 @@ async function sendRawEmail({ to, subject, html, attachments }) {
 }
 
 // Health indicator thresholds (Brazilian clinical standards)
+// `atencao` / `alerta` are explicit [min,max] ranges so both "higher is worse"
+// (glicemia, LDL, leucócitos...) and "lower is worse" (hemoglobina, plaquetas)
+// indicators are supported by the same range-membership classifier.
 const THRESHOLDS = {
   glicemia_jejum: { unit: 'mg/dL', normal: [70, 99], atencao: [100, 125], alerta: [126, Infinity], label: 'Glicemia em Jejum' },
   colesterol_ldl: { unit: 'mg/dL', normal: [0, 129], atencao: [130, 159], alerta: [160, Infinity], label: 'Colesterol LDL' },
@@ -60,13 +63,23 @@ const THRESHOLDS = {
   hemoglobina_glicada: { unit: '%', normal: [0, 5.6], atencao: [5.7, 6.4], alerta: [6.5, Infinity], label: 'Hemoglobina Glicada' },
   triglicerideos: { unit: 'mg/dL', normal: [0, 149], atencao: [150, 199], alerta: [200, Infinity], label: 'Triglicerídeos' },
   creatinina: { unit: 'mg/dL', normal: [0.6, 1.2], atencao: [1.3, 1.5], alerta: [1.6, Infinity], label: 'Creatinina' },
+  // Hematology (hemograma) — lower is worse for hemoglobina/plaquetas/neutrófilos.
+  hemoglobina: { unit: 'g/dL', normal: [13, 17], atencao: [11, 12.9], alerta: [0, 10.9], label: 'Hemoglobina' },
+  leucocitos: { unit: '/mm³', normal: [4000, 11000], atencao: [11001, 20000], alerta: [20001, Infinity], label: 'Leucócitos' },
+  linfocitos: { unit: '/mm³', normal: [1000, 4000], atencao: [4001, 5000], alerta: [5001, Infinity], label: 'Linfócitos' },
+  neutrofilos: { unit: '/mm³', normal: [1500, Infinity], atencao: [1000, 1499], alerta: [0, 999], label: 'Neutrófilos' },
+  plaquetas: { unit: '/mm³', normal: [150000, 450000], atencao: [100000, 149999], alerta: [0, 99999], label: 'Plaquetas' },
 };
+
+function inRange(value, range) {
+  return range && value >= range[0] && value <= range[1];
+}
 
 function classifyIndicator(name, value) {
   const threshold = THRESHOLDS[name];
   if (!threshold) return 'desconhecido';
-  if (value >= threshold.alerta[0]) return 'alerta';
-  if (value >= threshold.atencao[0]) return 'atencao';
+  if (inRange(value, threshold.alerta)) return 'alerta';
+  if (inRange(value, threshold.atencao)) return 'atencao';
   return 'normal';
 }
 
@@ -264,6 +277,9 @@ const HIGHER_IS_WORSE = {
   glicemia_jejum: true, colesterol_ldl: true, pressao_sistolica: true,
   pressao_diastolica: true, imc: true, hemoglobina_glicada: true,
   triglicerideos: true, creatinina: true,
+  // Hematology
+  leucocitos: true, linfocitos: true,
+  hemoglobina: false, plaquetas: false, neutrofilos: false,
 };
 
 // Load the full ordered history of a patient's indicators.

@@ -5,6 +5,9 @@ const {
   THRESHOLDS, classifyIndicator,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
 } = require('../services/notifications');
+const {
+  extractIndicatorsFromText, extractCollectionDate, extractCriticalFindings, extractTextFromFile,
+} = require('../services/examExtraction');
 const groq = require('../services/groq');
 
 const MAX_BATCH_FILES = 50;
@@ -37,37 +40,6 @@ function withUploadErrors(mw) {
       return res.status(400).json({ error: err.message || 'Falha no envio dos arquivos.' });
     });
   };
-}
-
-// Pattern-based indicator extraction from exam text/filename
-// In production this would use OCR + NLP; here we use regex patterns
-// commonly found in Brazilian lab reports
-const INDICATOR_PATTERNS = [
-  { name: 'glicemia_jejum', patterns: [/glic[eê]mia[\s\S]{0,30}?(\d{2,3}[.,]?\d*)\s*mg/i, /glicose[\s\S]{0,30}?(\d{2,3}[.,]?\d*)\s*mg/i] },
-  { name: 'colesterol_ldl', patterns: [/ldl[\s\S]{0,30}?(\d{2,3}[.,]?\d*)\s*mg/i, /colesterol\s*ldl[\s\S]{0,30}?(\d{2,3}[.,]?\d*)/i] },
-  { name: 'pressao_sistolica', patterns: [/press[aã]o[\s\S]{0,20}?(\d{2,3})\s*[x\/]\s*\d{2,3}/i, /sist[oó]lica[\s\S]{0,20}?(\d{2,3})/i] },
-  { name: 'pressao_diastolica', patterns: [/press[aã]o[\s\S]{0,20}?\d{2,3}\s*[x\/]\s*(\d{2,3})/i, /diast[oó]lica[\s\S]{0,20}?(\d{2,3})/i] },
-  { name: 'hemoglobina_glicada', patterns: [/hemoglobina\s*glicada[\s\S]{0,30}?(\d{1,2}[.,]\d{1,2})\s*%/i, /hba1c[\s\S]{0,20}?(\d{1,2}[.,]\d{1,2})/i] },
-  { name: 'triglicerideos', patterns: [/triglic[eé]r[ií]d[eo]s?[\s\S]{0,30}?(\d{2,4}[.,]?\d*)\s*mg/i] },
-  { name: 'creatinina', patterns: [/creatinina[\s\S]{0,30}?(\d{1,2}[.,]\d{1,2})\s*mg/i] },
-  { name: 'imc', patterns: [/imc[\s\S]{0,20}?(\d{2}[.,]\d{1,2})/i] },
-];
-
-function extractIndicatorsFromText(text) {
-  const indicators = [];
-  for (const def of INDICATOR_PATTERNS) {
-    for (const pattern of def.patterns) {
-      const match = text.match(pattern);
-      if (match) {
-        const value = parseFloat(match[1].replace(',', '.'));
-        if (!isNaN(value) && value > 0) {
-          indicators.push({ name: def.name, value });
-          break;
-        }
-      }
-    }
-  }
-  return indicators;
 }
 
 function generateAiAnalysis(indicators) {
@@ -112,38 +84,6 @@ function generateAiAnalysis(indicators) {
   return lines.join('\n');
 }
 
-// Extract raw text from an uploaded exam file (PDF text layer or filename for images).
-async function extractTextFromFile(file, fallbackName) {
-  const fileBuffer = file.buffer;
-  const fileMimeType = file.mimetype;
-  let extractedText = '';
-
-  if (fileMimeType === 'application/pdf') {
-    try {
-      const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
-      const uint8 = new Uint8Array(fileBuffer);
-      const doc = await pdfjsLib.getDocument({ data: uint8 }).promise;
-      for (let i = 1; i <= doc.numPages; i++) {
-        const page = await doc.getPage(i);
-        const content = await page.getTextContent();
-        extractedText += content.items.map(item => item.str).join(' ') + '\n';
-      }
-      console.log(`[EXAM UPLOAD] PDF text extracted: ${extractedText.length} chars`);
-    } catch (pdfErr) {
-      console.warn('[EXAM UPLOAD] pdfjs failed, falling back to raw extraction:', pdfErr.message);
-      const bufStr = fileBuffer.toString('utf-8');
-      const textMatches = bufStr.match(/\(([^)]+)\)/g);
-      if (textMatches) {
-        extractedText = textMatches.map(m => m.slice(1, -1)).join(' ');
-      }
-    }
-  } else {
-    // For images, include the filename which may contain useful info
-    extractedText = fallbackName || file.originalname || '';
-  }
-  return extractedText;
-}
-
 let examColumnsEnsured = false;
 async function ensureExamColumns() {
   if (examColumnsEnsured) return;
@@ -172,10 +112,14 @@ async function ensureExamColumns() {
 // the exam row + health_indicators. Returns { exam, indicators, aiAnalysis }.
 async function processExamFile(userId, patientId, file, opts = {}) {
   const fileName = opts.exam_name || file.originalname || 'Exame enviado';
-  let extractedText = await extractTextFromFile(file, fileName);
+  let extractedText = await extractTextFromFile(file.buffer, file.mimetype, fileName);
   if (opts.exam_text) extractedText += ' ' + opts.exam_text;
 
   const indicators = extractIndicatorsFromText(extractedText);
+  // Record indicators at the exam's real collection date (when present) so the
+  // longitudinal trajectory reflects the actual timeline, not the upload time.
+  const collectedAt = extractCollectionDate(extractedText);
+  const criticalFindings = extractCriticalFindings(extractedText);
 
   // Prefer the Groq LLM for a richer preventive interpretation; fall back to rules.
   let aiAnalysis = generateAiAnalysis(indicators);
@@ -201,13 +145,14 @@ async function processExamFile(userId, patientId, file, opts = {}) {
 
   const examResult = await pool.query(
     `INSERT INTO exams (patient_id, exam_name, category, status, result, ai_analysis, result_date, uploaded_by, file_name, file_type, file_size, source, notes)
-     VALUES ($1, $2, 'laboratorial', 'concluido', $3, $4, NOW(), $5, $6, $7, $8, 'upload_paciente', $9) RETURNING *`,
+     VALUES ($1, $2, 'laboratorial', 'concluido', $3, $4, COALESCE($10, NOW()), $5, $6, $7, $8, 'upload_paciente', $9) RETURNING *`,
     [
       patientId, fileName,
       indicators.length > 0 ? JSON.stringify(indicators) : null,
       aiAnalysis, userId,
       file.originalname, file.mimetype, file.size,
-      opts.notes || null
+      opts.notes || null,
+      collectedAt
     ]
   );
   const exam = examResult.rows[0];
@@ -223,31 +168,56 @@ async function processExamFile(userId, patientId, file, opts = {}) {
     exam.has_file = true;
   }
 
-  // Store each extracted indicator in the longitudinal history table.
+  // Store each extracted indicator in the longitudinal history table, at the
+  // exam's real collection date when available.
   for (const ind of indicators) {
     const threshold = THRESHOLDS[ind.name];
     await pool.query(
       `INSERT INTO health_indicators (patient_user_id, indicator_name, value, unit, recorded_at, source)
-       VALUES ($1, $2, $3, $4, NOW(), 'exam_upload')`,
-      [userId, ind.name, ind.value, threshold ? threshold.unit : '']
+       VALUES ($1, $2, $3, $4, COALESCE($5, NOW()), 'exam_upload')`,
+      [userId, ind.name, ind.value, threshold ? threshold.unit : '', collectedAt]
     );
   }
 
-  return { exam, indicators, aiAnalysis };
+  return { exam, indicators, aiAnalysis, criticalFindings };
 }
 
 // Runs the Groq-powered comparative analysis over the patient's ENTIRE exam
 // history (all indicators from every uploaded/seeded exam) and notifies the
 // patient + linked professionals when a worsening/out-of-range trend is found.
 // Used by both single and batch uploads so alerts always consider all exams.
+// Collect critical free-text findings (leukemia/monoclonal/blastos keywords)
+// from a patient's stored exams (name + result text + analysis) so the
+// comparative analysis can factor in laudos that carry no numeric indicator
+// (e.g. immunophenotyping conclusions).
+async function getCriticalFindingsForUser(userId) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT e.exam_name, e.ai_analysis, e.notes
+       FROM exams e
+       JOIN patients p ON p.id = e.patient_id
+       JOIN users u ON u.email = p.email
+       WHERE u.id = $1
+       ORDER BY e.created_at DESC LIMIT 200`,
+      [userId]
+    );
+    const text = rows.map(r => `${r.exam_name || ''} ${r.ai_analysis || ''} ${r.notes || ''}`).join(' \n ');
+    return extractCriticalFindings(text);
+  } catch (err) {
+    console.warn('[EXAM] getCriticalFindingsForUser failed:', err.message);
+    return [];
+  }
+}
+
 async function analyzeHistoryAndNotify(userId) {
   const history = await getIndicatorHistory(userId);
   const comparative = computeComparativeAnalysis(history);
+  const criticalFindings = await getCriticalFindingsForUser(userId);
 
   let comparativeAnalysisText = null;
   if (groq.isConfigured() && comparative.trends.length > 0) {
     try {
-      comparativeAnalysisText = await groq.analyzeExamComparison(comparative.trends, { history });
+      comparativeAnalysisText = await groq.analyzeExamComparison(comparative.trends, { history, criticalFindings });
     } catch (llmErr) {
       console.warn('[EXAM] Groq comparative analysis failed:', llmErr.message);
     }
@@ -469,7 +439,8 @@ router.get('/comparative', async (req, res) => {
     let analysis = null;
     if (req.query.analyze === '1' && groq.isConfigured() && comparative.trends.length > 0) {
       try {
-        analysis = await groq.analyzeExamComparison(comparative.trends, { history });
+        const criticalFindings = await getCriticalFindingsForUser(userId);
+        analysis = await groq.analyzeExamComparison(comparative.trends, { history, criticalFindings });
       } catch (llmErr) {
         console.warn('[EXAM COMPARATIVE] Groq analysis failed:', llmErr.message);
       }

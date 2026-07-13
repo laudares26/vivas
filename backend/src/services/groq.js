@@ -153,6 +153,11 @@ async function analyzeExamComparison(trends, options = {}) {
   const timeline = buildHistoryTimeline(options.history);
   const totalMeasurements = (trends || []).reduce((s, t) => s + (t.count || 0), 0);
 
+  const findings = Array.isArray(options.criticalFindings) ? options.criticalFindings : [];
+  const findingsBlock = findings.length
+    ? `\n\nAchados textuais relevantes detectados em laudos do paciente (ex.: imunofenotipagem, morfologia): ${findings.join(', ')}. Considere-os na interpretacao hematologica.`
+    : '';
+
   const messages = [
     {
       role: 'system',
@@ -163,16 +168,20 @@ Gere uma analise comparativa educativa em portugues do Brasil que considere TODO
 REGRAS:
 1. NAO forneca diagnostico medico definitivo — apenas orientacao preventiva educativa.
 2. Analise a EVOLUCAO ao longo de TODO o periodo (do primeiro ao ultimo exame), destacando tendencias sustentadas de piora/melhora e nao so a ultima medicao.
-3. Quando um padrao ao longo dos exames sugerir RISCO aumentado de uma condicao (ex.: pre-diabetes/diabetes, risco cardiovascular, alteracao renal), sinalize esse risco de forma preventiva e educativa (como "possivel risco", nunca como diagnostico fechado).
-4. Priorize os indicadores que pioraram de forma consistente ou estao fora da faixa de referencia.
-5. Sugira acoes preventivas gerais (habitos, acompanhamento) sem prescrever medicamentos ou doses.
-6. Reforce que o paciente deve confirmar com um profissional de saude (medico) pela VivaS.
-7. Seja objetivo e estruturado. Use no maximo ~300 palavras.
-8. Finalize com: "Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
+3. Quando um padrao ao longo dos exames sugerir RISCO aumentado de uma condicao, sinalize esse risco de forma preventiva e educativa (como "possivel risco", nunca como diagnostico fechado). Considere, entre outros:
+   - metabolico/cardiovascular: pre-diabetes/diabetes (glicemia, hemoglobina glicada), dislipidemia (LDL, triglicerideos), hipertensao (pressao);
+   - renal: creatinina em elevacao;
+   - HEMATOLOGICO: o conjunto de leucocitose (leucocitos muito elevados) + linfocitose acentuada (linfocitos muito elevados) + anemia (hemoglobina baixa) + plaquetopenia (plaquetas baixas) e um padrao classico de ALERTA que pode sugerir uma neoplasia hematologica, como uma leucemia (ex.: leucemia linfocitica cronica). Nesse caso, sinalize explicitamente "possivel alteracao hematologica / possivel risco de leucemia" e recomende avaliacao HEMATOLOGICA URGENTE — sem afirmar o diagnostico.
+4. Se houver achados textuais de laudos (imunofenotipagem, morfologia, celulas de Gumprecht, restricao de cadeia leve, escore de Matutes, blastos), integre-os ao raciocinio hematologico.
+5. Priorize os indicadores que pioraram de forma consistente ou estao fora da faixa de referencia.
+6. Sugira acoes preventivas gerais (habitos, acompanhamento, especialista adequado) sem prescrever medicamentos ou doses.
+7. Reforce que o paciente deve confirmar com um profissional de saude (medico/hematologista) pela VivaS.
+8. Seja objetivo e estruturado. Use no maximo ~320 palavras.
+9. Finalize com: "Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
     },
     {
       role: 'user',
-      content: `Resumo por indicador (${totalMeasurements} medições no total):\n${lines || '(sem indicadores estruturados)'}\n\nSerie historica completa (todos os exames):\n${timeline || '(sem série detalhada)'}\n\nGere a analise comparativa preventiva considerando TODOS os exames.`,
+      content: `Resumo por indicador (${totalMeasurements} medições no total):\n${lines || '(sem indicadores estruturados)'}\n\nSerie historica completa (todos os exames):\n${timeline || '(sem série detalhada)'}${findingsBlock}\n\nGere a analise comparativa preventiva considerando TODOS os exames.`,
     },
   ];
 
