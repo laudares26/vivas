@@ -149,7 +149,7 @@ export default function Prontuario() {
               <div className="card">
                 <div className="flex items-center gap-2 mb-1">
                   <TrendingUp className="w-5 h-5 text-wine" />
-                  <h3 className="font-semibold text-gray-900">Análise histórica com IA</h3>
+                  <h3 className="font-semibold text-gray-900">Análise histórica inteligente</h3>
                 </div>
                 <p className="text-sm text-gray-500 mb-4">
                   Evolução considerando <strong>todos os exames do paciente</strong> — não apenas o último.

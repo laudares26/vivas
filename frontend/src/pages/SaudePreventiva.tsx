@@ -206,11 +206,11 @@ export default function SaudePreventiva() {
 
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Análise histórica com IA — considera TODOS os exames enviados */}
+          {/* Análise histórica inteligente — considera TODOS os exames enviados */}
           <div className="card border border-wine-line">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="w-5 h-5 text-wine" />
-              <h3 className="text-lg font-semibold text-gray-900">Análise histórica com IA</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Análise histórica inteligente</h3>
             </div>
             <p className="text-sm text-gray-500 mb-4">
               Interpretação da sua evolução considerando <strong>todos os exames enviados</strong> — não apenas o último.
@@ -254,7 +254,7 @@ export default function SaudePreventiva() {
               </div>
             ) : (
               <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-500">
-                Envie seus exames na aba <strong>Enviar Exame</strong> para gerar a análise histórica com IA.
+                Envie seus exames na aba <strong>Enviar Exame</strong> para gerar a análise histórica inteligente.
               </div>
             )}
           </div>
