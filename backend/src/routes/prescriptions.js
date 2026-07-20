@@ -5,14 +5,27 @@ router.get('/', async (req, res) => {
   try {
     const { patient_id } = req.query;
     let query = `SELECT pr.*, p.full_name as patient_name, prof.full_name as professional_name,
-                 json_agg(json_build_object('id', pi.id, 'medication_name', pi.medication_name, 'dosage', pi.dosage, 
-                   'frequency', pi.frequency, 'duration', pi.duration, 'route', pi.route, 'instructions', pi.instructions)) as items
+                 json_agg(json_build_object('id', pi.id, 'medication_name', pi.medication_name, 'dosage', pi.dosage,
+                   'frequency', pi.frequency, 'duration', pi.duration, 'route', pi.route, 'instructions', pi.instructions,
+                   'active_ingredient', pi.active_ingredient, 'anvisa_registration', pi.anvisa_registration, 'therapeutic_class', pi.therapeutic_class)) as items
                  FROM prescriptions pr
                  LEFT JOIN patients p ON pr.patient_id = p.id
                  LEFT JOIN professionals prof ON pr.professional_id = prof.id
                  LEFT JOIN prescription_items pi ON pi.prescription_id = pr.id`;
     const params = [];
-    if (patient_id) { params.push(patient_id); query += ` WHERE pr.patient_id = $1`; }
+    const conditions = [];
+
+    // Data isolation: professional sees prescriptions they issued; patient only their own
+    if (['medico', 'psicologo'].includes(req.user.role)) {
+      params.push(req.user.email);
+      conditions.push(`pr.professional_id IN (SELECT id FROM professionals WHERE email = $${params.length})`);
+    } else if (req.user.role === 'paciente') {
+      params.push(req.user.email);
+      conditions.push(`pr.patient_id IN (SELECT id FROM patients WHERE email = $${params.length})`);
+    }
+
+    if (patient_id) { params.push(patient_id); conditions.push(`pr.patient_id = $${params.length}`); }
+    if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');
     query += ' GROUP BY pr.id, p.full_name, prof.full_name ORDER BY pr.date_time DESC';
 
     const result = await pool.query(query, params);
@@ -29,7 +42,8 @@ router.get('/:id', async (req, res) => {
       `SELECT pr.*, p.full_name as patient_name, p.cpf as patient_cpf, p.cns as patient_cns,
        prof.full_name as professional_name, prof.professional_id as professional_reg, prof.specialty,
        json_agg(json_build_object('id', pi.id, 'medication_name', pi.medication_name, 'dosage', pi.dosage,
-         'frequency', pi.frequency, 'duration', pi.duration, 'route', pi.route, 'instructions', pi.instructions)) as items
+         'frequency', pi.frequency, 'duration', pi.duration, 'route', pi.route, 'instructions', pi.instructions,
+         'active_ingredient', pi.active_ingredient, 'anvisa_registration', pi.anvisa_registration, 'therapeutic_class', pi.therapeutic_class)) as items
        FROM prescriptions pr
        LEFT JOIN patients p ON pr.patient_id = p.id
        LEFT JOIN professionals prof ON pr.professional_id = prof.id
@@ -56,9 +70,10 @@ router.post('/', async (req, res) => {
     if (items && items.length > 0) {
       for (const item of items) {
         await pool.query(
-          `INSERT INTO prescription_items (prescription_id, medication_name, dosage, frequency, duration, route, instructions)
-           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-          [prescription.id, item.medication_name, item.dosage, item.frequency, item.duration, item.route, item.instructions]
+          `INSERT INTO prescription_items (prescription_id, medication_name, dosage, frequency, duration, route, instructions, active_ingredient, anvisa_registration, therapeutic_class)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+          [prescription.id, item.medication_name, item.dosage, item.frequency, item.duration, item.route, item.instructions,
+           item.active_ingredient || null, item.anvisa_registration || null, item.therapeutic_class || null]
         );
       }
     }

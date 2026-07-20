@@ -1,7 +1,7 @@
 {
-  "name": "VivaS - Saúde Preventiva",
-  "short_name": "VivaS",
-  "description": "Saúde preventiva com inteligência artificial. Monitore seus exames, receba alertas e cuide da sua saúde.",
+  "name": "vivas - Saúde Preventiva",
+  "short_name": "vivas",
+  "description": "Saúde preventiva inteligente. Monitore seus exames, receba alertas e cuide da sua saúde.",
   "start_url": "/",
   "scope": "/",
   "id": "/",

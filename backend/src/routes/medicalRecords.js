@@ -11,6 +11,15 @@ router.get('/', async (req, res) => {
     const params = [];
     const conditions = [];
 
+    // Data isolation: professional sees only records they authored; patient only their own
+    if (['medico', 'psicologo'].includes(req.user.role)) {
+      params.push(req.user.email);
+      conditions.push(`mr.professional_id IN (SELECT id FROM professionals WHERE email = $${params.length})`);
+    } else if (req.user.role === 'paciente') {
+      params.push(req.user.email);
+      conditions.push(`mr.patient_id IN (SELECT id FROM patients WHERE email = $${params.length})`);
+    }
+
     if (patient_id) { params.push(patient_id); conditions.push(`mr.patient_id = $${params.length}`); }
     if (professional_id) { params.push(professional_id); conditions.push(`mr.professional_id = $${params.length}`); }
 

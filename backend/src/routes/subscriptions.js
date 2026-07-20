@@ -32,13 +32,37 @@ function getStripe() {
   return require('stripe')(process.env.STRIPE_SECRET_KEY);
 }
 
+// Look up a post-consultation invite discount code (5% off) that hasn't been used yet.
+async function getValidDiscount(code) {
+  if (!code) return null;
+  try {
+    const result = await pool.query(
+      `SELECT discount_code, discount_percent FROM patient_invites
+       WHERE UPPER(discount_code) = UPPER($1) AND status <> 'registered' LIMIT 1`,
+      [String(code).trim()]
+    );
+    if (!result.rows.length) return null;
+    return { code: result.rows[0].discount_code, percent: result.rows[0].discount_percent || 5 };
+  } catch (err) {
+    // patient_invites table may not exist yet — treat as no discount
+    return null;
+  }
+}
+
+// GET /api/subscriptions/validate-discount/:code (public — used by landing pages)
+router.get('/validate-discount/:code', async (req, res) => {
+  const discount = await getValidDiscount(req.params.code);
+  if (!discount) return res.json({ valid: false });
+  res.json({ valid: true, percent: discount.percent, code: discount.code });
+});
+
 // Create checkout session (no auth required - user doesn't have account yet)
 router.post('/checkout', async (req, res) => {
   try {
     const stripe = getStripe();
     if (!stripe) return res.status(503).json({ error: 'Stripe não configurado' });
     
-    const { plan, email } = req.body;
+    const { plan, email, discountCode } = req.body;
     if (!PLANS[plan]) return res.status(400).json({ error: 'Plano inválido' });
     
     const planData = PLANS[plan];
@@ -46,7 +70,12 @@ router.post('/checkout', async (req, res) => {
     if (plan === 'empresa') {
       return res.json({ redirect: 'mailto:contato@vivasaudeinteligente.com.br?subject=VivaS Empresas' });
     }
-    
+
+    // Apply post-consultation invite discount (e.g. 5% off) when a valid code is provided.
+    const discount = await getValidDiscount(discountCode);
+    const unitAmount = discount ? Math.round(planData.price * (1 - discount.percent / 100)) : planData.price;
+    const productName = discount ? `VivaS ${planData.name} (${discount.percent}% desconto)` : `VivaS ${planData.name}`;
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'subscription',
@@ -54,15 +83,15 @@ router.post('/checkout', async (req, res) => {
       line_items: [{
         price_data: {
           currency: 'brl',
-          product_data: { name: `VivaS ${planData.name}`, description: planData.features.join(' · ') },
-          unit_amount: planData.price,
+          product_data: { name: productName, description: planData.features.join(' · ') },
+          unit_amount: unitAmount,
           recurring: { interval: 'month' }
         },
         quantity: 1
       }],
       success_url: `${req.headers.origin || 'https://vivas.digital'}/register?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`,
       cancel_url: `${req.headers.origin || 'https://vivasaudeinteligente.com.br'}/#planos`,
-      metadata: { plan, maxMembers: String(planData.maxMembers) }
+      metadata: { plan, maxMembers: String(planData.maxMembers), discountCode: discount ? discount.code : '' }
     });
     
     res.json({ url: session.url, sessionId: session.id });
@@ -370,17 +399,11 @@ async function checkAbandonedCheckouts() {
       // Also send email notification about abandoned cart
       if (email) {
         try {
-          const nodemailer = require('nodemailer');
-          const smtpPass = process.env.SMTP_PASS;
-          if (smtpPass) {
-            const transporter = nodemailer.createTransport({
-              service: 'gmail',
-              auth: { user: process.env.SMTP_USER || 'sandrolaudares@gmail.com', pass: smtpPass }
-            });
-            await transporter.sendMail({
-              from: '"VivaS Saude" <contato@vivasaudeinteligente.com.br>',
+          const { sendRawEmail } = require('../services/notifications');
+          {
+            await sendRawEmail({
               to: email,
-              subject: `${nome}, sua cotacao VivaS esta esperando por voce`,
+              subject: `${nome}, sua cotacao vivas esta esperando por voce`,
               html: `
                 <div style="font-family:'Plus Jakarta Sans',sans-serif;max-width:520px;margin:0 auto;padding:32px;">
                   <div style="background:#7B1E3C;padding:24px;border-radius:12px 12px 0 0;text-align:center;">
@@ -472,6 +495,14 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
         `UPDATE checkout_sessions SET status = 'completed', completed_at = NOW() WHERE stripe_session_id = $1`,
         [session.id]
       );
+      // Consume the invite discount code once the subscription is paid.
+      const code = session.metadata?.discountCode;
+      if (code) {
+        await pool.query(
+          `UPDATE patient_invites SET status = 'registered', registered_at = NOW() WHERE UPPER(discount_code) = UPPER($1)`,
+          [code]
+        ).catch(() => {});
+      }
     } catch (err) {
       console.error('Webhook checkout tracking error:', err);
     }
@@ -539,16 +570,8 @@ router.post('/quote', async (req, res) => {
     const confirmUrl = `${baseUrl}/api/subscriptions/confirm-quote?id=${quoteId}&email=${encodeURIComponent(email)}`;
 
     // Send email with quote
-    const nodemailer = require('nodemailer');
-    const smtpUser = process.env.SMTP_USER || 'sandrolaudares@gmail.com';
-    const smtpPass = process.env.SMTP_PASS;
-
-    if (smtpPass) {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: smtpUser, pass: smtpPass }
-      });
-
+    const { sendRawEmail } = require('../services/notifications');
+    {
       let planLabel = plan === 'individual' ? 'Individual' : 'Família';
       let detailLines = `<tr><td style="padding:8px 0;color:#6B7280">Plano ${planLabel}</td><td style="padding:8px 0;text-align:right;font-weight:600">R$ ${base.toFixed(2).replace('.', ',')}</td></tr>`;
       if (depAdd > 0) detailLines += `<tr><td style="padding:8px 0;color:#6B7280">${dependentes} dependente(s)</td><td style="padding:8px 0;text-align:right;font-weight:600">+ R$ ${depAdd.toFixed(2).replace('.', ',')}</td></tr>`;
@@ -573,19 +596,16 @@ router.post('/quote', async (req, res) => {
           </div>
           <p style="font-size:12px;color:#9CA3AF;text-align:center">Este link expira em 48 horas. Se não solicitou esta cotação, ignore este email.</p>
           <hr style="border:none;border-top:1px solid #F3F4F6;margin:24px 0">
-          <p style="font-size:11px;color:#9CA3AF;text-align:center">VivaS Saúde Inteligente - vivasaudeinteligente.com.br</p>
+          <p style="font-size:11px;color:#9CA3AF;text-align:center">vivas Saúde Inteligente - vivasaudeinteligente.com.br</p>
         </div>
       `;
 
-      const info = await transporter.sendMail({
-        from: `"VivaS Saúde" <${smtpUser}>`,
+      const result = await sendRawEmail({
         to: email,
-        subject: 'VivaS - Sua cotação está pronta!',
+        subject: 'vivas - Sua cotação está pronta!',
         html
       });
-      console.log(`[QUOTE] Email sent to ${email} - Response: ${info.response}`);
-    } else {
-      console.log(`[QUOTE] No SMTP_PASS - Email would be sent to ${email} - Total: R$ ${total.toFixed(2)}`);
+      console.log(`[QUOTE] Email dispatch to ${email} - success: ${result.success}`);
     }
 
     res.json({ success: true, quoteId, total, confirmUrl });

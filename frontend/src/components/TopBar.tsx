@@ -10,7 +10,7 @@ const BREADCRUMBS: Record<string, string> = {
   '/triagem': 'Triagem Inteligente', '/assistente': 'Assistente Inteligente (Apoio)',
   '/predicao': 'Suporte Preventivo', '/cupons': 'Cupons e Promoções',
   '/configuracoes': 'Configurações', '/usuarios': 'Gerenciamento de Usuários',
-  '/saude-preventiva': 'Saúde Preventiva', '/dicom': 'Isis DICOM Viewer',
+  '/saude-preventiva': 'Saúde Preventiva', '/dicom': 'vivas DICOM',
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -34,18 +34,18 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
       className="min-h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 flex-shrink-0"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-sm min-w-0 flex-1">
         {onMenuClick && (
-          <button onClick={onMenuClick} className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 md:hidden">
+          <button onClick={onMenuClick} className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 md:hidden flex-shrink-0">
             <Menu className="w-5 h-5" />
           </button>
         )}
-        <span className="text-gray-400 hidden sm:inline">VIVAS</span>
+        <span className="text-gray-400 hidden sm:inline">vivas</span>
         <span className="text-gray-300 hidden sm:inline">›</span>
         <span className="font-medium text-gray-900 truncate">{pageName}</span>
       </div>
 
-      <div className="flex items-center gap-2 md:gap-4">
+      <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
         <div className="relative hidden lg:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" placeholder="Buscar pacientes, médicos, exames..."

@@ -268,7 +268,7 @@ export default function EmpresaDashboard() {
                 Cancelar
               </button>
             </div>
-            <p className="text-xs text-muted mt-3">O colaborador receberá um email com instruções de acesso à plataforma VivaS.</p>
+            <p className="text-xs text-muted mt-3">O colaborador receberá um email com instruções de acesso à plataforma vivas.</p>
           </form>
         )}
 

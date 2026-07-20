@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Upload, FileText, Activity, Heart, Droplets, TrendingUp, TrendingDown, Minus, AlertCircle, CheckCircle2, Clock, Bell, Send, Loader2, X } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../contexts/AuthContext'
-import { api, type ExamBatchResult } from '../services/api'
+import { api, type ExamBatchResult, type Exam, type ExamComparative } from '../services/api'
 
 interface HealthExam {
   id: number
@@ -73,6 +73,34 @@ export default function SaudePreventiva() {
 
   const [uploading, setUploading] = useState(false)
   const [batchResult, setBatchResult] = useState<ExamBatchResult | null>(null)
+  const [myExams, setMyExams] = useState<Exam[]>([])
+  const [openingFileId, setOpeningFileId] = useState<string | null>(null)
+  const [comparative, setComparative] = useState<ExamComparative | null>(null)
+  const [loadingComparative, setLoadingComparative] = useState(true)
+
+  const loadMyExams = () => {
+    api.getExams().then(setMyExams).catch(() => {})
+  }
+  const loadComparative = () => {
+    setLoadingComparative(true)
+    api.getExamComparative({ analyze: true })
+      .then(setComparative)
+      .catch(() => setComparative(null))
+      .finally(() => setLoadingComparative(false))
+  }
+  useEffect(() => { loadMyExams(); loadComparative() }, [])
+
+  const openExamFile = async (examId: string) => {
+    setOpeningFileId(examId)
+    try {
+      const url = await api.fetchExamFileUrl(examId)
+      window.open(url, '_blank')
+    } catch (err) {
+      addToast('error', err instanceof Error ? err.message : 'Erro ao abrir arquivo')
+    } finally {
+      setOpeningFileId(null)
+    }
+  }
 
   const addFiles = (files: FileList | null) => {
     if (!files) return
@@ -101,6 +129,8 @@ export default function SaudePreventiva() {
         addToast('success', 'Alertas comparativos enviados por email para voce e seus profissionais de saude.')
       }
       setUploadFiles([])
+      loadMyExams()
+      loadComparative()
     } catch (err) {
       addToast('error', err instanceof Error ? err.message : 'Erro ao enviar exames')
     } finally {
@@ -176,6 +206,59 @@ export default function SaudePreventiva() {
 
       {activeTab === 'overview' && (
         <div className="space-y-6">
+          {/* Análise histórica inteligente — considera TODOS os exames enviados */}
+          <div className="card border border-wine-line">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="w-5 h-5 text-wine" />
+              <h3 className="text-lg font-semibold text-gray-900">Análise histórica inteligente</h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Interpretação da sua evolução considerando <strong>todos os exames enviados</strong> — não apenas o último.
+            </p>
+
+            {loadingComparative ? (
+              <div className="flex items-center gap-3 p-4 bg-wine-soft rounded-lg">
+                <Loader2 className="w-5 h-5 text-wine animate-spin" />
+                <span className="text-sm font-medium text-wine">Analisando todo o seu histórico de exames...</span>
+              </div>
+            ) : comparative && comparative.trends.length > 0 ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  {comparative.trends.map(t => {
+                    const Icon = t.direction === 'estavel' ? Minus : (t.direction === 'subiu' ? TrendingUp : TrendingDown)
+                    const color = t.worsening ? 'text-red-600' : (t.direction === 'estavel' ? 'text-gray-400' : 'text-green-600')
+                    return (
+                      <div key={t.name} className="flex items-center justify-between text-xs sm:text-sm border-b border-gray-100 pb-2">
+                        <span className="font-medium text-gray-700">{t.label}</span>
+                        <div className="flex items-center gap-2">
+                          {t.first_value != null && <span className="text-gray-400">{t.first_value}→</span>}
+                          <span className="font-semibold text-gray-900">{t.current_value} {t.unit}</span>
+                          {t.count > 1 && <span className="text-gray-400">({t.count} exames)</span>}
+                          <span className={`flex items-center gap-0.5 ${color}`}>
+                            <Icon className="w-3.5 h-3.5" />
+                            {t.delta_pct != null && t.direction !== 'estavel' ? `${t.delta_pct > 0 ? '+' : ''}${t.delta_pct}%` : ''}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                {comparative.analysis ? (
+                  <div className="p-4 bg-wine-soft border border-wine-line rounded-lg">
+                    <p className="font-semibold text-sm text-gray-900 mb-2">Interpretação preventiva (todo o histórico):</p>
+                    <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{comparative.analysis}</p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400">Análise textual indisponível no momento.</p>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-500">
+                Envie seus exames na aba <strong>Enviar Exame</strong> para gerar a análise histórica inteligente.
+              </div>
+            )}
+          </div>
+
           {/* Health Score */}
           <div className="card bg-gradient-to-r from-wine-soft to-green-50 border border-wine-line">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -360,6 +443,43 @@ export default function SaudePreventiva() {
 
       {activeTab === 'exams' && (
         <div className="space-y-4">
+          <div className="card">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-wine" />
+              Meus exames enviados
+            </h3>
+            {myExams.length === 0 ? (
+              <p className="text-sm text-gray-400 py-4 text-center">
+                Você ainda não enviou exames. Use a aba "Enviar Exame" para adicionar seus PDFs/imagens — eles ficam guardados aqui para você e seu médico consultarem quando quiser.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {myExams.map(exam => (
+                  <div key={exam.id} className="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-200 bg-white">
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 text-sm truncate">{exam.file_name || exam.exam_name}</p>
+                      <p className="text-xs text-gray-500">{new Date(exam.result_date || exam.created_at).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    {exam.has_file ? (
+                      <button
+                        type="button"
+                        onClick={() => openExamFile(exam.id)}
+                        disabled={openingFileId === exam.id}
+                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-wine text-white rounded-lg text-xs font-semibold disabled:opacity-60"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        {openingFileId === exam.id ? 'Abrindo...' : 'Ver arquivo'}
+                      </button>
+                    ) : (
+                      <span className="flex-shrink-0 text-xs text-gray-400">Sem arquivo</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <p className="text-xs text-gray-400 px-1">Exemplos de análise preventiva (demonstração):</p>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-3">
               {exams.map(exam => (

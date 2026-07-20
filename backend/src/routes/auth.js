@@ -165,27 +165,20 @@ router.post('/register', async (req, res) => {
     );
 
     // Send patient terms/contract email (non-blocking)
-    const smtpPass = process.env.SMTP_PASS;
-    if (smtpPass) {
-      const nodemailer = require('nodemailer');
-      const smtpUser = process.env.SMTP_USER || 'sandrolaudares@gmail.com';
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: smtpUser, pass: smtpPass }
-      });
+    {
+      const { sendRawEmail } = require('../services/notifications');
       const termsHtml = generatePacienteTerms({
         fullName: full_name,
         cpf: null,
         email,
         plan: validPlan || 'individual'
       });
-      transporter.sendMail({
-        from: `"VivaS Saude" <${smtpUser}>`,
+      sendRawEmail({
         to: email,
-        subject: 'VivaS - Termos e Condicoes de Uso',
+        subject: 'vivas - Termos e Condicoes de Uso',
         html: termsHtml
-      }).then(info => {
-        console.log(`[REGISTER] Terms email sent to ${email} - ${info.response}`);
+      }).then(result => {
+        console.log(`[REGISTER] Terms email dispatch to ${email} - success: ${result.success}`);
       }).catch(err => {
         console.error(`[REGISTER] Terms email failed for ${email}:`, err.message);
       });

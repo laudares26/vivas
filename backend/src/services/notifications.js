@@ -24,7 +24,36 @@ function getTransporter() {
   return transporter;
 }
 
+// Single source of truth for the platform sender address.
+// Set SMTP_FROM in the environment to change it (e.g. "vivas" <contato@vivas.digital>).
+function getFromAddress() {
+  return process.env.SMTP_FROM || '"vivas" <contato@vivas.digital>';
+}
+
+// Send a raw email through the shared transporter. Returns {success, ...}.
+// Supports optional attachments (nodemailer format). Falls back to console log
+// when no SMTP is configured.
+async function sendRawEmail({ to, subject, html, attachments }) {
+  const transport = getTransporter();
+  const emailData = { from: getFromAddress(), to, subject, html, attachments };
+  if (transport) {
+    try {
+      const info = await transport.sendMail(emailData);
+      console.log(`[Email] Sent to ${to}: ${subject} (messageId: ${info.messageId})`);
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error(`[Email] Failed to send to ${to}:`, err.message);
+      return { success: false, error: err.message };
+    }
+  }
+  console.log(`[Email][LOG] To: ${to} | Subject: ${subject}`);
+  return { success: true, logged: true };
+}
+
 // Health indicator thresholds (Brazilian clinical standards)
+// `atencao` / `alerta` are explicit [min,max] ranges so both "higher is worse"
+// (glicemia, LDL, leucócitos...) and "lower is worse" (hemoglobina, plaquetas)
+// indicators are supported by the same range-membership classifier.
 const THRESHOLDS = {
   glicemia_jejum: { unit: 'mg/dL', normal: [70, 99], atencao: [100, 125], alerta: [126, Infinity], label: 'Glicemia em Jejum' },
   colesterol_ldl: { unit: 'mg/dL', normal: [0, 129], atencao: [130, 159], alerta: [160, Infinity], label: 'Colesterol LDL' },
@@ -34,13 +63,23 @@ const THRESHOLDS = {
   hemoglobina_glicada: { unit: '%', normal: [0, 5.6], atencao: [5.7, 6.4], alerta: [6.5, Infinity], label: 'Hemoglobina Glicada' },
   triglicerideos: { unit: 'mg/dL', normal: [0, 149], atencao: [150, 199], alerta: [200, Infinity], label: 'Triglicerídeos' },
   creatinina: { unit: 'mg/dL', normal: [0.6, 1.2], atencao: [1.3, 1.5], alerta: [1.6, Infinity], label: 'Creatinina' },
+  // Hematology (hemograma) — lower is worse for hemoglobina/plaquetas/neutrófilos.
+  hemoglobina: { unit: 'g/dL', normal: [13, 17], atencao: [11, 12.9], alerta: [0, 10.9], label: 'Hemoglobina' },
+  leucocitos: { unit: '/mm³', normal: [4000, 11000], atencao: [11001, 20000], alerta: [20001, Infinity], label: 'Leucócitos' },
+  linfocitos: { unit: '/mm³', normal: [1000, 4000], atencao: [4001, 5000], alerta: [5001, Infinity], label: 'Linfócitos' },
+  neutrofilos: { unit: '/mm³', normal: [1500, Infinity], atencao: [1000, 1499], alerta: [0, 999], label: 'Neutrófilos' },
+  plaquetas: { unit: '/mm³', normal: [150000, 450000], atencao: [100000, 149999], alerta: [0, 99999], label: 'Plaquetas' },
 };
+
+function inRange(value, range) {
+  return range && value >= range[0] && value <= range[1];
+}
 
 function classifyIndicator(name, value) {
   const threshold = THRESHOLDS[name];
   if (!threshold) return 'desconhecido';
-  if (value >= threshold.alerta[0]) return 'alerta';
-  if (value >= threshold.atencao[0]) return 'atencao';
+  if (inRange(value, threshold.alerta)) return 'alerta';
+  if (inRange(value, threshold.atencao)) return 'atencao';
   return 'normal';
 }
 
@@ -48,7 +87,7 @@ async function sendEmail(to, subject, html) {
   const transport = getTransporter();
 
   const emailData = {
-    from: process.env.SMTP_FROM || '"VIVAS Saúde" <notificacoes@vivas.digital>',
+    from: getFromAddress(),
     to,
     subject,
     html,
@@ -238,6 +277,9 @@ const HIGHER_IS_WORSE = {
   glicemia_jejum: true, colesterol_ldl: true, pressao_sistolica: true,
   pressao_diastolica: true, imc: true, hemoglobina_glicada: true,
   triglicerideos: true, creatinina: true,
+  // Hematology
+  leucocitos: true, linfocitos: true,
+  hemoglobina: false, plaquetas: false, neutrofilos: false,
 };
 
 // Load the full ordered history of a patient's indicators.
@@ -336,6 +378,65 @@ function computeComparativeAnalysis(history) {
 
   trends.sort((a, b) => (b.worsening === a.worsening ? 0 : b.worsening ? 1 : -1));
   return { trends, alerts };
+}
+
+// Deterministic, non-LLM comparative narrative used as a fallback whenever the
+// Groq analysis is unavailable (e.g. API quota/rate limit). It still surfaces
+// the preventive signals — including the classic hematologic/leukemia pattern —
+// so the panel and alert emails are never left without an interpretation.
+const HEMA_NAMES = ['hemoglobina', 'leucocitos', 'linfocitos', 'neutrofilos', 'plaquetas'];
+
+function buildFallbackComparativeText(trends, criticalFindings = []) {
+  const list = Array.isArray(trends) ? trends : [];
+  const byName = Object.fromEntries(list.map(t => [t.name, t]));
+  const parts = [];
+
+  const worsened = list.filter(t => t.worsening && (t.current_status === 'alerta' || t.current_status === 'atencao'));
+  if (worsened.length) {
+    parts.push('Ao considerar toda a trajetória dos exames enviados, os seguintes indicadores merecem atenção preventiva: ' +
+      worsened.map(t => `${t.label} (${t.first_value != null ? t.first_value + '→' : ''}${t.current_value} ${t.unit})`).join('; ') + '.');
+  } else {
+    parts.push('Ao considerar toda a trajetória dos exames enviados, não há indicadores em piora relevante no momento.');
+  }
+
+  // Hematologic pattern: leucocitose + linfocitose + anemia + plaquetopenia.
+  const isAlert = (n) => byName[n] && (byName[n].current_status === 'alerta' || byName[n].current_status === 'atencao');
+  const hemaAlerts = HEMA_NAMES.filter(isAlert);
+  const findings = Array.isArray(criticalFindings) ? criticalFindings : [];
+  const hasLeukemiaKeyword = findings.some(f => ['leucemia', 'monoclonal', 'blastos'].includes(f));
+  const leucoHigh = isAlert('leucocitos');
+  const linfoHigh = isAlert('linfocitos');
+  const hemoLow = isAlert('hemoglobina');
+  const plaqLow = isAlert('plaquetas');
+  const hemaPatternScore = [leucoHigh, linfoHigh, hemoLow, plaqLow].filter(Boolean).length;
+
+  if (hemaPatternScore >= 2 || (hemaPatternScore >= 1 && hasLeukemiaKeyword)) {
+    let p = 'Foi identificado um conjunto de alterações hematológicas ao longo dos exames';
+    const bits = [];
+    if (leucoHigh) bits.push('leucócitos elevados (leucocitose)');
+    if (linfoHigh) bits.push('linfócitos elevados (linfocitose)');
+    if (hemoLow) bits.push('hemoglobina baixa (anemia)');
+    if (plaqLow) bits.push('plaquetas baixas (plaquetopenia)');
+    if (bits.length) p += ': ' + bits.join(', ');
+    p += '. Esse conjunto é um padrão de ALERTA que pode indicar risco de uma condição hematológica, incluindo uma possível leucemia (por exemplo, leucemia linfocítica crônica).';
+    if (hasLeukemiaKeyword) {
+      p += ' Há ainda achados textuais relevantes em laudos do paciente (ex.: imunofenotipagem/morfologia) que reforçam a necessidade de investigação hematológica.';
+    }
+    p += ' Estes resultados NÃO permitem confirmar diagnóstico e precisam de correlação clínica. Recomenda-se avaliação HEMATOLÓGICA URGENTE com um médico/hematologista.';
+    parts.push(p);
+  } else if (hemaAlerts.length) {
+    parts.push('Há indicadores hematológicos fora da faixa de referência (' +
+      hemaAlerts.map(n => byName[n].label).join(', ') + '). Recomenda-se avaliação médica para investigação.');
+  }
+
+  // Metabolic/cardiovascular/renal preventive hints.
+  const metabWorse = worsened.filter(t => ['glicemia_jejum', 'hemoglobina_glicada', 'colesterol_ldl', 'triglicerideos', 'creatinina', 'pressao_sistolica', 'pressao_diastolica', 'imc'].includes(t.name));
+  if (metabWorse.length) {
+    parts.push('No eixo metabólico/cardiovascular/renal, mantenha acompanhamento e hábitos preventivos (alimentação equilibrada, atividade física regular) e converse com seu médico sobre os indicadores em elevação.');
+  }
+
+  parts.push('Esta análise comparativa é um suporte preventivo inteligente e não substitui a avaliação de um profissional de saúde.');
+  return parts.join('\n\n');
 }
 
 function trendArrow(direction, worsening) {
@@ -475,7 +576,70 @@ async function sendComparativeReport(patientUserId, comparative, aiText) {
   };
 }
 
+const PLATFORM_URL = 'https://vivas.digital';
+const SITE_URL = 'https://vivasaudeinteligente.com.br';
+
+function emailShell(title, subtitle, innerHtml) {
+  return `
+    <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: linear-gradient(135deg, #7B1E3C, #5E1730); padding: 24px; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 800;">vivas</h1>
+        <p style="color: #E9C4BE; margin: 6px 0 0; font-size: 14px;">${subtitle}</p>
+      </div>
+      <div style="padding: 28px; background: white; color: #1f2937;">
+        ${innerHtml}
+      </div>
+      <div style="padding: 16px; background: #f8fafc; text-align: center; font-size: 12px; color: #6b7280;">
+        <p>vivas Saúde Inteligente${title ? ' — ' + title : ''}</p>
+      </div>
+    </div>`;
+}
+
+// Invite email for an unregistered patient — first consultation is free.
+async function sendInvitePatientEmail({ patientName, patientEmail, professionalName, specialty, dateTime, notes }) {
+  const when = dateTime
+    ? new Date(dateTime).toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' })
+    : 'a combinar';
+  const inner = `
+    <p>Olá <strong>${patientName || 'paciente'}</strong>,</p>
+    <p>Você foi convidado(a) por <strong>${professionalName}</strong>${specialty ? ` (${specialty})` : ''} para uma consulta na vivas — e a sua <strong>primeira consulta é gratuita</strong>.</p>
+    <div style="background:#F6E7E1;border-left:4px solid #7B1E3C;padding:16px;margin:18px 0;border-radius:6px;">
+      <p style="margin:0 0 6px;"><strong>Profissional:</strong> ${professionalName}${specialty ? ' · ' + specialty : ''}</p>
+      <p style="margin:0 0 6px;"><strong>Data e hora:</strong> ${when}</p>
+      ${notes ? `<p style="margin:0;"><strong>Observações:</strong> ${notes}</p>` : ''}
+      <p style="margin:8px 0 0;color:#7B1E3C;font-weight:700;">1ª consulta gratuita</p>
+    </div>
+    <p>Para acessar a plataforma e acompanhar sua consulta, crie seu acesso gratuito:</p>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${PLATFORM_URL}/register?convite=${encodeURIComponent(patientEmail || '')}" style="display:inline-block;background:#7B1E3C;color:white;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:600;">Acessar a vivas</a>
+    </div>
+    <p style="color:#6B5B62;font-size:13px;">Após a sua primeira consulta, você receberá um convite especial com <strong>5% de desconto</strong> no plano que escolher.</p>`;
+  return sendEmail(patientEmail, 'Você foi convidado(a) para uma consulta gratuita na vivas', emailShell('Convite de consulta', 'Convite de consulta', inner));
+}
+
+// Post-consultation email offering 5% discount to subscribe to any plan.
+async function sendPostConsultDiscountEmail({ patientName, patientEmail, discountCode, discountPercent = 5 }) {
+  const link = `${SITE_URL}/?desconto=${encodeURIComponent(discountCode)}#planos`;
+  const inner = `
+    <p>Olá <strong>${patientName || 'paciente'}</strong>,</p>
+    <p>Esperamos que sua primeira consulta na vivas tenha sido ótima! Para você continuar cuidando da sua saúde de forma preventiva, preparamos um presente:</p>
+    <div style="background:#F6E7E1;border:2px dashed #7B1E3C;padding:20px;margin:20px 0;border-radius:10px;text-align:center;">
+      <p style="margin:0;color:#7B1E3C;font-size:15px;">Desconto exclusivo</p>
+      <p style="margin:6px 0;font-size:34px;font-weight:800;color:#7B1E3C;">${discountPercent}% OFF</p>
+      <p style="margin:0;font-size:13px;color:#6B5B62;">no plano que você escolher · use o código</p>
+      <p style="margin:8px 0 0;font-size:20px;font-weight:800;letter-spacing:2px;color:#1f2937;">${discountCode}</p>
+    </div>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${link}" style="display:inline-block;background:#7B1E3C;color:white;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:600;">Escolher meu plano com ${discountPercent}%</a>
+    </div>
+    <p style="color:#6B5B62;font-size:13px;">O desconto é aplicado automaticamente ao concluir sua inscrição por este link.</p>`;
+  return sendEmail(patientEmail, `Seu presente vivas: ${discountPercent}% de desconto no plano`, emailShell('Convite para assinar', 'Bem-vindo(a) à vivas', inner));
+}
+
 module.exports = {
   checkAndNotify, classifyIndicator, THRESHOLDS, sendEmail,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
+  buildFallbackComparativeText,
+  sendInvitePatientEmail, sendPostConsultDiscountEmail,
+  getTransporter, getFromAddress, sendRawEmail,
 };

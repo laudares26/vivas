@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Users, CalendarDays, AlertTriangle, Clock, TrendingUp, ArrowUpRight, Bell, Camera, Upload, FileText, CheckCircle, XCircle, Activity } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { api, type DashboardData } from '../services/api'
@@ -12,6 +13,7 @@ export default function Dashboard() {
   const [imageQuality, setImageQuality] = useState<'good' | 'bad' | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
     api.getDashboard().then(setData).catch(console.error).finally(() => setLoading(false))
@@ -87,7 +89,7 @@ export default function Dashboard() {
 
       {/* KPI Cards - personalized */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card">
+        <button type="button" onClick={() => navigate('/agendamentos')} className="card text-left w-full cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-wine">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-wine-soft flex items-center justify-center">
               <CalendarDays className="w-5 h-5 text-wine" />
@@ -99,9 +101,9 @@ export default function Dashboard() {
           </div>
           <p className="text-2xl font-bold text-gray-900">{data.personalStats?.totalConsultations || 0}</p>
           <p className="text-sm text-gray-500 mt-0.5">Consultas Realizadas</p>
-        </div>
+        </button>
 
-        <div className="card">
+        <button type="button" onClick={() => navigate('/agendamentos')} className="card text-left w-full cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-wine">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-wine-soft flex items-center justify-center">
               <Clock className="w-5 h-5 text-wine" />
@@ -113,9 +115,9 @@ export default function Dashboard() {
               : 'Nenhuma'}
           </p>
           <p className="text-sm text-gray-500 mt-0.5">Última Consulta</p>
-        </div>
+        </button>
 
-        <div className="card">
+        <button type="button" onClick={() => navigate('/agendamentos')} className="card text-left w-full cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-wine">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-wine-soft flex items-center justify-center">
               <Activity className="w-5 h-5 text-wine" />
@@ -123,9 +125,9 @@ export default function Dashboard() {
           </div>
           <p className="text-2xl font-bold text-gray-900">{data.kpis.appointmentsToday}</p>
           <p className="text-sm text-gray-500 mt-0.5">Atendimentos Hoje</p>
-        </div>
+        </button>
 
-        <div className="card relative">
+        <button type="button" onClick={() => navigate('/saude-preventiva')} className="card relative text-left w-full cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-wine">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
               <Bell className="w-5 h-5 text-red-600" />
@@ -141,7 +143,7 @@ export default function Dashboard() {
           {(data.healthAlerts?.unread || 0) > 0 && (
             <p className="text-xs text-red-500 mt-0.5 font-medium">{data.healthAlerts.unread} não lido(s)</p>
           )}
-        </div>
+        </button>
       </div>
 
       {/* Health Alerts Section */}
@@ -158,7 +160,12 @@ export default function Dashboard() {
           </h3>
           <div className="space-y-2">
             {data.healthAlerts.recent.map(alert => (
-              <div key={alert.id} className={`flex items-center gap-3 p-3 rounded-lg ${alert.read_by_patient && alert.read_by_professional ? 'bg-gray-50' : 'bg-red-50'}`}>
+              <button
+                type="button"
+                key={alert.id}
+                onClick={() => navigate(isProfessional ? `/prontuario?nome=${encodeURIComponent(alert.patient_name || '')}` : '/saude-preventiva')}
+                className={`w-full text-left flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:brightness-95 transition-all focus:outline-none focus:ring-2 focus:ring-wine ${alert.read_by_patient && alert.read_by_professional ? 'bg-gray-50' : 'bg-red-50'}`}
+              >
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${alert.read_by_patient && alert.read_by_professional ? 'bg-gray-400' : 'bg-red-500'}`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
@@ -172,7 +179,7 @@ export default function Dashboard() {
                 <span className="text-xs px-2 py-1 rounded bg-red-100 text-red-700 font-medium flex-shrink-0">
                   {alert.severity || 'Alto'}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -181,12 +188,27 @@ export default function Dashboard() {
       {/* Fique em dia com seus exames + Upload */}
       {(isPatient || isProfessional) && (
         <div className="card border-l-4 border-l-vivas-green">
+          {isProfessional ? (
+            <button
+              type="button"
+              onClick={() => navigate('/exames')}
+              className="w-full text-left cursor-pointer group focus:outline-none"
+            >
+              <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2 group-hover:text-wine transition-colors">
+                <FileText className="w-5 h-5 text-vivas-green" />
+                Fique em dia com seus exames
+                <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-wine" />
+              </h3>
+              <p className="text-sm text-gray-500">Acompanhe os exames dos seus pacientes.</p>
+            </button>
+          ) : (
+          <>
           <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
             <FileText className="w-5 h-5 text-vivas-green" />
             Fique em dia com seus exames
           </h3>
           <p className="text-sm text-gray-500 mb-4">
-            {isPatient ? 'Envie seus exames para acompanhamento preventivo. Use a câmera ou faça upload do arquivo.' : 'Acompanhe os exames dos seus pacientes.'}
+            Envie seus exames para acompanhamento preventivo. Use a câmera ou faça upload do arquivo.
           </p>
 
           {isPatient && uploadState === 'idle' && (
@@ -263,6 +285,8 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
+          )}
+          </>
           )}
         </div>
       )}

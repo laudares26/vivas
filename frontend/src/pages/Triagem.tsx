@@ -75,11 +75,11 @@ export default function Triagem() {
       </div>
 
       {/* Manchester legend */}
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
         {MANCHESTER.map(m => (
-          <div key={m.color} className={`${m.bg} ${m.text} rounded-xl p-3 text-center`}>
-            <p className="text-sm font-bold">{m.label}</p>
-            <p className="text-xs opacity-80 mt-1">{m.time}</p>
+          <div key={m.color} className={`${m.bg} ${m.text} rounded-xl p-2 sm:p-3 text-center flex flex-col items-center justify-center min-w-0`}>
+            <p className="text-[10px] sm:text-sm font-bold leading-tight break-words hyphens-auto">{m.label}</p>
+            <p className="text-[10px] sm:text-xs opacity-80 mt-0.5 sm:mt-1">{m.time}</p>
           </div>
         ))}
       </div>

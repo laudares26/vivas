@@ -50,6 +50,7 @@ export const api = {
   getPrescription: (id: string) => request<Prescription>(`/prescriptions/${id}`),
   createPrescription: (data: CreatePrescriptionData) => request<Prescription>('/prescriptions', { method: 'POST', body: JSON.stringify(data) }),
   deletePrescription: (id: string) => request<void>(`/prescriptions/${id}`, { method: 'DELETE' }),
+  searchAnvisaMedications: (q: string) => request<AnvisaMedication[]>(`/medicamentos/anvisa?q=${encodeURIComponent(q)}`),
 
   // Exams
   getExams: (params?: string) => request<Exam[]>(`/exams${params ? `?${params}` : ''}`),
@@ -86,7 +87,23 @@ export const api = {
     }
     return res.json();
   },
-  getExamComparative: () => request<ExamComparative>('/exams/comparative'),
+  getExamComparative: (opts?: { analyze?: boolean; patientId?: string }) => {
+    const p = new URLSearchParams()
+    if (opts?.analyze) p.set('analyze', '1')
+    if (opts?.patientId) p.set('patientId', opts.patientId)
+    const qs = p.toString()
+    return request<ExamComparative>(`/exams/comparative${qs ? `?${qs}` : ''}`)
+  },
+  // Fetches the original uploaded exam file (with auth) and returns an object URL.
+  fetchExamFileUrl: async (examId: string): Promise<string> => {
+    const res = await fetch(`${API_BASE}/exams/${examId}/file`, { headers: { ...getAuthHeaders() } });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Erro ao abrir arquivo' }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+  },
 
   // EHR
   getEHR: (patientId: string) => request<EHREntry[]>(`/ehr/${patientId}`),
@@ -157,7 +174,8 @@ export interface Professional {
 export interface Appointment {
   id: string; patient_id: string; professional_id: string; date_time: string; duration_minutes: number;
   type: string; status: string; notes: string; patient_name: string; professional_name: string;
-  specialty: string; created_at: string;
+  specialty: string; created_at: string; is_first_free?: boolean;
+  invite_new_patient?: boolean; patient_email?: string;
 }
 
 export interface MedicalRecord {
@@ -171,6 +189,13 @@ export interface MedicalRecord {
 export interface PrescriptionItem {
   id: string; medication_name: string; dosage: string; frequency: string; duration: string;
   route: string; instructions: string;
+  active_ingredient?: string; anvisa_registration?: string; therapeutic_class?: string;
+}
+
+export interface AnvisaMedication {
+  nome_produto: string; principio_ativo: string | null; classe_terapeutica: string | null;
+  categoria_regulatoria: string | null; numero_registro: string | null;
+  empresa_detentora: string | null; situacao_registro: string | null;
 }
 
 export interface Prescription {
@@ -190,6 +215,7 @@ export interface Exam {
   loinc_code: string; exam_name: string; category: string; status: string; result: string;
   result_date: string; ai_analysis: string; notes: string; patient_name: string;
   professional_name: string; created_at: string; updated_at: string;
+  has_file?: boolean; file_name?: string; file_type?: string;
 }
 
 export interface ExamUploadResult {
@@ -198,6 +224,11 @@ export interface ExamUploadResult {
   indicators_found: number;
   indicators: Array<{ name: string; value: number }>;
   ai_analysis: string;
+  comparative?: {
+    trends: ExamTrend[];
+    alerts: Array<{ label: string; value: number; unit: string; status: string; delta: number | null; direction: string; worsening: boolean }>;
+    analysis: string | null;
+  };
   notifications: { notified: boolean; alerts?: Array<{ label: string; value: number; unit: string; status: string }>; } | null;
 }
 
@@ -215,6 +246,7 @@ export interface ExamComparative {
   trends: ExamTrend[];
   alerts: Array<{ label: string; value: number; unit: string; status: string; delta: number | null; direction: string; worsening: boolean }>;
   history?: Record<string, Array<{ value: number; unit: string; recorded_at: string }>>;
+  analysis?: string | null;
 }
 
 export interface ExamBatchResult {

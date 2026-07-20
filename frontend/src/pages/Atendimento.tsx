@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Stethoscope, Plus, HeartPulse, Thermometer, Wind, Droplets } from 'lucide-react'
 import { api, type MedicalRecord, type Patient, type Professional } from '../services/api'
 import { useToast } from '../components/Toast'
@@ -19,6 +20,7 @@ export default function Atendimento() {
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const { addToast } = useToast()
+  const navigate = useNavigate()
   const [form, setForm] = useState({
     patient_id: '', professional_id: '', chief_complaint: '', manchester_priority: 'verde',
     systolic_bp: '', diastolic_bp: '', heart_rate: '', temperature: '', respiratory_rate: '',
@@ -73,13 +75,13 @@ export default function Atendimento() {
       </div>
 
       {/* Manchester Queue */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
         {MANCHESTER.map(m => {
           const count = records.filter(r => r.manchester_priority === m.color).length
           return (
-            <div key={m.color} className={`rounded-xl p-4 ${m.bg} ${m.text} text-center`}>
-              <p className="text-2xl font-bold">{count}</p>
-              <p className="text-xs font-medium opacity-90">{m.label}</p>
+            <div key={m.color} className={`rounded-xl p-2 sm:p-4 ${m.bg} ${m.text} text-center flex flex-col items-center justify-center min-w-0`}>
+              <p className="text-xl sm:text-2xl font-bold leading-none">{count}</p>
+              <p className="text-[10px] sm:text-xs font-medium opacity-90 leading-tight mt-1 break-words hyphens-auto">{m.label}</p>
             </div>
           )
         })}
@@ -94,7 +96,13 @@ export default function Atendimento() {
               <div className="flex items-start justify-between flex-wrap gap-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
-                    <h3 className="font-semibold text-gray-900">{record.patient_name}</h3>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/prontuario?pid=${record.patient_id}&nome=${encodeURIComponent(record.patient_name || '')}`)}
+                      className="font-semibold text-gray-900 hover:text-wine hover:underline focus:outline-none focus:ring-2 focus:ring-wine rounded"
+                    >
+                      {record.patient_name}
+                    </button>
                     <span className={`badge ${m.bg} ${m.text}`}>{m.label}</span>
                     {record.icd10_code && <span className="badge-cid">CID-10: {record.icd10_code}</span>}
                   </div>

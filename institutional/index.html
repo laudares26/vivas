@@ -512,6 +512,21 @@
         }
       });
     });
+    // Invite discount code (?desconto=CODE) — applied at checkout, e.g. 5% off first plan
+    const discountCode = new URLSearchParams(window.location.search).get('desconto');
+    if (discountCode) {
+      fetch('/api/subscriptions/validate-discount/' + encodeURIComponent(discountCode))
+        .then(r => r.json())
+        .then(d => {
+          if (d && d.valid) {
+            const banner = document.createElement('div');
+            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#7B1E3C;color:#fff;text-align:center;padding:10px 16px;font-weight:600;font-size:14px;';
+            banner.textContent = `Desconto de ${d.percent}% aplicado! Escolha seu plano abaixo.`;
+            document.body.appendChild(banner);
+          }
+        })
+        .catch(() => {});
+    }
     // Plan checkout — track abandoned carts
     document.querySelectorAll('.btn-plan').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -524,7 +539,7 @@
           const res = await fetch('/api/subscriptions/checkout', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ plan })
+            body: JSON.stringify({ plan, discountCode: discountCode || undefined })
           });
           const data = await res.json();
           if (data.url) {

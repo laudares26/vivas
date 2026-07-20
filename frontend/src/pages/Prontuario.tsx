@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { FileText, Search, Stethoscope, TestTubeDiagonal, Pill, Syringe, AlertTriangle, User } from 'lucide-react'
-import { api, type Patient, type EHREntry } from '../services/api'
+import { useSearchParams } from 'react-router-dom'
+import { FileText, Search, Stethoscope, TestTubeDiagonal, Pill, Syringe, AlertTriangle, User, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react'
+import { api, type Patient, type EHREntry, type ExamComparative } from '../services/api'
 import { useToast } from '../components/Toast'
 
 const TYPE_CONFIG: Record<string, { icon: typeof FileText; color: string; bg: string }> = {
@@ -17,14 +18,40 @@ export default function Prontuario() {
   const [entries, setEntries] = useState<EHREntry[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
+  const [comparative, setComparative] = useState<ExamComparative | null>(null)
+  const [loadingComparative, setLoadingComparative] = useState(false)
   const { addToast } = useToast()
+  const [searchParams] = useSearchParams()
 
   useEffect(() => {
-    api.getPatients('limit=100').then(r => setPatients(r.data)).catch(() => {})
+    const nome = searchParams.get('nome') || ''
+    const pid = searchParams.get('pid') || ''
+    api.getPatients('limit=100').then(async r => {
+      setPatients(r.data)
+      if (nome) setSearchTerm(nome)
+      // Prefer selecting by patient id (robust to duplicate names); fall back to name match.
+      let match = pid ? r.data.find(p => p.id === pid) : undefined
+      if (!match && nome) {
+        match = r.data.find(p => p.full_name.toLowerCase() === nome.toLowerCase())
+          || r.data.find(p => p.full_name.toLowerCase().includes(nome.toLowerCase()))
+      }
+      if (match) { setSelectedPatient(match); loadEntries(match.id); return }
+      // Patient not in the list yet — fetch directly by id so the prontuário still opens.
+      if (pid) {
+        try {
+          const p = await api.getPatient(pid)
+          setPatients(prev => (prev.some(x => x.id === p.id) ? prev : [p, ...prev]))
+          setSelectedPatient(p)
+          loadEntries(p.id)
+        } catch { /* no access */ }
+      }
+    }).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadEntries = async (patientId: string) => {
     setLoading(true)
+    loadComparative(patientId)
     try {
       const res = await api.getEHR(patientId)
       setEntries(res)
@@ -32,9 +59,27 @@ export default function Prontuario() {
     finally { setLoading(false) }
   }
 
+  const loadComparative = (patientId: string) => {
+    setLoadingComparative(true)
+    setComparative(null)
+    api.getExamComparative({ analyze: true, patientId })
+      .then(setComparative)
+      .catch(() => setComparative(null))
+      .finally(() => setLoadingComparative(false))
+  }
+
   const selectPatient = (p: Patient) => {
     setSelectedPatient(p)
     loadEntries(p.id)
+  }
+
+  const parseResultRows = (result?: string): { name: string; value: string; unit?: string }[] | null => {
+    if (!result) return null
+    try {
+      const parsed = JSON.parse(result)
+      if (Array.isArray(parsed) && parsed.length && parsed[0] && 'name' in parsed[0]) return parsed
+      return null
+    } catch { return null }
   }
 
   const filteredPatients = patients.filter(p =>
@@ -100,6 +145,56 @@ export default function Prontuario() {
                 )}
               </div>
 
+              {/* Historical AI analysis — considers ALL of the patient's exams */}
+              <div className="card">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp className="w-5 h-5 text-wine" />
+                  <h3 className="font-semibold text-gray-900">Análise histórica inteligente</h3>
+                </div>
+                <p className="text-sm text-gray-500 mb-4">
+                  Evolução considerando <strong>todos os exames do paciente</strong> — não apenas o último.
+                </p>
+                {loadingComparative ? (
+                  <div className="flex items-center gap-3 p-4 bg-wine-soft rounded-lg">
+                    <Loader2 className="w-5 h-5 text-wine animate-spin" />
+                    <span className="text-sm font-medium text-wine">Analisando todo o histórico de exames...</span>
+                  </div>
+                ) : comparative && comparative.trends.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      {comparative.trends.map(t => {
+                        const Icon = t.direction === 'estavel' ? Minus : (t.direction === 'subiu' ? TrendingUp : TrendingDown)
+                        const color = t.worsening ? 'text-red-600' : (t.direction === 'estavel' ? 'text-gray-400' : 'text-green-600')
+                        return (
+                          <div key={t.name} className="flex items-center justify-between text-xs sm:text-sm border-b border-gray-100 pb-2">
+                            <span className="font-medium text-gray-700">{t.label}</span>
+                            <div className="flex items-center gap-2">
+                              {t.first_value != null && <span className="text-gray-400">{t.first_value}→</span>}
+                              <span className="font-semibold text-gray-900">{t.current_value} {t.unit}</span>
+                              {t.count > 1 && <span className="text-gray-400">({t.count} exames)</span>}
+                              <span className={`flex items-center gap-0.5 ${color}`}>
+                                <Icon className="w-3.5 h-3.5" />
+                                {t.delta_pct != null && t.direction !== 'estavel' ? `${t.delta_pct > 0 ? '+' : ''}${t.delta_pct}%` : ''}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {comparative.analysis ? (
+                      <div className="p-4 bg-wine-soft border border-wine-line rounded-lg">
+                        <p className="font-semibold text-sm text-gray-900 mb-2">Interpretação preventiva (todo o histórico):</p>
+                        <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{comparative.analysis}</p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400">Análise textual indisponível no momento.</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-400 text-sm text-center py-6">Sem exames com indicadores para este paciente.</p>
+                )}
+              </div>
+
               {/* Timeline */}
               <div className="card">
                 <h3 className="font-semibold text-gray-900 mb-4">Linha do Tempo</h3>
@@ -114,17 +209,28 @@ export default function Prontuario() {
                       {entries.map(entry => {
                         const config = TYPE_CONFIG[entry.entry_type] || TYPE_CONFIG.consulta
                         const Icon = config.icon
+                        const rows = entry.entry_type === 'exame' ? parseResultRows(entry.metadata?.result) : null
                         return (
                           <div key={entry.id} className="relative flex gap-4 pl-2">
                             <div className={`w-8 h-8 rounded-full ${config.bg} flex items-center justify-center z-10 flex-shrink-0`}>
                               <Icon className={`w-4 h-4 ${config.color}`} />
                             </div>
-                            <div className="flex-1 pb-2">
-                              <div className="flex items-center gap-2 mb-1">
+                            <div className="flex-1 pb-2 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <h4 className="font-medium text-gray-900 text-sm">{entry.title}</h4>
                                 <span className={`badge ${config.bg} ${config.color}`}>{entry.entry_type}</span>
                               </div>
-                              <p className="text-sm text-gray-600">{entry.description}</p>
+                              {rows ? (
+                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                  {rows.map((r, i) => (
+                                    <span key={i} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded capitalize">
+                                      {r.name.replace(/_/g, ' ')}: <strong>{r.value}</strong>{r.unit ? ` ${r.unit}` : ''}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-600 break-words">{entry.description}</p>
+                              )}
                               <p className="text-xs text-gray-400 mt-1">{new Date(entry.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                             </div>
                           </div>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Home, Calendar, FileText, User, Bell, Camera, Upload, ChevronRight, TrendingUp, Heart, Video, CreditCard, CheckCircle, XCircle, Loader2, MessageCircle } from 'lucide-react'
-import { api, type DashboardData, type ExamUploadResult } from '../services/api'
+import { api, type DashboardData, type ExamUploadResult, type ExamBatchResult } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function PatientDashboard() {
@@ -12,6 +12,7 @@ export default function PatientDashboard() {
   const [imageQuality, setImageQuality] = useState<'good' | 'bad' | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadResult, setUploadResult] = useState<ExamUploadResult | null>(null)
+  const [batchResult, setBatchResult] = useState<ExamBatchResult | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [showCarteirinha, setShowCarteirinha] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -23,11 +24,20 @@ export default function PatientDashboard() {
   }, [])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setSelectedFile(file)
+    const files = e.target.files
+    if (!files || files.length === 0) return
     setUploadError(null)
     setUploadResult(null)
+    setBatchResult(null)
+
+    // Multiple files: send them all in one batch (no per-image quality check).
+    if (files.length > 1) {
+      handleBatchUpload(Array.from(files))
+      return
+    }
+
+    const file = files[0]
+    setSelectedFile(file)
 
     // PDFs cannot be analyzed as images — skip quality check
     if (file.type === 'application/pdf') {
@@ -44,6 +54,19 @@ export default function PatientDashboard() {
       analyzeImageQuality(ev.target?.result as string)
     }
     reader.readAsDataURL(file)
+  }
+
+  const handleBatchUpload = async (files: File[]) => {
+    setUploadState('uploading')
+    setUploadError(null)
+    try {
+      const result = await api.uploadExamsBatch(files)
+      setBatchResult(result)
+      setUploadState('result')
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Erro ao enviar exames')
+      setUploadState('idle')
+    }
   }
 
   const handleSendExam = async () => {
@@ -92,6 +115,7 @@ export default function PatientDashboard() {
     setImageQuality(null)
     setSelectedFile(null)
     setUploadResult(null)
+    setBatchResult(null)
     setUploadError(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
@@ -273,7 +297,16 @@ export default function PatientDashboard() {
                   <Upload className="w-6 h-6" />
                   Upload
                 </button>
-                <input ref={fileInputRef} type="file" accept="image/*,application/pdf" onChange={handleFileSelect} className="hidden" />
+                <input ref={fileInputRef} type="file" multiple accept="image/*,application/pdf" onChange={handleFileSelect} className="hidden" />
+              </div>
+            )}
+            {uploadState === 'idle' && (
+              <p className="text-xs text-muted mt-2 text-center">Dica: no "Upload" você pode selecionar vários exames de uma vez.</p>
+            )}
+            {uploadState === 'idle' && uploadError && (
+              <div className="mt-3 flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-xl">
+                <XCircle className="w-5 h-5" />
+                <p className="text-sm">{uploadError}</p>
               </div>
             )}
             {uploadState === 'analyzing' && (
@@ -337,6 +370,37 @@ export default function PatientDashboard() {
                 <p className="text-xs text-muted">Estamos extraindo os indicadores do seu exame</p>
               </div>
             )}
+            {uploadState === 'result' && batchResult && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-success bg-success-soft p-3 rounded-xl">
+                  <CheckCircle className="w-5 h-5" />
+                  <div>
+                    <p className="font-semibold text-sm">{batchResult.files_processed} exame(s) enviado(s) e analisado(s)!</p>
+                    <p className="text-xs opacity-80">{batchResult.total_indicators} indicador(es) extraido(s) no total</p>
+                  </div>
+                </div>
+                {batchResult.comparative?.trends?.length > 0 && (
+                  <div className="bg-wine-soft p-4 rounded-xl">
+                    <p className="font-semibold text-sm text-wine mb-2 flex items-center gap-1.5">
+                      <TrendingUp className="w-4 h-4" /> Análise comparativa
+                    </p>
+                    <div className="space-y-1.5">
+                      {batchResult.comparative.trends.map(t => (
+                        <div key={t.name} className="flex items-center justify-between text-xs">
+                          <span className="text-ink font-medium">{t.label}</span>
+                          <span className={`font-semibold ${t.worsening ? 'text-red-600' : 'text-ink'}`}>
+                            {t.current_value} {t.unit}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <button onClick={resetUpload} className="w-full px-4 py-2.5 bg-wine text-white rounded-xl font-display font-bold text-sm">
+                  Enviar outros exames
+                </button>
+              </div>
+            )}
             {uploadState === 'result' && uploadResult && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-success bg-success-soft p-3 rounded-xl">
@@ -346,10 +410,31 @@ export default function PatientDashboard() {
                     <p className="text-xs opacity-80">{uploadResult.indicators_found} indicador(es) extraido(s)</p>
                   </div>
                 </div>
-                {uploadResult.ai_analysis && (
+                {uploadResult.comparative?.analysis ? (
+                  <div className="bg-wine-soft p-4 rounded-xl">
+                    <p className="font-semibold text-sm text-wine mb-2">Analise preventiva (todo o seu historico de exames):</p>
+                    <p className="text-xs text-ink whitespace-pre-line leading-relaxed">{uploadResult.comparative.analysis}</p>
+                  </div>
+                ) : uploadResult.ai_analysis && (
                   <div className="bg-wine-soft p-4 rounded-xl">
                     <p className="font-semibold text-sm text-wine mb-2">Analise preventiva:</p>
                     <p className="text-xs text-ink whitespace-pre-line leading-relaxed">{uploadResult.ai_analysis}</p>
+                  </div>
+                )}
+                {uploadResult.comparative?.trends && uploadResult.comparative.trends.length > 0 && (
+                  <div className="bg-white border border-wine-line p-4 rounded-xl">
+                    <p className="font-semibold text-sm text-ink mb-2">Evolucao dos seus indicadores:</p>
+                    <div className="space-y-1.5">
+                      {uploadResult.comparative.trends.map(t => (
+                        <div key={t.name} className="flex items-center justify-between text-xs">
+                          <span className="text-muted">{t.label}</span>
+                          <span className={t.worsening ? 'text-red-600 font-semibold' : 'text-ink'}>
+                            {t.previous_value != null ? `${t.previous_value}→` : ''}{t.current_value} {t.unit}
+                            {t.count > 1 ? ` (${t.count} exames)` : ''}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {uploadResult.notifications?.notified && (

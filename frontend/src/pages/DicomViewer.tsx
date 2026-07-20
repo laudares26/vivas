@@ -696,33 +696,33 @@ export default function DicomViewer() {
       )}
 
       {/* Header */}
-      <div className="bg-gray-900 text-white px-4 py-3 flex items-center justify-between border-b border-gray-700">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+      <div className="bg-wine text-white px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-wine-deep">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center flex-shrink-0">
             <Layers size={18} />
           </div>
-          <div>
-            <h1 className="text-lg font-bold">Isis DICOM Viewer</h1>
-            <p className="text-xs text-gray-400">Visualizador de Imagens Médicas | VIVAS Saúde</p>
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold truncate">vivas DICOM</h1>
+            <p className="text-xs text-white/70 truncate">Visualizador de Imagens Médicas | vivas</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 max-w-full">
           <button
             onClick={() => setTab('library')}
-            className={`px-3 py-1.5 text-sm rounded-lg transition ${tab === 'library' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+            className={`px-3 py-1.5 text-sm rounded-lg transition flex-shrink-0 ${tab === 'library' ? 'bg-white text-wine font-semibold' : 'text-white/80 hover:bg-white/10'}`}
           >
             <div className="flex items-center gap-1.5"><FileImage size={14} /> Biblioteca</div>
           </button>
           <button
             onClick={() => setTab('viewer')}
-            className={`px-3 py-1.5 text-sm rounded-lg transition ${tab === 'viewer' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+            className={`px-3 py-1.5 text-sm rounded-lg transition flex-shrink-0 disabled:opacity-40 ${tab === 'viewer' ? 'bg-white text-wine font-semibold' : 'text-white/80 hover:bg-white/10'}`}
             disabled={!selectedStudy}
           >
             <div className="flex items-center gap-1.5"><Monitor size={14} /> Visualizador</div>
           </button>
           <button
             onClick={() => { setTab('sources'); api.getPacsSources().then(setPacsSources).catch(() => {}) }}
-            className={`px-3 py-1.5 text-sm rounded-lg transition ${tab === 'sources' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+            className={`px-3 py-1.5 text-sm rounded-lg transition flex-shrink-0 ${tab === 'sources' ? 'bg-white text-wine font-semibold' : 'text-white/80 hover:bg-white/10'}`}
           >
             <div className="flex items-center gap-1.5"><Globe size={14} /> Fontes PACS</div>
           </button>
@@ -740,7 +740,7 @@ export default function DicomViewer() {
                 <input
                   type="text" value={search} onChange={e => setSearch(e.target.value)}
                   placeholder="Buscar paciente, exame, modalidade..."
-                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-wine"
                 />
               </div>
               <label className="flex items-center gap-2 px-4 py-2 bg-[#7B1E3C] text-white rounded-lg cursor-pointer hover:bg-[#5E1730] text-sm font-medium transition">
@@ -751,11 +751,11 @@ export default function DicomViewer() {
               <button onClick={loadStudies} className="p-2 hover:bg-gray-100 rounded-lg transition" title="Atualizar">
                 <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
               </button>
-              {uploadProgress && <span className="text-sm text-blue-600 flex items-center gap-1"><Loader2 size={14} className="animate-spin" />{uploadProgress}</span>}
+              {uploadProgress && <span className="text-sm text-wine flex items-center gap-1"><Loader2 size={14} className="animate-spin" />{uploadProgress}</span>}
             </div>
 
             {/* Statistics */}
-            <div className="px-4 py-2 bg-white border-b flex items-center gap-4 text-sm text-gray-600">
+            <div className="px-4 py-2 bg-white border-b flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
               <span><strong>{filteredStudies.length}</strong> estudo(s)</span>
               <span className="text-gray-300">|</span>
               {['CT', 'CR', 'MR', 'US', 'MG'].map(mod => {
@@ -771,7 +771,7 @@ export default function DicomViewer() {
             {/* Studies list */}
             <div className="flex-1 overflow-auto p-4">
               {loading ? (
-                <div className="flex items-center justify-center h-40"><Loader2 className="animate-spin text-blue-500" size={32} /></div>
+                <div className="flex items-center justify-center h-40"><Loader2 className="animate-spin text-wine" size={32} /></div>
               ) : filteredStudies.length === 0 ? (
                 <div className="text-center py-12">
                   <FileImage size={48} className="mx-auto text-gray-300 mb-3" />
@@ -781,19 +781,19 @@ export default function DicomViewer() {
               ) : (
                 <div className="space-y-2">
                   {filteredStudies.map(study => (
-                    <div key={study.id} className="bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all">
+                    <div key={study.id} className="bg-white rounded-xl border border-gray-200 hover:border-wine hover:shadow-md transition-all">
                       <div
-                        className="flex items-center gap-4 p-4 cursor-pointer"
+                        className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 cursor-pointer"
                         onClick={() => setExpandedStudy(expandedStudy === study.id ? null : study.id)}
                       >
                         {/* Patient avatar */}
-                        <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-wine to-wine-deep flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                           {getPatientInitials(study.patient_name || '')}
                         </div>
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-gray-900 truncate">
                               {(study.patient_name || 'Desconhecido').replace(/\^/g, ' ')}
                             </span>
@@ -805,7 +805,7 @@ export default function DicomViewer() {
                             )}
                           </div>
                           <p className="text-sm text-gray-600 truncate">{study.study_description || 'Sem descrição'}</p>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                          <div className="flex items-center flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-gray-400">
                             <span>ID: {study.patient_id || '—'}</span>
                             <span>Data: {formatDicomDate(study.study_date)}</span>
                             <span>{formatDicomTime(study.study_time)}</span>
@@ -814,7 +814,7 @@ export default function DicomViewer() {
                         </div>
 
                         {/* Stats */}
-                        <div className="flex items-center gap-4 text-sm text-gray-500 flex-shrink-0">
+                        <div className="hidden md:flex items-center gap-4 text-sm text-gray-500 flex-shrink-0">
                           <div className="text-center">
                             <div className="font-semibold text-gray-700">{study.num_series}</div>
                             <div className="text-xs">Séries</div>
@@ -829,7 +829,7 @@ export default function DicomViewer() {
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <button
                             onClick={e => { e.stopPropagation(); openStudyInViewer(study) }}
-                            className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
+                            className="p-2 rounded-lg bg-wine-soft text-wine hover:bg-wine-line transition"
                             title="Abrir no Visualizador"
                           >
                             <Eye size={18} />
@@ -848,7 +848,7 @@ export default function DicomViewer() {
                       {/* Expanded details */}
                       {expandedStudy === study.id && (
                         <div className="px-4 pb-4 border-t border-gray-100 pt-3">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                             <div><span className="text-gray-400">Paciente:</span> <span className="font-medium">{(study.patient_name || '').replace(/\^/g, ' ')}</span></div>
                             <div><span className="text-gray-400">ID:</span> <span className="font-medium">{study.patient_id || '—'}</span></div>
                             <div><span className="text-gray-400">Nascimento:</span> <span className="font-medium">{formatDicomDate(study.patient_birth_date)}</span></div>
@@ -883,7 +883,7 @@ export default function DicomViewer() {
                 <button
                   key={tool}
                   onClick={() => setActiveTool(tool)}
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center transition ${activeTool === tool ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center transition ${activeTool === tool ? 'bg-wine text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
                   title={label}
                 >
                   <Icon size={18} />
@@ -906,7 +906,7 @@ export default function DicomViewer() {
               <button onClick={() => setViewerState({ ...DEFAULT_STATE })} className="w-10 h-10 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white flex items-center justify-center transition" title="Reset">
                 <RefreshCw size={18} />
               </button>
-              <button onClick={() => setShowPresets(!showPresets)} className={`w-10 h-10 rounded-lg flex items-center justify-center transition ${showPresets ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`} title="Presets">
+              <button onClick={() => setShowPresets(!showPresets)} className={`w-10 h-10 rounded-lg flex items-center justify-center transition ${showPresets ? 'bg-wine text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`} title="Presets">
                 <Settings2 size={18} />
               </button>
               <button onClick={() => setShowInfo(!showInfo)} className={`w-10 h-10 rounded-lg flex items-center justify-center transition ${showInfo ? 'bg-green-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`} title="Informações">
@@ -921,15 +921,15 @@ export default function DicomViewer() {
             {/* Main viewer area */}
             <div className="flex-1 flex flex-col relative">
               {/* Patient info bar */}
-              <div className="bg-gray-900/90 text-white px-4 py-2 flex items-center justify-between text-sm border-b border-gray-700">
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold">{(selectedStudy.patient_name || '').replace(/\^/g, ' ')}</span>
-                  <span className="text-gray-400">|</span>
-                  <span className="text-gray-300">{selectedStudy.study_description}</span>
+              <div className="bg-gray-900/90 text-white px-4 py-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm border-b border-gray-700">
+                <div className="flex items-center flex-wrap gap-x-3 gap-y-1 min-w-0">
+                  <span className="font-semibold truncate">{(selectedStudy.patient_name || '').replace(/\^/g, ' ')}</span>
+                  <span className="text-gray-400 hidden sm:inline">|</span>
+                  <span className="text-gray-300 truncate">{selectedStudy.study_description}</span>
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${getModalityColor(selectedStudy.modality)}`}>{selectedStudy.modality}</span>
                   {selectedStudy.id.startsWith('demo-') && <span className="px-2 py-0.5 rounded text-xs bg-amber-600/30 text-amber-300 font-medium">EXEMPLO</span>}
                 </div>
-                <div className="flex items-center gap-4 text-gray-400 text-xs">
+                <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-gray-400 text-xs">
                   <span>Data: {formatDicomDate(selectedStudy.study_date)}</span>
                   <span>ID: {selectedStudy.patient_id || '—'}</span>
                   <span>Sexo: {selectedStudy.patient_sex || '—'}</span>
@@ -1010,14 +1010,14 @@ export default function DicomViewer() {
               </div>
 
               {/* Slice slider */}
-              <div className="bg-gray-900 px-4 py-2 flex items-center gap-3 border-t border-gray-700">
+              <div className="bg-gray-900 px-4 py-2 flex items-center flex-wrap gap-3 border-t border-gray-700">
                 <span className="text-gray-400 text-xs w-16">Fatia {currentSlice + 1}/{maxSlices}</span>
                 <input
                   type="range" min={0} max={maxSlices - 1} value={currentSlice}
                   onChange={e => setCurrentSlice(parseInt(e.target.value))}
-                  className="flex-1 accent-blue-500"
+                  className="flex-1 accent-[#7B1E3C]"
                 />
-                <div className="flex items-center gap-3 text-xs text-gray-400">
+                <div className="flex items-center flex-wrap gap-x-3 text-xs text-gray-400">
                   <span>WC: {viewerState.windowCenter}</span>
                   <span>WW: {viewerState.windowWidth}</span>
                   <span>Zoom: {(viewerState.zoom * 100).toFixed(0)}%</span>
@@ -1030,7 +1030,7 @@ export default function DicomViewer() {
         {tab === 'sources' && (
           <div className="h-full bg-gray-50 p-6 overflow-auto">
             <div className="max-w-4xl mx-auto">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">Fontes PACS / DICOMweb</h2>
                   <p className="text-sm text-gray-500 mt-1">Configure servidores PACS para busca e recebimento de exames via rede DICOM</p>
@@ -1047,37 +1047,37 @@ export default function DicomViewer() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-gray-200 p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Server size={20} className="text-blue-600" />
+                    <Server size={20} className="text-wine" />
                     <h3 className="font-semibold text-gray-900">DIMSE</h3>
                   </div>
                   <p className="text-xs text-gray-500">Protocolo tradicional DICOM via rede TCP/IP. Suporta C-ECHO, C-FIND, C-MOVE, C-GET, C-STORE.</p>
                   <div className="mt-2 flex flex-wrap gap-1">
                     {['C-ECHO', 'C-FIND', 'C-MOVE', 'C-STORE', 'MWL', 'MPPS'].map(op => (
-                      <span key={op} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-medium">{op}</span>
+                      <span key={op} className="px-1.5 py-0.5 bg-wine-soft text-wine rounded text-[10px] font-medium">{op}</span>
                     ))}
                   </div>
                 </div>
                 <div className="bg-white rounded-xl border border-gray-200 p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Globe size={20} className="text-green-600" />
+                    <Globe size={20} className="text-wine" />
                     <h3 className="font-semibold text-gray-900">DICOMweb</h3>
                   </div>
                   <p className="text-xs text-gray-500">Protocolo HTTP/REST moderno. QIDO-RS para busca, WADO-RS para download, STOW-RS para upload.</p>
                   <div className="mt-2 flex flex-wrap gap-1">
                     {['QIDO-RS', 'WADO-RS', 'STOW-RS', 'UPS-RS'].map(op => (
-                      <span key={op} className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded text-[10px] font-medium">{op}</span>
+                      <span key={op} className="px-1.5 py-0.5 bg-wine-soft text-wine rounded text-[10px] font-medium">{op}</span>
                     ))}
                   </div>
                 </div>
                 <div className="bg-white rounded-xl border border-gray-200 p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Layers size={20} className="text-purple-600" />
+                    <Layers size={20} className="text-wine" />
                     <h3 className="font-semibold text-gray-900">Codecs</h3>
                   </div>
                   <p className="text-xs text-gray-500">Decodificação de imagens DICOM com suporte a múltiplos formatos de compressão.</p>
                   <div className="mt-2 flex flex-wrap gap-1">
                     {['JPEG', 'JPEG 2000', 'JPEG-LS', 'RLE', 'HTJ2K', 'Deflate'].map(op => (
-                      <span key={op} className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded text-[10px] font-medium">{op}</span>
+                      <span key={op} className="px-1.5 py-0.5 bg-wine-soft text-wine rounded text-[10px] font-medium">{op}</span>
                     ))}
                   </div>
                 </div>
@@ -1102,8 +1102,8 @@ export default function DicomViewer() {
                 ) : (
                   <div className="divide-y divide-gray-100">
                     {pacsSources.map(source => (
-                      <div key={source.id} className="px-4 py-3 flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${source.protocol === 'DICOMweb' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                      <div key={source.id} className="px-4 py-3 flex items-center flex-wrap gap-3">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-wine-soft text-wine">
                           {source.protocol === 'DICOMweb' ? <Globe size={20} /> : <Server size={20} />}
                         </div>
                         <div className="flex-1">
@@ -1127,7 +1127,7 @@ export default function DicomViewer() {
 
               {/* Feature parity section */}
               <div className="mt-6 bg-white rounded-xl border border-gray-200 p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">Paridade de Funcionalidades - Isis DICOM Viewer</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">Paridade de Funcionalidades - vivas DICOM</h3>
                 <p className="text-xs text-gray-500 mb-4">Baseado nas bibliotecas DICOM-Swift, MTKDicomBridge e MTK</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                   {[

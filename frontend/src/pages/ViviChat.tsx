@@ -88,7 +88,7 @@ export default function ViviChat() {
         </div>
         <div>
           <p className="font-display font-bold text-sm">Vivi</p>
-          <p className="text-[10px] text-white/70">Assistente de saude VivaS</p>
+          <p className="text-[10px] text-white/70">Assistente de saude vivas</p>
         </div>
       </header>
 

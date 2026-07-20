@@ -44,11 +44,11 @@ function LayoutInner({ children }: { children: ReactNode }) {
       <Sidebar collapsed={isMobile ? false : collapsed} onToggle={handleToggle} mobileHidden={isMobile && !mobileOpen} />
 
       {/* Main content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+      <div className={`flex-1 min-w-0 flex flex-col transition-all duration-300 ${
         isMobile ? 'ml-0' : collapsed ? 'ml-[72px]' : 'ml-[260px]'
       }`}>
         <TopBar onMenuClick={isMobile ? () => setMobileOpen(true) : undefined} />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
           <div className="p-4 md:p-6 max-w-[1600px] mx-auto">
             {children}
           </div>
