@@ -142,8 +142,10 @@ function buildHistoryTimeline(history) {
 // happened to extract. Downsamples the number of exams and truncates each one
 // so the prompt stays within budget even across many years of history.
 function buildRawExamDossier(exams, opts = {}) {
-  const maxExams = opts.maxExams || 45;
-  const perExamChars = opts.perExamChars || 750;
+  // Defaults kept modest so the request fits within the Groq tokens-per-minute
+  // budget; can be raised via env on a higher tier (GROQ_DOSSIER_*).
+  const maxExams = opts.maxExams || parseInt(process.env.GROQ_DOSSIER_MAX_EXAMS || '26', 10);
+  const perExamChars = opts.perExamChars || parseInt(process.env.GROQ_DOSSIER_PER_EXAM || '650', 10);
   const list = (Array.isArray(exams) ? exams : [])
     .filter(e => e && e.exam_text && e.exam_text.trim())
     .sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -212,7 +214,7 @@ REGRAS OBRIGATORIAS:
     },
   ];
 
-  return chatCompletion(messages, { temperature: 0.3, maxTokens: 1200, timeoutMs: 45000 });
+  return chatCompletion(messages, { temperature: 0.3, maxTokens: 1000, timeoutMs: 45000 });
 }
 
 // LLM-generated comparative/historical analysis across multiple exams over time.
