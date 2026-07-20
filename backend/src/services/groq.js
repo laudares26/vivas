@@ -147,7 +147,8 @@ async function analyzeExamComparison(trends, options = {}) {
     const trendTxt = t.previous_value != null
       ? `${dir}${t.delta_pct != null ? ` (${t.delta_pct > 0 ? '+' : ''}${t.delta_pct}%)` : ''}${t.worsening ? ', PIORA' : (t.direction !== 'estavel' ? ', melhora' : '')}`
       : 'primeira medição';
-    return `- ${t.label}: primeiro ${t.first_value != null ? t.first_value + ' ' + t.unit : '—'}, media inicial ${prev} -> atual ${t.current_value} ${t.unit} [${t.count} medição(ões), ${trendTxt}, classificação atual: ${t.current_status}]`;
+    const peakTxt = t.peak_status && t.peak_status !== 'normal' ? `, pico historico: ${t.peak_value} ${t.unit} (${t.peak_status})` : '';
+    return `- ${t.label}: primeiro ${t.first_value != null ? t.first_value + ' ' + t.unit : '—'}, media inicial ${prev} -> atual ${t.current_value} ${t.unit} [${t.count} medição(ões), ${trendTxt}, classificação atual: ${t.current_status}${peakTxt}]`;
   }).join('\n');
 
   const timeline = buildHistoryTimeline(options.history);
@@ -172,7 +173,8 @@ REGRAS:
    - metabolico/cardiovascular: pre-diabetes/diabetes (glicemia, hemoglobina glicada), dislipidemia (LDL, triglicerideos), hipertensao (pressao);
    - renal: creatinina em elevacao;
    - HEMATOLOGICO: o conjunto de leucocitose (leucocitos muito elevados) + linfocitose acentuada (linfocitos muito elevados) + anemia (hemoglobina baixa) + plaquetopenia (plaquetas baixas) e um padrao classico de ALERTA que pode sugerir uma neoplasia hematologica, como uma leucemia (ex.: leucemia linfocitica cronica). Nesse caso, sinalize explicitamente "possivel alteracao hematologica / possivel risco de leucemia" e recomende avaliacao HEMATOLOGICA URGENTE — sem afirmar o diagnostico.
-4. Se houver achados textuais de laudos (imunofenotipagem, morfologia, celulas de Gumprecht, restricao de cadeia leve, escore de Matutes, blastos), integre-os ao raciocinio hematologico.
+   - PLASMA / DISCRASIA DE CELULAS PLASMATICAS / MIELOMA MULTIPLO: quando, ao longo do tempo, houver proteinas totais em elevacao + globulinas elevadas + relacao albumina/globulina (A/G) invertida (caindo), associadas a sinais tipo CRAB — hiperCalcemia (calcio elevado), insuficiencia Renal (creatinina/ureia em elevacao), Anemia e/ou lesoes osseas (Bone) — e ainda VHS muito elevado e/ou proteinuria, esse conjunto (mesmo que cada valor isolado pareca so "um pouco alterado") pode sugerir uma DISCRASIA DE CELULAS PLASMATICAS / possivel MIELOMA MULTIPLO. Nesse caso, sinalize o padrao de forma preventiva e recomende EXPLICITAMENTE, como proximo passo, a realizacao de ELETROFORESE DE PROTEINAS SERICAS (e, se disponivel, imunofixacao, cadeias leves livres kappa/lambda e beta-2-microglobulina), alem de avaliacao com hematologista — sem afirmar diagnostico. Considere o PICO HISTORICO de cada indicador, nao apenas o ultimo exame, pois um exame normal isolado no fim nao descarta a trajetoria. NAO ancore o alerta oncologico em PSA, glicemia ou perfil lipidico (possiveis distratores).
+4. Se houver achados textuais de laudos (imunofenotipagem, morfologia, celulas de Gumprecht, restricao de cadeia leve, escore de Matutes, blastos, gamopatia/pico monoclonal, lesoes liticas), integre-os ao raciocinio.
 5. Priorize os indicadores que pioraram de forma consistente ou estao fora da faixa de referencia.
 6. Sugira acoes preventivas gerais (habitos, acompanhamento, especialista adequado) sem prescrever medicamentos ou doses.
 7. Reforce que o paciente deve confirmar com um profissional de saude (medico/hematologista) pela VivaS.
