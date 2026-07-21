@@ -187,6 +187,11 @@ async function analyzeRawExamHistory(exams, options = {}) {
   const findings = Array.isArray(options.criticalFindings) ? options.criticalFindings : [];
   const findingsBlock = findings.length ? `\n\nAchados textuais sinalizados por triagem interna: ${findings.join(', ')}.` : '';
 
+  const priority = Array.isArray(options.priorityPatterns) ? options.priorityPatterns : [];
+  const priorityBlock = priority.length
+    ? `\n\nPADROES PRIORITARIOS JA DETECTADOS por triagem determinstica (voce DEVE aborda-los explicitamente na sua analise, correlacionando os indicadores, e recomendar os exames de confirmacao adequados):\n${priority.map(p => `- ${p.text}`).join('\n')}`
+    : '';
+
   const messages = [
     {
       role: 'system',
@@ -210,7 +215,7 @@ REGRAS OBRIGATORIAS:
     },
     {
       role: 'user',
-      content: `DOSSIE DE EXAMES (${dossier.used} de ${dossier.total} exames, amostrados ao longo do tempo):\n\n${dossier.text}\n\nResumo de indicadores estruturados (apoio, pode estar incompleto):\n${trendLines}${findingsBlock}\n\nGere a analise preventiva considerando a EVOLUCAO de TODO o conjunto de exames e recomende os exames de confirmacao pertinentes.`,
+      content: `DOSSIE DE EXAMES (${dossier.used} de ${dossier.total} exames, amostrados ao longo do tempo):\n\n${dossier.text}\n\nResumo de indicadores estruturados (apoio, pode estar incompleto):\n${trendLines}${findingsBlock}${priorityBlock}\n\nGere a analise preventiva considerando a EVOLUCAO de TODO o conjunto de exames e recomende os exames de confirmacao pertinentes.`,
     },
   ];
 
@@ -239,6 +244,11 @@ async function analyzeExamComparison(trends, options = {}) {
     ? `\n\nAchados textuais relevantes detectados em laudos do paciente (ex.: imunofenotipagem, morfologia): ${findings.join(', ')}. Considere-os na interpretacao hematologica.`
     : '';
 
+  const priority = Array.isArray(options.priorityPatterns) ? options.priorityPatterns : [];
+  const priorityBlock = priority.length
+    ? `\n\nPADROES PRIORITARIOS JA DETECTADOS por triagem determinstica (voce DEVE aborda-los explicitamente e recomendar os exames de confirmacao adequados):\n${priority.map(p => `- ${p.text}`).join('\n')}`
+    : '';
+
   const messages = [
     {
       role: 'system',
@@ -263,7 +273,7 @@ REGRAS:
     },
     {
       role: 'user',
-      content: `Resumo por indicador (${totalMeasurements} medições no total):\n${lines || '(sem indicadores estruturados)'}\n\nSerie historica completa (todos os exames):\n${timeline || '(sem série detalhada)'}${findingsBlock}\n\nGere a analise comparativa preventiva considerando TODOS os exames.`,
+      content: `Resumo por indicador (${totalMeasurements} medições no total):\n${lines || '(sem indicadores estruturados)'}\n\nSerie historica completa (todos os exames):\n${timeline || '(sem série detalhada)'}${findingsBlock}${priorityBlock}\n\nGere a analise comparativa preventiva considerando TODOS os exames.`,
     },
   ];
 

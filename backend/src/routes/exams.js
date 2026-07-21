@@ -4,7 +4,7 @@ const multer = require('multer');
 const {
   THRESHOLDS, classifyIndicator,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
-  buildFallbackComparativeText,
+  buildFallbackComparativeText, detectPriorityPatterns, computeHealthScore,
 } = require('../services/notifications');
 const {
   extractIndicatorsFromText, extractCollectionDate, extractCriticalFindings, extractTextFromFile,
@@ -244,22 +244,41 @@ async function getExamTextsForUser(userId) {
 // panel/alert is never left empty when Groq is unavailable.
 async function buildComparativeNarrative(userId, trends, history, criticalFindings) {
   if (!trends || trends.length === 0) return null;
+
+  // Deterministic safety net: high-priority patterns (hematologic / plasma-cell)
+  // that emerge only from crossing several exams over time are computed from the
+  // numeric trends and ALWAYS surfaced. The generic LLM narrative is great for
+  // breadth but non-deterministic, so it can miss a slow oncologic trajectory
+  // even when the markers are present. We prepend any priority pattern the LLM
+  // did not already cover so a myeloma/leukemia signal is never dropped.
+  const priority = detectPriorityPatterns(trends, criticalFindings);
+
+  let llmText = null;
   if (groq.isConfigured()) {
     const examTexts = await getExamTextsForUser(userId);
     if (examTexts.length > 0) {
       try {
-        return await groq.analyzeRawExamHistory(examTexts, { trends, criticalFindings });
+        llmText = await groq.analyzeRawExamHistory(examTexts, { trends, criticalFindings, priorityPatterns: priority });
       } catch (llmErr) {
         console.warn('[EXAM] Groq raw-text analysis failed, trying structured:', llmErr.message);
       }
     }
-    try {
-      return await groq.analyzeExamComparison(trends, { history, criticalFindings });
-    } catch (llmErr) {
-      console.warn('[EXAM] Groq structured analysis failed:', llmErr.message);
+    if (!llmText) {
+      try {
+        llmText = await groq.analyzeExamComparison(trends, { history, criticalFindings, priorityPatterns: priority });
+      } catch (llmErr) {
+        console.warn('[EXAM] Groq structured analysis failed:', llmErr.message);
+      }
     }
   }
-  return buildFallbackComparativeText(trends, criticalFindings);
+
+  if (!llmText) return buildFallbackComparativeText(trends, criticalFindings);
+
+  const missing = priority.filter(p => !llmText.toLowerCase().includes(p.term.toLowerCase()));
+  if (missing.length === 0) return llmText;
+
+  const header = 'Sinais prioritários detectados na sua trajetória de exames (requerem atenção):';
+  return `${header}\n\n${missing.map(p => `- ${p.text}`).join('\n\n')}\n\n---\n\n${llmText}`;
 }
 
 async function analyzeHistoryAndNotify(userId) {
@@ -481,10 +500,15 @@ router.get('/comparative', async (req, res) => {
 
     const history = await getIndicatorHistory(userId);
     const comparative = computeComparativeAnalysis(history);
+    const criticalFindings = comparative.trends.length > 0
+      ? await getCriticalFindingsForUser(userId)
+      : [];
+    const score = comparative.trends.length > 0
+      ? computeHealthScore(comparative.trends, criticalFindings)
+      : null;
 
     let analysis = null;
     if (req.query.analyze === '1' && comparative.trends.length > 0) {
-      const criticalFindings = await getCriticalFindingsForUser(userId);
       analysis = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings);
     }
 
@@ -493,6 +517,7 @@ router.get('/comparative', async (req, res) => {
       alerts: comparative.alerts,
       history,
       analysis,
+      score,
     });
   } catch (err) {
     console.error('[EXAM COMPARATIVE] Error:', err);

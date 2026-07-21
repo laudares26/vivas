@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Home, Calendar, FileText, User, Bell, Camera, Upload, ChevronRight, TrendingUp, Heart, Video, CreditCard, CheckCircle, XCircle, Loader2, MessageCircle } from 'lucide-react'
-import { api, type DashboardData, type ExamUploadResult, type ExamBatchResult } from '../services/api'
+import { api, type DashboardData, type ExamUploadResult, type ExamBatchResult, type ExamComparative } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function PatientDashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
+  const [healthScore, setHealthScore] = useState<ExamComparative['score'] | null>(null)
   const [loading, setLoading] = useState(true)
   const [uploadState, setUploadState] = useState<'idle' | 'preview' | 'analyzing' | 'done' | 'uploading' | 'result'>('idle')
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
@@ -21,6 +22,7 @@ export default function PatientDashboard() {
 
   useEffect(() => {
     api.getDashboard().then(setData).catch(console.error).finally(() => setLoading(false))
+    api.getExamComparative().then(c => setHealthScore(c.score ?? null)).catch(() => setHealthScore(null))
   }, [])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,10 +131,11 @@ export default function PatientDashboard() {
   const firstName = user?.full_name?.split(' ')[0] || 'Paciente'
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Bom dia,' : hour < 18 ? 'Boa tarde,' : 'Boa noite,'
-  const healthScore = 82
-  const scoreColor = healthScore >= 70 ? '#2F8F6B' : healthScore >= 40 ? '#B5751A' : '#DC2626'
+  const scoreValue = healthScore?.score ?? null
+  const scoreTone = healthScore?.tone
+  const scoreColor = scoreTone === 'alerta' ? '#DC2626' : scoreTone === 'atencao' ? '#B5751A' : scoreTone === 'bom' ? '#2F8F6B' : '#94a3b8'
   const circumference = 2 * Math.PI * 36
-  const dashOffset = circumference * (1 - healthScore / 100)
+  const dashOffset = scoreValue != null ? circumference * (1 - scoreValue / 100) : circumference
 
   return (
     <div className="min-h-screen bg-bg" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -206,17 +209,22 @@ export default function PatientDashboard() {
                   transform="rotate(-90 42 42)" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-display font-extrabold text-2xl text-ink">{healthScore}</span>
+                <span className="font-display font-extrabold text-2xl text-ink">{scoreValue != null ? scoreValue : '—'}</span>
                 <span className="text-xs text-muted font-semibold">de 100</span>
               </div>
             </div>
             <div>
-              <h4 className="font-display font-bold text-sm text-ink">Saúde em dia</h4>
-              <p className="text-xs text-muted mt-1">Baseado nos seus exames, hábitos e histórico.</p>
-              <span className="inline-flex items-center gap-1.5 mt-2 bg-success-soft text-success text-xs font-semibold px-2.5 py-1 rounded-full">
-                <TrendingUp className="w-3 h-3" />
-                +4 nos últimos 30 dias
-              </span>
+              <h4 className="font-display font-bold text-sm text-ink">{healthScore ? healthScore.label : 'Índice de saúde'}</h4>
+              <p className="text-xs text-muted mt-1">
+                {scoreValue == null
+                  ? 'Envie seus exames para calcular o índice com base no seu histórico.'
+                  : 'Baseado na análise de todos os seus exames enviados.'}
+              </p>
+              {scoreTone === 'alerta' && (
+                <span className="inline-flex items-center gap-1.5 mt-2 bg-red-50 text-red-600 text-xs font-semibold px-2.5 py-1 rounded-full">
+                  Padrão que requer investigação médica
+                </span>
+              )}
             </div>
           </div>
         </section>

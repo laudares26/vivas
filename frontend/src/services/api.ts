@@ -247,6 +247,7 @@ export interface ExamComparative {
   alerts: Array<{ label: string; value: number; unit: string; status: string; delta: number | null; direction: string; worsening: boolean }>;
   history?: Record<string, Array<{ value: number; unit: string; recorded_at: string }>>;
   analysis?: string | null;
+  score?: { score: number; label: string; tone: string; priorityCount: number };
 }
 
 export interface ExamBatchResult {
