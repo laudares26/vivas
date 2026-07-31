@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Heart, Eye, EyeOff, LogIn } from 'lucide-react'
+import { Eye, EyeOff, LogIn } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Login() {
@@ -43,7 +43,7 @@ export default function Login() {
         </div>
         <div className="relative z-10 flex flex-col items-center text-center">
           <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
-            <Heart className="w-12 h-12" fill="white" />
+            <img src="/vivas-icon-branco.svg" alt="vivas" className="w-12 h-12 object-contain" />
           </div>
           <h1 className="font-display text-5xl font-extrabold mb-3">vivas</h1>
           <p className="text-xl text-white/70 mb-8">Saúde preventiva inteligente</p>
@@ -58,7 +58,7 @@ export default function Login() {
         <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
           <div className="lg:hidden flex items-center gap-3 mb-6 justify-center">
             <div className="w-10 h-10 rounded-xl bg-wine flex items-center justify-center">
-              <Heart className="w-6 h-6 text-white" fill="white" />
+              <img src="/vivas-icon-branco.svg" alt="vivas" className="w-6 h-6 object-contain" />
             </div>
             <h1 className="font-display text-2xl font-extrabold text-wine">vivas</h1>
           </div>
