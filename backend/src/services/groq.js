@@ -1,16 +1,39 @@
-// Groq LLM service — powers the Vivi assistant and exam analysis.
-// Uses the Groq Chat Completions API (OpenAI-compatible).
+// LLM service — powers the Vivi assistant and exam analysis.
+//
+// The exam-analysis and assistant prompts all funnel through `chatCompletion`,
+// which routes to a pluggable provider selected by env `LLM_PROVIDER`:
+//   - "vertex" / "medgemma": MedGemma (Google Health AI) via Vertex AI.
+//   - "groq" (default): Groq Chat Completions API (Llama, OpenAI-compatible).
+// When the primary provider is Vertex but it is not configured, we transparently
+// fall back to Groq so the deterministic safety net below still has an LLM.
+
+const vertexMedgemma = require('./vertexMedgemma');
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const DEFAULT_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
-function isConfigured() {
+function preferVertex() {
+  const p = (process.env.LLM_PROVIDER || 'groq').toLowerCase();
+  return p === 'vertex' || p === 'medgemma';
+}
+
+function groqConfigured() {
   return !!process.env.GROQ_API_KEY;
 }
 
+// True when ANY provider can serve a request. The routes gate LLM usage on this.
+function isConfigured() {
+  return (preferVertex() && vertexMedgemma.isConfigured()) || groqConfigured();
+}
+
 async function chatCompletion(messages, options = {}) {
-  if (!isConfigured()) {
-    throw new Error('GROQ_API_KEY not configured');
+  // Route to MedGemma/Vertex when selected and configured.
+  if (preferVertex() && vertexMedgemma.isConfigured()) {
+    return vertexMedgemma.chatCompletion(messages, options);
+  }
+
+  if (!groqConfigured()) {
+    throw new Error('no LLM provider configured (set LLM_PROVIDER + credentials)');
   }
 
   const body = {

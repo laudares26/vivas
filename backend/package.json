@@ -15,6 +15,7 @@
     "dicom-parser": "^1.8.21",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
+    "google-auth-library": "^9.15.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
     "nodemailer": "^9.0.0",
