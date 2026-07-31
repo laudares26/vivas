@@ -211,7 +211,15 @@ function buildRawExamDossier(exams, opts = {}) {
 // code/regex on our side. A compact structured-trend summary is included as a
 // hint, but the model reasons over the raw content.
 async function analyzeRawExamHistory(exams, options = {}) {
-  const dossier = buildRawExamDossier(exams, options);
+  // MedGemma 4B destabilizes on very large prompts (degenerate loops), so feed
+  // it a tighter dossier than we would send to Groq.
+  const vertex = preferVertex() && vertexMedgemma.isConfigured();
+  const dossierOpts = { ...options };
+  if (vertex) {
+    if (dossierOpts.maxExams == null) dossierOpts.maxExams = parseInt(process.env.VERTEX_DOSSIER_MAX_EXAMS || '14', 10);
+    if (dossierOpts.perExamChars == null) dossierOpts.perExamChars = parseInt(process.env.VERTEX_DOSSIER_PER_EXAM || '420', 10);
+  }
+  const dossier = buildRawExamDossier(exams, dossierOpts);
   if (!dossier.text) throw new Error('no exam text available for raw analysis');
 
   const trends = Array.isArray(options.trends) ? options.trends : [];
@@ -256,7 +264,7 @@ REGRAS OBRIGATORIAS:
   ];
 
   const DISCLAIMER = 'Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude.';
-  let answer = await chatCompletion(messages, { temperature: 0.3, maxTokens: 1000, timeoutMs: 45000 });
+  let answer = await chatCompletion(messages, { temperature: 0.3, maxTokens: vertex ? 700 : 1000, timeoutMs: 45000 });
   // Some models echo a patient name printed in the raw lab text. Strip
   // "(o/do/da) paciente <Nome Proprio>" so no (possibly wrong) name is shown.
   if (typeof answer === 'string') {

@@ -98,11 +98,16 @@ function stripThinking(text) {
 // than persisting/showing junk.
 function looksDegenerate(text) {
   if (!text || text.length < 40) return true;
-  // A short chunk (<=6 chars) repeated back-to-back many times.
-  if (/(.{1,6}?)\1{8,}/s.test(text)) return true;
-  // Very low character diversity in the tail (typical of a stuck loop).
-  const tail = text.slice(-400).replace(/\s/g, '');
-  if (tail.length > 120 && new Set(tail).size / tail.length < 0.12) return true;
+  // A short chunk (<=8 chars) repeated back-to-back several times.
+  if (/(.{1,8}?)\1{5,}/s.test(text)) return true;
+  // Slide a window across the WHOLE text: a stuck (even "mutating") loop shows
+  // up as a region of very low character diversity anywhere in the output.
+  const s = text.replace(/\s+/g, ' ');
+  const W = 200;
+  for (let i = 0; i + W <= s.length; i += 100) {
+    const w = s.slice(i, i + W).replace(/ /g, '');
+    if (w.length >= 120 && new Set(w).size / w.length < 0.1) return true;
+  }
   return false;
 }
 
