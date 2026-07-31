@@ -3,6 +3,7 @@ import { Upload, FileText, Activity, Heart, Droplets, TrendingUp, TrendingDown, 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../contexts/AuthContext'
+import AnalysisBadge from '../components/AnalysisBadge'
 import { api, type ExamBatchResult, type Exam, type ExamComparative } from '../services/api'
 
 interface HealthExam {
@@ -245,11 +246,17 @@ export default function SaudePreventiva() {
                 </div>
                 {comparative.analysis ? (
                   <div className="p-4 bg-wine-soft border border-wine-line rounded-lg">
-                    <p className="font-semibold text-sm text-gray-900 mb-2">Interpretação preventiva (todo o histórico):</p>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <p className="font-semibold text-sm text-gray-900">Interpretação preventiva (todo o histórico):</p>
+                      <AnalysisBadge meta={comparative.analysis_meta} />
+                    </div>
                     <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{comparative.analysis}</p>
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-400">Análise textual indisponível no momento.</p>
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                    <p className="text-xs text-amber-700">Análise aprofundada por MedGemma em processamento — disponível em instantes. Recarregue a página em alguns minutos.</p>
+                  </div>
                 )}
               </div>
             ) : (

@@ -242,11 +242,19 @@ export interface ExamTrend {
   current_status: string; previous_status: string | null;
 }
 
+export interface AnalysisMeta {
+  provider: string | null;
+  model: string | null;
+  generated_at: string | null;
+  mode: 'stored' | 'live';
+}
+
 export interface ExamComparative {
   trends: ExamTrend[];
   alerts: Array<{ label: string; value: number; unit: string; status: string; delta: number | null; direction: string; worsening: boolean }>;
   history?: Record<string, Array<{ value: number; unit: string; recorded_at: string }>>;
   analysis?: string | null;
+  analysis_meta?: AnalysisMeta | null;
   score?: { score: number; label: string; tone: string; priorityCount: number };
 }
 

@@ -12,6 +12,7 @@ WORKDIR /app
 COPY backend/package.json backend/package-lock.json ./
 RUN npm ci --omit=dev
 COPY backend/src/ ./src/
+COPY backend/scripts/ ./scripts/
 COPY --from=frontend-build /app/frontend/dist ./frontend-dist/
 COPY institutional/ ./institutional/
 

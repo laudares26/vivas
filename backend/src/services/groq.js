@@ -1,17 +1,55 @@
-// Groq LLM service — powers the Vivi assistant and exam analysis.
-// Uses the Groq Chat Completions API (OpenAI-compatible).
+// LLM service — powers the Vivi assistant and exam analysis.
+//
+// The exam-analysis and assistant prompts all funnel through `chatCompletion`,
+// which routes to a pluggable provider selected by env `LLM_PROVIDER`:
+//   - "vertex" / "medgemma": MedGemma (Google Health AI) via Vertex AI.
+//   - "groq" (default): Groq Chat Completions API (Llama, OpenAI-compatible).
+// When the primary provider is Vertex but it is not configured, we transparently
+// fall back to Groq so the deterministic safety net below still has an LLM.
+
+const vertexMedgemma = require('./vertexMedgemma');
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const DEFAULT_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
-function isConfigured() {
+function preferVertex() {
+  const p = (process.env.LLM_PROVIDER || 'groq').toLowerCase();
+  return p === 'vertex' || p === 'medgemma';
+}
+
+function groqConfigured() {
   return !!process.env.GROQ_API_KEY;
 }
 
+// True when ANY provider can serve a request. The routes gate LLM usage on this.
+function isConfigured() {
+  return (preferVertex() && vertexMedgemma.isConfigured()) || groqConfigured();
+}
+
+// Which provider actually served the most recent chatCompletion call, so callers
+// can persist accurate provenance ("medgemma" vs "groq") with the analysis.
+let lastProvider = null;
+let lastModel = null;
+function getLastProvider() { return lastProvider; }
+function getLastModel() { return lastModel; }
+
 async function chatCompletion(messages, options = {}) {
-  if (!isConfigured()) {
-    throw new Error('GROQ_API_KEY not configured');
+  // Route to MedGemma/Vertex when selected and configured. Only record the
+  // provenance AFTER a successful call — a failed/degenerate MedGemma response
+  // falls back downstream and must not be mislabeled as "medgemma".
+  if (preferVertex() && vertexMedgemma.isConfigured()) {
+    const out = await vertexMedgemma.chatCompletion(messages, options);
+    lastProvider = 'medgemma';
+    lastModel = process.env.VERTEX_MEDGEMMA_MODEL || 'medgemma';
+    return out;
   }
+
+  if (!groqConfigured()) {
+    throw new Error('no LLM provider configured (set LLM_PROVIDER + credentials)');
+  }
+
+  lastProvider = 'groq';
+  lastModel = options.model || DEFAULT_MODEL;
 
   const body = {
     model: options.model || DEFAULT_MODEL,
@@ -176,7 +214,14 @@ function buildRawExamDossier(exams, opts = {}) {
 // code/regex on our side. A compact structured-trend summary is included as a
 // hint, but the model reasons over the raw content.
 async function analyzeRawExamHistory(exams, options = {}) {
-  const dossier = buildRawExamDossier(exams, options);
+  // Dossier size is tunable per provider via env (MedGemma vs Groq token budgets).
+  const vertex = preferVertex() && vertexMedgemma.isConfigured();
+  const dossierOpts = { ...options };
+  if (vertex) {
+    if (dossierOpts.maxExams == null) dossierOpts.maxExams = parseInt(process.env.VERTEX_DOSSIER_MAX_EXAMS || '22', 10);
+    if (dossierOpts.perExamChars == null) dossierOpts.perExamChars = parseInt(process.env.VERTEX_DOSSIER_PER_EXAM || '600', 10);
+  }
+  const dossier = buildRawExamDossier(exams, dossierOpts);
   if (!dossier.text) throw new Error('no exam text available for raw analysis');
 
   const trends = Array.isArray(options.trends) ? options.trends : [];
@@ -209,6 +254,7 @@ COMO RACIOCINAR:
 REGRAS OBRIGATORIAS:
 - NUNCA forneca diagnostico definitivo — apenas orientacao preventiva educativa e recomendacao de exames/especialista.
 - NAO prescreva medicamentos nem doses.
+- NAO cite, repita nem invente NOME de paciente, medico, laboratorio ou qualquer identificador que apareca (ou nao) nos documentos. Refira-se sempre a "voce" ou "o paciente", de forma generica.
 - Seja objetivo e estruturado (pode usar topicos). Use no maximo ~350 palavras.
 - Escreva em portugues do Brasil.
 - Finalize SEMPRE com: "Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
@@ -219,7 +265,24 @@ REGRAS OBRIGATORIAS:
     },
   ];
 
-  return chatCompletion(messages, { temperature: 0.3, maxTokens: 1000, timeoutMs: 45000 });
+  const DISCLAIMER = 'Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude.';
+  let answer = await chatCompletion(messages, { temperature: 0.3, maxTokens: 1000, timeoutMs: 45000 });
+  // Some models echo a patient name printed in the raw lab text. Strip
+  // "(o/do/da) paciente <Nome Proprio>" so no (possibly wrong) name is shown.
+  if (typeof answer === 'string') {
+    answer = answer.replace(
+      /\b(d[aeo]s?\s+)?pacientes?\s+[A-ZÀ-Ý][a-zà-ÿ]+(?:\s+(?:d[aeo]s?\s+)?[A-ZÀ-Ý][a-zà-ÿ]+){1,3}/g,
+      'o paciente'
+    );
+  }
+  // Guarantee the disclaimer even when a model is cut off before writing it.
+  if (typeof answer === 'string') {
+    const norm = answer.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (!norm.includes('nao substitui a avaliacao de um profissional')) {
+      answer = `${answer.trim()}\n\n${DISCLAIMER}`;
+    }
+  }
+  return answer;
 }
 
 // LLM-generated comparative/historical analysis across multiple exams over time.
@@ -287,6 +350,9 @@ module.exports = {
   analyzeExamIndicators,
   analyzeExamComparison,
   analyzeRawExamHistory,
+  getLastProvider,
+  getLastModel,
+  preferVertex,
   VIVI_SYSTEM_PROMPT,
   DEFAULT_MODEL,
 };
