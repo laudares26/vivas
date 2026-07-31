@@ -4,7 +4,7 @@ const multer = require('multer');
 const {
   THRESHOLDS, classifyIndicator,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
-  buildFallbackComparativeText,
+  buildFallbackComparativeText, detectPriorityPatterns, computeHealthScore,
 } = require('../services/notifications');
 const {
   extractIndicatorsFromText, extractCollectionDate, extractCriticalFindings, extractTextFromFile,
@@ -94,6 +94,7 @@ async function ensureExamColumns() {
     ALTER TABLE exams ADD COLUMN IF NOT EXISTS file_type VARCHAR(50);
     ALTER TABLE exams ADD COLUMN IF NOT EXISTS file_size INTEGER;
     ALTER TABLE exams ADD COLUMN IF NOT EXISTS source VARCHAR(30) DEFAULT 'manual';
+    ALTER TABLE exams ADD COLUMN IF NOT EXISTS exam_text TEXT;
   `);
   // Store the original uploaded file so patient and professional can reopen it anytime.
   await pool.query(`
@@ -144,16 +145,21 @@ async function processExamFile(userId, patientId, file, opts = {}) {
 
   await ensureExamColumns();
 
+  // Keep a bounded copy of the raw exam text so the LLM can later reason over
+  // the full content of every exam (generic detection), not just the numeric
+  // indicators our regex happened to extract.
+  const storedText = (extractedText || '').replace(/\s+/g, ' ').trim().slice(0, 12000) || null;
+
   const examResult = await pool.query(
-    `INSERT INTO exams (patient_id, exam_name, category, status, result, ai_analysis, result_date, uploaded_by, file_name, file_type, file_size, source, notes)
-     VALUES ($1, $2, 'laboratorial', 'concluido', $3, $4, COALESCE($10, NOW()), $5, $6, $7, $8, 'upload_paciente', $9) RETURNING *`,
+    `INSERT INTO exams (patient_id, exam_name, category, status, result, ai_analysis, result_date, uploaded_by, file_name, file_type, file_size, source, notes, exam_text)
+     VALUES ($1, $2, 'laboratorial', 'concluido', $3, $4, COALESCE($10, NOW()), $5, $6, $7, $8, 'upload_paciente', $9, $11) RETURNING *`,
     [
       patientId, fileName,
       indicators.length > 0 ? JSON.stringify(indicators) : null,
       aiAnalysis, userId,
       file.originalname, file.mimetype, file.size,
       opts.notes || null,
-      collectedAt
+      collectedAt, storedText
     ]
   );
   const exam = examResult.rows[0];
@@ -210,24 +216,77 @@ async function getCriticalFindingsForUser(userId) {
   }
 }
 
+// Load the bounded raw text of every exam of a patient so the LLM can reason
+// over the full content (generic detection), not only the extracted indicators.
+async function getExamTextsForUser(userId) {
+  try {
+    await ensureExamColumns();
+    const { rows } = await pool.query(
+      `SELECT COALESCE(e.result_date, e.created_at) AS date, e.exam_name, e.exam_text
+       FROM exams e
+       JOIN patients p ON p.id = e.patient_id
+       JOIN users u ON u.email = p.email
+       WHERE u.id = $1 AND e.exam_text IS NOT NULL AND length(trim(e.exam_text)) > 0
+       ORDER BY COALESCE(e.result_date, e.created_at) ASC
+       LIMIT 400`,
+      [userId]
+    );
+    return rows;
+  } catch (err) {
+    console.warn('[EXAM] getExamTextsForUser failed:', err.message);
+    return [];
+  }
+}
+
+// Build the preventive narrative. GENERIC-FIRST: feed the full exam text to the
+// LLM so it detects any risk pattern on its own (no per-disease code). Falls
+// back to the structured comparison, then to the deterministic text, so the
+// panel/alert is never left empty when Groq is unavailable.
+async function buildComparativeNarrative(userId, trends, history, criticalFindings) {
+  if (!trends || trends.length === 0) return null;
+
+  // Deterministic safety net: high-priority patterns (hematologic / plasma-cell)
+  // that emerge only from crossing several exams over time are computed from the
+  // numeric trends and ALWAYS surfaced. The generic LLM narrative is great for
+  // breadth but non-deterministic, so it can miss a slow oncologic trajectory
+  // even when the markers are present. We prepend any priority pattern the LLM
+  // did not already cover so a myeloma/leukemia signal is never dropped.
+  const priority = detectPriorityPatterns(trends, criticalFindings);
+
+  let llmText = null;
+  if (groq.isConfigured()) {
+    const examTexts = await getExamTextsForUser(userId);
+    if (examTexts.length > 0) {
+      try {
+        llmText = await groq.analyzeRawExamHistory(examTexts, { trends, criticalFindings, priorityPatterns: priority });
+      } catch (llmErr) {
+        console.warn('[EXAM] Groq raw-text analysis failed, trying structured:', llmErr.message);
+      }
+    }
+    if (!llmText) {
+      try {
+        llmText = await groq.analyzeExamComparison(trends, { history, criticalFindings, priorityPatterns: priority });
+      } catch (llmErr) {
+        console.warn('[EXAM] Groq structured analysis failed:', llmErr.message);
+      }
+    }
+  }
+
+  if (!llmText) return buildFallbackComparativeText(trends, criticalFindings);
+
+  const missing = priority.filter(p => !llmText.toLowerCase().includes(p.term.toLowerCase()));
+  if (missing.length === 0) return llmText;
+
+  const header = 'Sinais prioritários detectados na sua trajetória de exames (requerem atenção):';
+  return `${header}\n\n${missing.map(p => `- ${p.text}`).join('\n\n')}\n\n---\n\n${llmText}`;
+}
+
 async function analyzeHistoryAndNotify(userId) {
   const history = await getIndicatorHistory(userId);
   const comparative = computeComparativeAnalysis(history);
   const criticalFindings = await getCriticalFindingsForUser(userId);
 
-  let comparativeAnalysisText = null;
-  if (groq.isConfigured() && comparative.trends.length > 0) {
-    try {
-      comparativeAnalysisText = await groq.analyzeExamComparison(comparative.trends, { history, criticalFindings });
-    } catch (llmErr) {
-      console.warn('[EXAM] Groq comparative analysis failed:', llmErr.message);
-    }
-  }
-  // Deterministic fallback so the interpretation (incl. hematologic/leukemia
-  // signal) is never empty when Groq is unavailable (quota/rate limit).
-  if (!comparativeAnalysisText && comparative.trends.length > 0) {
-    comparativeAnalysisText = buildFallbackComparativeText(comparative.trends, criticalFindings);
-  }
+  const comparativeAnalysisText = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings);
 
   const notifications = await sendComparativeReport(userId, comparative, comparativeAnalysisText);
   return { comparative, comparativeAnalysisText, notifications };
@@ -441,22 +500,16 @@ router.get('/comparative', async (req, res) => {
 
     const history = await getIndicatorHistory(userId);
     const comparative = computeComparativeAnalysis(history);
+    const criticalFindings = comparative.trends.length > 0
+      ? await getCriticalFindingsForUser(userId)
+      : [];
+    const score = comparative.trends.length > 0
+      ? computeHealthScore(comparative.trends, criticalFindings)
+      : null;
 
     let analysis = null;
     if (req.query.analyze === '1' && comparative.trends.length > 0) {
-      const criticalFindings = await getCriticalFindingsForUser(userId);
-      if (groq.isConfigured()) {
-        try {
-          analysis = await groq.analyzeExamComparison(comparative.trends, { history, criticalFindings });
-        } catch (llmErr) {
-          console.warn('[EXAM COMPARATIVE] Groq analysis failed:', llmErr.message);
-        }
-      }
-      // Deterministic fallback so the panel narrative is never empty when Groq
-      // is unavailable (quota/rate limit) — still surfaces the leukemia signal.
-      if (!analysis) {
-        analysis = buildFallbackComparativeText(comparative.trends, criticalFindings);
-      }
+      analysis = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings);
     }
 
     res.json({
@@ -464,6 +517,7 @@ router.get('/comparative', async (req, res) => {
       alerts: comparative.alerts,
       history,
       analysis,
+      score,
     });
   } catch (err) {
     console.error('[EXAM COMPARATIVE] Error:', err);

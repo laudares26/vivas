@@ -269,22 +269,34 @@ export default function SaudePreventiva() {
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">Baseado nos seus últimos exames e indicadores</p>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="relative w-20 h-20">
-                  <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="#e2e8f0" strokeWidth="3" />
-                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="#7B1E3C" strokeWidth="3"
-                      strokeDasharray="72 28" strokeLinecap="round" className="transition-all duration-1000" />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xl font-bold text-gray-900">72</span>
+              {(() => {
+                const s = comparative?.score
+                const value = s ? s.score : null
+                const tone = s?.tone
+                const stroke = tone === 'alerta' ? '#DC2626' : tone === 'atencao' ? '#B5751A' : tone === 'bom' ? '#2F8F6B' : '#94a3b8'
+                const labelColor = tone === 'alerta' ? 'text-red-600' : tone === 'atencao' ? 'text-amber-600' : tone === 'bom' ? 'text-green-600' : 'text-gray-500'
+                const sub = tone === 'alerta' ? 'Padrão que requer investigação' : tone === 'atencao' ? 'Alguns pontos de atenção' : tone === 'bom' ? 'Indicadores dentro do esperado' : 'Envie exames para calcular'
+                return (
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-20 h-20">
+                      <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                        <circle cx="18" cy="18" r="15.915" fill="none" stroke="#e2e8f0" strokeWidth="3" />
+                        {value != null && (
+                          <circle cx="18" cy="18" r="15.915" fill="none" stroke={stroke} strokeWidth="3"
+                            strokeDasharray={`${value} ${100 - value}`} strokeLinecap="round" className="transition-all duration-1000" />
+                        )}
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xl font-bold text-gray-900">{value != null ? value : '—'}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <p className={`text-sm font-medium ${labelColor}`}>{s ? s.label : '—'}</p>
+                      <p className="text-xs text-gray-500">{sub}</p>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-amber-600">Bom</p>
-                  <p className="text-xs text-gray-500">Alguns pontos de atenção</p>
-                </div>
-              </div>
+                )
+              })()}
             </div>
           </div>
 

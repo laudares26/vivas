@@ -137,6 +137,91 @@ function buildHistoryTimeline(history) {
   return blocks.join('\n');
 }
 
+// Build a bounded, chronological "dossier" from the raw text of every exam so
+// the LLM can reason over the FULL content — not just the indicators our regex
+// happened to extract. Downsamples the number of exams and truncates each one
+// so the prompt stays within budget even across many years of history.
+function buildRawExamDossier(exams, opts = {}) {
+  // Defaults kept modest so the request fits within the Groq tokens-per-minute
+  // budget; can be raised via env on a higher tier (GROQ_DOSSIER_*).
+  const maxExams = opts.maxExams || parseInt(process.env.GROQ_DOSSIER_MAX_EXAMS || '26', 10);
+  const perExamChars = opts.perExamChars || parseInt(process.env.GROQ_DOSSIER_PER_EXAM || '650', 10);
+  const list = (Array.isArray(exams) ? exams : [])
+    .filter(e => e && e.exam_text && e.exam_text.trim())
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // Evenly sample across the timeline, always keeping the first and last exams.
+  let sampled = list;
+  if (list.length > maxExams) {
+    const step = (list.length - 1) / (maxExams - 1);
+    const idx = new Set();
+    for (let i = 0; i < maxExams; i++) idx.add(Math.round(i * step));
+    sampled = [...idx].sort((a, b) => a - b).map(i => list[i]);
+  }
+
+  const fmt = (d) => { try { return new Date(d).toLocaleDateString('pt-BR'); } catch { return String(d); } };
+  return {
+    text: sampled.map(e => {
+      const body = String(e.exam_text).replace(/\s+/g, ' ').trim().slice(0, perExamChars);
+      return `### ${fmt(e.date)} — ${e.exam_name || 'Exame'}\n${body}`;
+    }).join('\n\n'),
+    used: sampled.length,
+    total: list.length,
+  };
+}
+
+// GENERIC analysis: sends the full text of the patient's exams (a bounded
+// chronological dossier) to the LLM and lets it identify ANY risk pattern and
+// recommend the appropriate confirmatory exams — WITHOUT any disease-specific
+// code/regex on our side. A compact structured-trend summary is included as a
+// hint, but the model reasons over the raw content.
+async function analyzeRawExamHistory(exams, options = {}) {
+  const dossier = buildRawExamDossier(exams, options);
+  if (!dossier.text) throw new Error('no exam text available for raw analysis');
+
+  const trends = Array.isArray(options.trends) ? options.trends : [];
+  const trendLines = trends.length
+    ? trends.map(t => `- ${t.label}: ${t.first_value != null ? t.first_value + ' ' + t.unit : '—'} -> ${t.current_value} ${t.unit} [${t.count} exames, atual: ${t.current_status}${t.peak_status && t.peak_status !== 'normal' ? `, pico: ${t.peak_value} (${t.peak_status})` : ''}]`).join('\n')
+    : '(sem indicadores estruturados extraidos)';
+
+  const findings = Array.isArray(options.criticalFindings) ? options.criticalFindings : [];
+  const findingsBlock = findings.length ? `\n\nAchados textuais sinalizados por triagem interna: ${findings.join(', ')}.` : '';
+
+  const priority = Array.isArray(options.priorityPatterns) ? options.priorityPatterns : [];
+  const priorityBlock = priority.length
+    ? `\n\nPADROES PRIORITARIOS JA DETECTADOS por triagem determinstica (voce DEVE aborda-los explicitamente na sua analise, correlacionando os indicadores, e recomendar os exames de confirmacao adequados):\n${priority.map(p => `- ${p.text}`).join('\n')}`
+    : '';
+
+  const messages = [
+    {
+      role: 'system',
+      content: `Voce e um assistente de analise preventiva da plataforma VivaS, especializado em saude.
+Voce recebe o TEXTO INTEGRAL de varios exames de um mesmo paciente, em ordem cronologica (um dossie ao longo do tempo). Sua tarefa e analisar TODO o conjunto e identificar, de forma PREVENTIVA e EDUCATIVA, qualquer padrao de risco que emerja da EVOLUCAO dos exames.
+
+COMO RACIOCINAR:
+1. Leia os exames como uma trajetoria: procure tendencias sustentadas (piora/melhora) ao longo dos anos, nao apenas o ultimo exame.
+2. Correlacione resultados de exames DIFERENTES na mesma epoca (ex.: sangue + urina + imagem) — muitos padroes so aparecem no conjunto.
+3. Identifique QUALQUER condicao cujo risco os exames sugiram (metabolica, cardiovascular, renal, hepatica, hematologica, oncologica, endocrina, etc.). NAO se limite a uma lista fixa.
+4. Quando um padrao sugerir risco aumentado de uma condicao, diga "possivel risco de ..." (nunca diagnostico fechado) e recomende EXPLICITAMENTE os EXAMES DE CONFIRMACAO adequados aquele padrao (ex.: eletroforese de proteinas sericas e imunofixacao para suspeita de gamopatia/mieloma; ferritina/saturacao para anemia; TSH para tireoide; etc.), alem do especialista indicado.
+5. Ignore distratores: nao ancore um alerta grave em um unico valor levemente alterado se o conjunto aponta para outra coisa.
+6. Se houver sinais de gravidade/urgencia, sinalize a necessidade de avaliacao rapida.
+
+REGRAS OBRIGATORIAS:
+- NUNCA forneca diagnostico definitivo — apenas orientacao preventiva educativa e recomendacao de exames/especialista.
+- NAO prescreva medicamentos nem doses.
+- Seja objetivo e estruturado (pode usar topicos). Use no maximo ~350 palavras.
+- Escreva em portugues do Brasil.
+- Finalize SEMPRE com: "Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
+    },
+    {
+      role: 'user',
+      content: `DOSSIE DE EXAMES (${dossier.used} de ${dossier.total} exames, amostrados ao longo do tempo):\n\n${dossier.text}\n\nResumo de indicadores estruturados (apoio, pode estar incompleto):\n${trendLines}${findingsBlock}${priorityBlock}\n\nGere a analise preventiva considerando a EVOLUCAO de TODO o conjunto de exames e recomende os exames de confirmacao pertinentes.`,
+    },
+  ];
+
+  return chatCompletion(messages, { temperature: 0.3, maxTokens: 1000, timeoutMs: 45000 });
+}
+
 // LLM-generated comparative/historical analysis across multiple exams over time.
 // `options.history` (the full per-indicator series) is included so the model
 // reasons over EVERY exam, not just the latest reading.
@@ -147,7 +232,8 @@ async function analyzeExamComparison(trends, options = {}) {
     const trendTxt = t.previous_value != null
       ? `${dir}${t.delta_pct != null ? ` (${t.delta_pct > 0 ? '+' : ''}${t.delta_pct}%)` : ''}${t.worsening ? ', PIORA' : (t.direction !== 'estavel' ? ', melhora' : '')}`
       : 'primeira medição';
-    return `- ${t.label}: primeiro ${t.first_value != null ? t.first_value + ' ' + t.unit : '—'}, media inicial ${prev} -> atual ${t.current_value} ${t.unit} [${t.count} medição(ões), ${trendTxt}, classificação atual: ${t.current_status}]`;
+    const peakTxt = t.peak_status && t.peak_status !== 'normal' ? `, pico historico: ${t.peak_value} ${t.unit} (${t.peak_status})` : '';
+    return `- ${t.label}: primeiro ${t.first_value != null ? t.first_value + ' ' + t.unit : '—'}, media inicial ${prev} -> atual ${t.current_value} ${t.unit} [${t.count} medição(ões), ${trendTxt}, classificação atual: ${t.current_status}${peakTxt}]`;
   }).join('\n');
 
   const timeline = buildHistoryTimeline(options.history);
@@ -156,6 +242,11 @@ async function analyzeExamComparison(trends, options = {}) {
   const findings = Array.isArray(options.criticalFindings) ? options.criticalFindings : [];
   const findingsBlock = findings.length
     ? `\n\nAchados textuais relevantes detectados em laudos do paciente (ex.: imunofenotipagem, morfologia): ${findings.join(', ')}. Considere-os na interpretacao hematologica.`
+    : '';
+
+  const priority = Array.isArray(options.priorityPatterns) ? options.priorityPatterns : [];
+  const priorityBlock = priority.length
+    ? `\n\nPADROES PRIORITARIOS JA DETECTADOS por triagem determinstica (voce DEVE aborda-los explicitamente e recomendar os exames de confirmacao adequados):\n${priority.map(p => `- ${p.text}`).join('\n')}`
     : '';
 
   const messages = [
@@ -172,7 +263,8 @@ REGRAS:
    - metabolico/cardiovascular: pre-diabetes/diabetes (glicemia, hemoglobina glicada), dislipidemia (LDL, triglicerideos), hipertensao (pressao);
    - renal: creatinina em elevacao;
    - HEMATOLOGICO: o conjunto de leucocitose (leucocitos muito elevados) + linfocitose acentuada (linfocitos muito elevados) + anemia (hemoglobina baixa) + plaquetopenia (plaquetas baixas) e um padrao classico de ALERTA que pode sugerir uma neoplasia hematologica, como uma leucemia (ex.: leucemia linfocitica cronica). Nesse caso, sinalize explicitamente "possivel alteracao hematologica / possivel risco de leucemia" e recomende avaliacao HEMATOLOGICA URGENTE — sem afirmar o diagnostico.
-4. Se houver achados textuais de laudos (imunofenotipagem, morfologia, celulas de Gumprecht, restricao de cadeia leve, escore de Matutes, blastos), integre-os ao raciocinio hematologico.
+   - PLASMA / DISCRASIA DE CELULAS PLASMATICAS / MIELOMA MULTIPLO: quando, ao longo do tempo, houver proteinas totais em elevacao + globulinas elevadas + relacao albumina/globulina (A/G) invertida (caindo), associadas a sinais tipo CRAB — hiperCalcemia (calcio elevado), insuficiencia Renal (creatinina/ureia em elevacao), Anemia e/ou lesoes osseas (Bone) — e ainda VHS muito elevado e/ou proteinuria, esse conjunto (mesmo que cada valor isolado pareca so "um pouco alterado") pode sugerir uma DISCRASIA DE CELULAS PLASMATICAS / possivel MIELOMA MULTIPLO. Nesse caso, sinalize o padrao de forma preventiva e recomende EXPLICITAMENTE, como proximo passo, a realizacao de ELETROFORESE DE PROTEINAS SERICAS (e, se disponivel, imunofixacao, cadeias leves livres kappa/lambda e beta-2-microglobulina), alem de avaliacao com hematologista — sem afirmar diagnostico. Considere o PICO HISTORICO de cada indicador, nao apenas o ultimo exame, pois um exame normal isolado no fim nao descarta a trajetoria. NAO ancore o alerta oncologico em PSA, glicemia ou perfil lipidico (possiveis distratores).
+4. Se houver achados textuais de laudos (imunofenotipagem, morfologia, celulas de Gumprecht, restricao de cadeia leve, escore de Matutes, blastos, gamopatia/pico monoclonal, lesoes liticas), integre-os ao raciocinio.
 5. Priorize os indicadores que pioraram de forma consistente ou estao fora da faixa de referencia.
 6. Sugira acoes preventivas gerais (habitos, acompanhamento, especialista adequado) sem prescrever medicamentos ou doses.
 7. Reforce que o paciente deve confirmar com um profissional de saude (medico/hematologista) pela VivaS.
@@ -181,7 +273,7 @@ REGRAS:
     },
     {
       role: 'user',
-      content: `Resumo por indicador (${totalMeasurements} medições no total):\n${lines || '(sem indicadores estruturados)'}\n\nSerie historica completa (todos os exames):\n${timeline || '(sem série detalhada)'}${findingsBlock}\n\nGere a analise comparativa preventiva considerando TODOS os exames.`,
+      content: `Resumo por indicador (${totalMeasurements} medições no total):\n${lines || '(sem indicadores estruturados)'}\n\nSerie historica completa (todos os exames):\n${timeline || '(sem série detalhada)'}${findingsBlock}${priorityBlock}\n\nGere a analise comparativa preventiva considerando TODOS os exames.`,
     },
   ];
 
@@ -194,6 +286,7 @@ module.exports = {
   viviChat,
   analyzeExamIndicators,
   analyzeExamComparison,
+  analyzeRawExamHistory,
   VIVI_SYSTEM_PROMPT,
   DEFAULT_MODEL,
 };

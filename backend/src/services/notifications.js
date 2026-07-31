@@ -69,6 +69,16 @@ const THRESHOLDS = {
   linfocitos: { unit: '/mm³', normal: [1000, 4000], atencao: [4001, 5000], alerta: [5001, Infinity], label: 'Linfócitos' },
   neutrofilos: { unit: '/mm³', normal: [1500, Infinity], atencao: [1000, 1499], alerta: [0, 999], label: 'Neutrófilos' },
   plaquetas: { unit: '/mm³', normal: [150000, 450000], atencao: [100000, 149999], alerta: [0, 99999], label: 'Plaquetas' },
+  // Plasma-cell / myeloma-relevant biochemistry.
+  proteinas_totais: { unit: 'g/dL', normal: [6, 8.3], atencao: [8.4, 8.9], alerta: [9, Infinity], label: 'Proteínas Totais' },
+  albumina: { unit: 'g/dL', normal: [3.5, 5.2], atencao: [3, 3.49], alerta: [0, 2.99], label: 'Albumina' },
+  globulina: { unit: 'g/dL', normal: [2, 3.5], atencao: [3.6, 4.5], alerta: [4.6, Infinity], label: 'Globulinas' },
+  relacao_ag: { unit: '', normal: [1.1, 2.5], atencao: [0.8, 1.09], alerta: [0, 0.79], label: 'Relação Albumina/Globulina' },
+  calcio: { unit: 'mg/dL', normal: [8.6, 10.2], atencao: [10.3, 11], alerta: [11.1, Infinity], label: 'Cálcio Total' },
+  fosfatase_alcalina: { unit: 'U/L', normal: [40, 129], atencao: [130, 200], alerta: [201, Infinity], label: 'Fosfatase Alcalina' },
+  vhs: { unit: 'mm', normal: [0, 20], atencao: [21, 50], alerta: [51, Infinity], label: 'VHS' },
+  acido_urico: { unit: 'mg/dL', normal: [3.4, 7], atencao: [7.1, 8.5], alerta: [8.6, Infinity], label: 'Ácido Úrico' },
+  proteinuria: { unit: 'cruzes', normal: [0, 0], atencao: [0.5, 1], alerta: [2, Infinity], label: 'Proteinúria (urina)' },
 };
 
 function inRange(value, range) {
@@ -280,6 +290,10 @@ const HIGHER_IS_WORSE = {
   // Hematology
   leucocitos: true, linfocitos: true,
   hemoglobina: false, plaquetas: false, neutrofilos: false,
+  // Plasma-cell / myeloma biochemistry
+  proteinas_totais: true, globulina: true, calcio: true, fosfatase_alcalina: true,
+  vhs: true, acido_urico: true, proteinuria: true,
+  albumina: false, relacao_ag: false,
 };
 
 // Load the full ordered history of a patient's indicators.
@@ -332,6 +346,17 @@ function computeComparativeAnalysis(history) {
     const currentStatus = classifyIndicator(name, latest.value);
     const previousStatus = baselineVal != null ? classifyIndicator(name, baselineVal) : null;
 
+    // Worst classification ever reached across the whole series. Used by the
+    // oncologic-pattern detection so a single later "normal" reading (e.g. from
+    // an unrelated exam mixed into the history) does not mask a sustained signal.
+    let peakRank = 0;
+    let peakValue = latest.value;
+    for (const pt of series) {
+      const r = statusRank[classifyIndicator(name, pt.value)] || 0;
+      if (r > peakRank) { peakRank = r; peakValue = pt.value; }
+    }
+    const peakStatus = peakRank >= 2 ? 'alerta' : (peakRank >= 1 ? 'atencao' : 'normal');
+
     let direction = 'estavel';
     let worsening = false;
     let delta = null;
@@ -359,6 +384,8 @@ function computeComparativeAnalysis(history) {
       worsening,
       current_status: currentStatus,
       previous_status: previousStatus,
+      peak_status: peakStatus,
+      peak_value: peakValue,
     };
     trends.push(trend);
 
@@ -386,28 +413,25 @@ function computeComparativeAnalysis(history) {
 // so the panel and alert emails are never left without an interpretation.
 const HEMA_NAMES = ['hemoglobina', 'leucocitos', 'linfocitos', 'neutrofilos', 'plaquetas'];
 
-function buildFallbackComparativeText(trends, criticalFindings = []) {
+// Deterministic detector for high-priority patterns that emerge only from
+// CROSSING several routine exams over time (hematologic / plasma-cell). It runs
+// on the structured trends (using the worst value ever seen, `peak_status`, so
+// a sustained trajectory is not masked by a later normal exam) and returns a
+// stable list of { key, term, text }. This is the safety net that guarantees
+// the critical oncologic signals are surfaced regardless of LLM variability.
+function detectPriorityPatterns(trends, criticalFindings = []) {
   const list = Array.isArray(trends) ? trends : [];
   const byName = Object.fromEntries(list.map(t => [t.name, t]));
-  const parts = [];
-
-  const worsened = list.filter(t => t.worsening && (t.current_status === 'alerta' || t.current_status === 'atencao'));
-  if (worsened.length) {
-    parts.push('Ao considerar toda a trajetória dos exames enviados, os seguintes indicadores merecem atenção preventiva: ' +
-      worsened.map(t => `${t.label} (${t.first_value != null ? t.first_value + '→' : ''}${t.current_value} ${t.unit})`).join('; ') + '.');
-  } else {
-    parts.push('Ao considerar toda a trajetória dos exames enviados, não há indicadores em piora relevante no momento.');
-  }
+  const isEver = (n) => byName[n] && (byName[n].peak_status === 'alerta' || byName[n].peak_status === 'atencao');
+  const findings = Array.isArray(criticalFindings) ? criticalFindings : [];
+  const patterns = [];
 
   // Hematologic pattern: leucocitose + linfocitose + anemia + plaquetopenia.
-  const isAlert = (n) => byName[n] && (byName[n].current_status === 'alerta' || byName[n].current_status === 'atencao');
-  const hemaAlerts = HEMA_NAMES.filter(isAlert);
-  const findings = Array.isArray(criticalFindings) ? criticalFindings : [];
   const hasLeukemiaKeyword = findings.some(f => ['leucemia', 'monoclonal', 'blastos'].includes(f));
-  const leucoHigh = isAlert('leucocitos');
-  const linfoHigh = isAlert('linfocitos');
-  const hemoLow = isAlert('hemoglobina');
-  const plaqLow = isAlert('plaquetas');
+  const leucoHigh = isEver('leucocitos');
+  const linfoHigh = isEver('linfocitos');
+  const hemoLow = isEver('hemoglobina');
+  const plaqLow = isEver('plaquetas');
   const hemaPatternScore = [leucoHigh, linfoHigh, hemoLow, plaqLow].filter(Boolean).length;
 
   if (hemaPatternScore >= 2 || (hemaPatternScore >= 1 && hasLeukemiaKeyword)) {
@@ -423,8 +447,89 @@ function buildFallbackComparativeText(trends, criticalFindings = []) {
       p += ' Há ainda achados textuais relevantes em laudos do paciente (ex.: imunofenotipagem/morfologia) que reforçam a necessidade de investigação hematológica.';
     }
     p += ' Estes resultados NÃO permitem confirmar diagnóstico e precisam de correlação clínica. Recomenda-se avaliação HEMATOLÓGICA URGENTE com um médico/hematologista.';
-    parts.push(p);
-  } else if (hemaAlerts.length) {
+    patterns.push({ key: 'hematologic', term: 'hematológ', text: p });
+  }
+
+  // Plasma-cell dyscrasia / multiple-myeloma pattern. No single value "screams";
+  // the signal only emerges from crossing several routine exams over time —
+  // rising total protein/globulins with an inverted A/G ratio, plus CRAB-type
+  // features (hyperCalcemia, Renal impairment, Anemia, Bone lesions) and a high
+  // VHS/proteinuria. The gold-standard action is to recommend serum protein
+  // electrophoresis, the confirmatory exam that is typically never ordered.
+  const proteinAxis = isEver('globulina') || isEver('proteinas_totais') || isEver('relacao_ag');
+  const crabBits = [];
+  if (isEver('calcio')) crabBits.push('cálcio elevado (hipercalcemia)');
+  if (isEver('creatinina')) crabBits.push('elevação de creatinina/ureia (função renal)');
+  if (isEver('hemoglobina')) crabBits.push('anemia');
+  if (findings.some(f => f === 'lesao_ossea_litica')) crabBits.push('lesões ósseas em exames de imagem');
+  const vhsHigh = isEver('vhs');
+  const proteinuriaHigh = isEver('proteinuria');
+  const hasMyelomaKeyword = findings.some(f => ['mieloma', 'lesao_ossea_litica'].includes(f));
+  const plasmaScore = (proteinAxis ? 1 : 0) + crabBits.length + (vhsHigh ? 1 : 0) + (proteinuriaHigh ? 1 : 0) + (hasMyelomaKeyword ? 1 : 0);
+
+  if ((proteinAxis && (crabBits.length >= 1 || vhsHigh || proteinuriaHigh || hasMyelomaKeyword)) || plasmaScore >= 3) {
+    const proteinBits = [];
+    if (isEver('proteinas_totais')) proteinBits.push('proteínas totais elevadas');
+    if (isEver('globulina')) proteinBits.push('globulinas elevadas');
+    if (isEver('relacao_ag')) proteinBits.push('relação albumina/globulina (A/G) invertida');
+    let p = 'Ao cruzar exames de rotina ao longo do tempo, chama atenção um conjunto de sinais que isoladamente passariam despercebidos';
+    const allBits = [...proteinBits, ...crabBits];
+    if (vhsHigh) allBits.push('VHS muito elevado');
+    if (proteinuriaHigh) allBits.push('proteinúria');
+    if (allBits.length) p += ': ' + allBits.join(', ');
+    p += '. Esse padrão pode sugerir uma discrasia de células plasmáticas / possível mieloma múltiplo (uma forma de câncer ósseo/da medula), um quadro de evolução lenta em que nenhum exame isolado fecha o caso.';
+    p += ' Recomenda-se, como próximo passo, a realização de ELETROFORESE DE PROTEÍNAS SÉRICAS (e, se disponível, imunofixação, dosagem de cadeias leves livres kappa/lambda e beta-2-microglobulina), além de avaliação com hematologista.';
+    p += ' Estes achados NÃO confirmam diagnóstico e precisam de correlação clínica — variações de PSA, glicemia e perfil lipídico não devem ser interpretadas como o sinal principal aqui.';
+    patterns.push({ key: 'plasma_cell', term: 'eletroforese', text: p });
+  }
+
+  return patterns;
+}
+
+// Deterministic preventive health score (0-100) derived from the ACTUAL exam
+// trends, so the patient/professional dashboards reflect real data instead of a
+// fixed placeholder. Worsening/out-of-range indicators lower the score; a
+// detected high-priority pattern (hematologic/plasma-cell) caps it low so a
+// serious trajectory can never read as "Saúde em dia".
+function computeHealthScore(trends, criticalFindings = []) {
+  const list = Array.isArray(trends) ? trends : [];
+  let score = 100;
+  for (const t of list) {
+    const cur = t.current_status;
+    if (cur === 'alerta') score -= 9;
+    else if (cur === 'atencao') score -= 4;
+    if (t.worsening && cur !== 'normal') score -= 2;
+  }
+  const priority = detectPriorityPatterns(trends, criticalFindings);
+  if (priority.length) score = Math.min(score, 38);
+
+  score = Math.max(5, Math.min(98, Math.round(score)));
+  let label, tone;
+  if (priority.length || score < 40) { label = 'Requer atenção'; tone = 'alerta'; }
+  else if (score < 70) { label = 'Atenção'; tone = 'atencao'; }
+  else { label = 'Saúde em dia'; tone = 'bom'; }
+  return { score, label, tone, priorityCount: priority.length };
+}
+
+function buildFallbackComparativeText(trends, criticalFindings = []) {
+  const list = Array.isArray(trends) ? trends : [];
+  const byName = Object.fromEntries(list.map(t => [t.name, t]));
+  const parts = [];
+
+  const worsened = list.filter(t => t.worsening && (t.current_status === 'alerta' || t.current_status === 'atencao'));
+  if (worsened.length) {
+    parts.push('Ao considerar toda a trajetória dos exames enviados, os seguintes indicadores merecem atenção preventiva: ' +
+      worsened.map(t => `${t.label} (${t.first_value != null ? t.first_value + '→' : ''}${t.current_value} ${t.unit})`).join('; ') + '.');
+  } else {
+    parts.push('Ao considerar toda a trajetória dos exames enviados, não há indicadores em piora relevante no momento.');
+  }
+
+  const isAlert = (n) => byName[n] && (byName[n].current_status === 'alerta' || byName[n].current_status === 'atencao');
+  const hemaAlerts = HEMA_NAMES.filter(isAlert);
+  const priority = detectPriorityPatterns(trends, criticalFindings);
+  priority.forEach(p => parts.push(p.text));
+
+  if (!priority.some(p => p.key === 'hematologic') && hemaAlerts.length) {
     parts.push('Há indicadores hematológicos fora da faixa de referência (' +
       hemaAlerts.map(n => byName[n].label).join(', ') + '). Recomenda-se avaliação médica para investigação.');
   }
@@ -639,7 +744,7 @@ async function sendPostConsultDiscountEmail({ patientName, patientEmail, discoun
 module.exports = {
   checkAndNotify, classifyIndicator, THRESHOLDS, sendEmail,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
-  buildFallbackComparativeText,
+  buildFallbackComparativeText, detectPriorityPatterns, computeHealthScore,
   sendInvitePatientEmail, sendPostConsultDiscountEmail,
   getTransporter, getFromAddress, sendRawEmail,
 };
