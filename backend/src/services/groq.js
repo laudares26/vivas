@@ -34,11 +34,14 @@ function getLastProvider() { return lastProvider; }
 function getLastModel() { return lastModel; }
 
 async function chatCompletion(messages, options = {}) {
-  // Route to MedGemma/Vertex when selected and configured.
+  // Route to MedGemma/Vertex when selected and configured. Only record the
+  // provenance AFTER a successful call — a failed/degenerate MedGemma response
+  // falls back downstream and must not be mislabeled as "medgemma".
   if (preferVertex() && vertexMedgemma.isConfigured()) {
+    const out = await vertexMedgemma.chatCompletion(messages, options);
     lastProvider = 'medgemma';
     lastModel = process.env.VERTEX_MEDGEMMA_MODEL || 'medgemma';
-    return vertexMedgemma.chatCompletion(messages, options);
+    return out;
   }
 
   if (!groqConfigured()) {

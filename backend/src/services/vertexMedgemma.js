@@ -126,50 +126,66 @@ async function chatCompletion(messages, options = {}) {
   // otherwise the response is cut off mid-reasoning and no answer is returned.
   const answerTokens = options.maxTokens || 900;
   const thinkTokens = parseInt(process.env.VERTEX_MEDGEMMA_THINK_TOKENS || '3000', 10);
-  const body = {
-    model: options.model || process.env.VERTEX_MEDGEMMA_MODEL || 'medgemma',
-    messages,
-    temperature: options.temperature != null ? options.temperature : 0.5,
-    max_tokens: answerTokens + thinkTokens,
-    top_p: options.topP != null ? options.topP : 0.9,
-    // Penalize repetition — MedGemma can otherwise fall into a degenerate loop
-    // (e.g. echoing a numeric series forever) and never reach its conclusion.
-    frequency_penalty: options.frequencyPenalty != null ? options.frequencyPenalty : 0.8,
-    presence_penalty: options.presencePenalty != null ? options.presencePenalty : 0.5,
-  };
 
   // MedGemma's thinking makes it much slower than Groq, so callers' tight
   // timeouts (tuned for Groq) would abort mid-generation. Treat the configured
   // value as a FLOOR the caller cannot undercut.
-  const controller = new AbortController();
   const timeoutFloor = parseInt(process.env.VERTEX_MEDGEMMA_TIMEOUT_MS || '240000', 10);
-  const timeout = setTimeout(() => controller.abort(), Math.max(options.timeoutMs || 0, timeoutFloor));
+  const timeoutMs = Math.max(options.timeoutMs || 0, timeoutFloor);
 
-  try {
-    const res = await fetch(chatCompletionsUrl(), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
+  // The 4B model occasionally decodes into a degenerate loop. Since it is
+  // stochastic, simply regenerating usually yields a clean answer — so retry a
+  // few times before giving up (which would fall back to the deterministic text).
+  const maxAttempts = parseInt(process.env.VERTEX_MEDGEMMA_MAX_ATTEMPTS || '3', 10);
+  let lastErr;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const body = {
+      model: options.model || process.env.VERTEX_MEDGEMMA_MODEL || 'medgemma',
+      messages,
+      // Nudge sampling down on retries to reduce the chance of another loop.
+      temperature: (options.temperature != null ? options.temperature : 0.5) - (attempt - 1) * 0.15,
+      max_tokens: answerTokens + thinkTokens,
+      top_p: options.topP != null ? options.topP : 0.9,
+      // Penalize repetition — MedGemma can otherwise fall into a degenerate loop
+      // (e.g. echoing a numeric series forever) and never reach its conclusion.
+      frequency_penalty: options.frequencyPenalty != null ? options.frequencyPenalty : 0.8,
+      presence_penalty: options.presencePenalty != null ? options.presencePenalty : 0.5,
+    };
+    if (body.temperature < 0.1) body.temperature = 0.1;
 
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      throw new Error(`Vertex MedGemma error ${res.status}: ${errText.slice(0, 300)}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(chatCompletionsUrl(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`Vertex MedGemma error ${res.status}: ${errText.slice(0, 300)}`);
+      }
+
+      const data = await res.json();
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) throw new Error('Vertex MedGemma returned empty response');
+      const answer = stripThinking(content);
+      if (!answer) throw new Error('Vertex MedGemma returned only reasoning, no answer');
+      if (looksDegenerate(answer)) throw new Error('Vertex MedGemma returned degenerate/looping output');
+      return answer;
+    } catch (err) {
+      lastErr = err;
+      console.warn(`[MEDGEMMA] attempt ${attempt}/${maxAttempts} failed: ${err.message}`);
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) throw new Error('Vertex MedGemma returned empty response');
-    const answer = stripThinking(content);
-    if (!answer) throw new Error('Vertex MedGemma returned only reasoning, no answer');
-    return answer;
-  } finally {
-    clearTimeout(timeout);
   }
+  throw lastErr || new Error('Vertex MedGemma failed');
 }
 
 module.exports = { isConfigured, chatCompletion };
