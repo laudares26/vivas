@@ -136,20 +136,20 @@ async function chatCompletion(messages, options = {}) {
   // The 4B model occasionally decodes into a degenerate loop. Since it is
   // stochastic, simply regenerating usually yields a clean answer — so retry a
   // few times before giving up (which would fall back to the deterministic text).
-  const maxAttempts = parseInt(process.env.VERTEX_MEDGEMMA_MAX_ATTEMPTS || '3', 10);
+  const maxAttempts = parseInt(process.env.VERTEX_MEDGEMMA_MAX_ATTEMPTS || '4', 10);
   let lastErr;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const body = {
       model: options.model || process.env.VERTEX_MEDGEMMA_MODEL || 'medgemma',
       messages,
       // Nudge sampling down on retries to reduce the chance of another loop.
-      temperature: (options.temperature != null ? options.temperature : 0.5) - (attempt - 1) * 0.15,
+      temperature: (options.temperature != null ? options.temperature : 0.4) - (attempt - 1) * 0.1,
       max_tokens: answerTokens + thinkTokens,
       top_p: options.topP != null ? options.topP : 0.9,
-      // Penalize repetition — MedGemma can otherwise fall into a degenerate loop
-      // (e.g. echoing a numeric series forever) and never reach its conclusion.
-      frequency_penalty: options.frequencyPenalty != null ? options.frequencyPenalty : 0.8,
-      presence_penalty: options.presencePenalty != null ? options.presencePenalty : 0.5,
+      // A MILD repetition penalty discourages loops; too high pushes the model
+      // off-distribution and causes worse (mutating) garbage, so keep it small.
+      frequency_penalty: options.frequencyPenalty != null ? options.frequencyPenalty : 0.3,
+      presence_penalty: options.presencePenalty != null ? options.presencePenalty : 0.2,
     };
     if (body.temperature < 0.1) body.temperature = 0.1;
 
