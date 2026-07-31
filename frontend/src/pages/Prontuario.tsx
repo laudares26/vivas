@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { FileText, Search, Stethoscope, TestTubeDiagonal, Pill, Syringe, AlertTriangle, User, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react'
+import { FileText, Search, Stethoscope, TestTubeDiagonal, Pill, Syringe, AlertTriangle, User, TrendingUp, TrendingDown, Minus, Loader2, Clock } from 'lucide-react'
 import { api, type Patient, type EHREntry, type ExamComparative } from '../services/api'
 import { useToast } from '../components/Toast'
+import AnalysisBadge from '../components/AnalysisBadge'
 
 const TYPE_CONFIG: Record<string, { icon: typeof FileText; color: string; bg: string }> = {
   consulta: { icon: Stethoscope, color: 'text-wine', bg: 'bg-wine-soft' },
@@ -183,11 +184,17 @@ export default function Prontuario() {
                     </div>
                     {comparative.analysis ? (
                       <div className="p-4 bg-wine-soft border border-wine-line rounded-lg">
-                        <p className="font-semibold text-sm text-gray-900 mb-2">Interpretação preventiva (todo o histórico):</p>
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                          <p className="font-semibold text-sm text-gray-900">Interpretação preventiva (todo o histórico):</p>
+                          <AnalysisBadge meta={comparative.analysis_meta} />
+                        </div>
                         <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{comparative.analysis}</p>
                       </div>
                     ) : (
-                      <p className="text-xs text-gray-400">Análise textual indisponível no momento.</p>
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                        <p className="text-xs text-amber-700">Análise aprofundada por MedGemma em processamento — disponível em instantes.</p>
+                      </div>
                     )}
                   </div>
                 ) : (

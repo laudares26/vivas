@@ -71,9 +71,25 @@ function chatCompletionsUrl() {
   const project = process.env.VERTEX_PROJECT_ID;
   const location = process.env.VERTEX_LOCATION;
   const endpointId = process.env.VERTEX_MEDGEMMA_ENDPOINT_ID;
-  const host = `https://${location}-aiplatform.googleapis.com`;
-  // Dedicated endpoint OpenAI-compatible route.
+  // Model Garden deploys a DEDICATED endpoint, whose OpenAI-compatible route
+  // lives on a per-endpoint DNS (…prediction.vertexai.goog), NOT on the shared
+  // *-aiplatform.googleapis.com host. Prefer VERTEX_MEDGEMMA_DNS when provided.
+  const dns = process.env.VERTEX_MEDGEMMA_DNS;
+  const host = dns ? `https://${dns}` : `https://${location}-aiplatform.googleapis.com`;
   return `${host}/v1beta1/projects/${project}/locations/${location}/endpoints/${endpointId}/chat/completions`;
+}
+
+// MedGemma 1.5 answers in a "thinking" format: an internal reasoning block
+// wrapped in <unused94>thought … <unused95>, followed by the final answer. Keep
+// only the final answer (everything after the last <unused95>); if the marker is
+// absent, drop a leading "<unused94>thought" preamble as a best effort.
+function stripThinking(text) {
+  if (typeof text !== 'string') return text;
+  const marker = '<unused95>';
+  const idx = text.lastIndexOf(marker);
+  let out = idx !== -1 ? text.slice(idx + marker.length) : text;
+  out = out.replace(/^<unused9\d>\s*thought[\s\S]*/i, '').trim() || out;
+  return out.replace(/<unused9\d>/g, '').trim();
 }
 
 async function chatCompletion(messages, options = {}) {
@@ -86,16 +102,25 @@ async function chatCompletion(messages, options = {}) {
   const token = typeof tokenResponse === 'string' ? tokenResponse : tokenResponse?.token;
   if (!token) throw new Error('failed to obtain Vertex AI access token');
 
+  // MedGemma spends tokens on its internal "thought" before the answer, so we
+  // add a thinking budget on top of the caller's desired answer length —
+  // otherwise the response is cut off mid-reasoning and no answer is returned.
+  const answerTokens = options.maxTokens || 900;
+  const thinkTokens = parseInt(process.env.VERTEX_MEDGEMMA_THINK_TOKENS || '3000', 10);
   const body = {
     model: options.model || process.env.VERTEX_MEDGEMMA_MODEL || 'medgemma',
     messages,
     temperature: options.temperature != null ? options.temperature : 0.5,
-    max_tokens: options.maxTokens || 900,
+    max_tokens: answerTokens + thinkTokens,
     top_p: options.topP != null ? options.topP : 0.9,
   };
 
+  // MedGemma's thinking makes it much slower than Groq, so callers' tight
+  // timeouts (tuned for Groq) would abort mid-generation. Treat the configured
+  // value as a FLOOR the caller cannot undercut.
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs || 45000);
+  const timeoutFloor = parseInt(process.env.VERTEX_MEDGEMMA_TIMEOUT_MS || '240000', 10);
+  const timeout = setTimeout(() => controller.abort(), Math.max(options.timeoutMs || 0, timeoutFloor));
 
   try {
     const res = await fetch(chatCompletionsUrl(), {
@@ -116,7 +141,9 @@ async function chatCompletion(messages, options = {}) {
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content;
     if (!content) throw new Error('Vertex MedGemma returned empty response');
-    return content.trim();
+    const answer = stripThinking(content);
+    if (!answer) throw new Error('Vertex MedGemma returned only reasoning, no answer');
+    return answer;
   } finally {
     clearTimeout(timeout);
   }

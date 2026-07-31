@@ -26,15 +26,27 @@ function isConfigured() {
   return (preferVertex() && vertexMedgemma.isConfigured()) || groqConfigured();
 }
 
+// Which provider actually served the most recent chatCompletion call, so callers
+// can persist accurate provenance ("medgemma" vs "groq") with the analysis.
+let lastProvider = null;
+let lastModel = null;
+function getLastProvider() { return lastProvider; }
+function getLastModel() { return lastModel; }
+
 async function chatCompletion(messages, options = {}) {
   // Route to MedGemma/Vertex when selected and configured.
   if (preferVertex() && vertexMedgemma.isConfigured()) {
+    lastProvider = 'medgemma';
+    lastModel = process.env.VERTEX_MEDGEMMA_MODEL || 'medgemma';
     return vertexMedgemma.chatCompletion(messages, options);
   }
 
   if (!groqConfigured()) {
     throw new Error('no LLM provider configured (set LLM_PROVIDER + credentials)');
   }
+
+  lastProvider = 'groq';
+  lastModel = options.model || DEFAULT_MODEL;
 
   const body = {
     model: options.model || DEFAULT_MODEL,
@@ -310,6 +322,9 @@ module.exports = {
   analyzeExamIndicators,
   analyzeExamComparison,
   analyzeRawExamHistory,
+  getLastProvider,
+  getLastModel,
+  preferVertex,
   VIVI_SYSTEM_PROMPT,
   DEFAULT_MODEL,
 };

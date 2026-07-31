@@ -10,6 +10,7 @@ const {
   extractIndicatorsFromText, extractCollectionDate, extractCriticalFindings, extractTextFromFile,
 } = require('../services/examExtraction');
 const groq = require('../services/groq');
+const analysisStore = require('../services/preventiveAnalysisStore');
 
 const MAX_BATCH_FILES = 50;
 
@@ -242,6 +243,9 @@ async function getExamTextsForUser(userId) {
 // LLM so it detects any risk pattern on its own (no per-disease code). Falls
 // back to the structured comparison, then to the deterministic text, so the
 // panel/alert is never left empty when Groq is unavailable.
+// Returns { text, provider, model }. `provider` is the LLM that actually served
+// the narrative ("medgemma" / "groq"), or "fallback" when the deterministic text
+// was used because no LLM was available.
 async function buildComparativeNarrative(userId, trends, history, criticalFindings) {
   if (!trends || trends.length === 0) return null;
 
@@ -272,13 +276,19 @@ async function buildComparativeNarrative(userId, trends, history, criticalFindin
     }
   }
 
-  if (!llmText) return buildFallbackComparativeText(trends, criticalFindings);
+  if (!llmText) {
+    return { text: buildFallbackComparativeText(trends, criticalFindings), provider: 'fallback', model: null };
+  }
+
+  const provider = groq.getLastProvider();
+  const model = groq.getLastModel();
 
   const missing = priority.filter(p => !llmText.toLowerCase().includes(p.term.toLowerCase()));
-  if (missing.length === 0) return llmText;
+  if (missing.length === 0) return { text: llmText, provider, model };
 
   const header = 'Sinais prioritários detectados na sua trajetória de exames (requerem atenção):';
-  return `${header}\n\n${missing.map(p => `- ${p.text}`).join('\n\n')}\n\n---\n\n${llmText}`;
+  const text = `${header}\n\n${missing.map(p => `- ${p.text}`).join('\n\n')}\n\n---\n\n${llmText}`;
+  return { text, provider, model };
 }
 
 async function analyzeHistoryAndNotify(userId) {
@@ -286,10 +296,39 @@ async function analyzeHistoryAndNotify(userId) {
   const comparative = computeComparativeAnalysis(history);
   const criticalFindings = await getCriticalFindingsForUser(userId);
 
-  const comparativeAnalysisText = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings);
+  const narrative = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings);
+  const comparativeAnalysisText = narrative ? narrative.text : null;
+
+  if (narrative && comparative.trends.length > 0) {
+    const score = computeHealthScore(comparative.trends, criticalFindings);
+    await analysisStore.saveAnalysis(userId, {
+      text: narrative.text, score, provider: narrative.provider,
+      model: narrative.model, trendsCount: comparative.trends.length,
+    }).catch(err => console.warn('[EXAM] saveAnalysis failed:', err.message));
+  }
 
   const notifications = await sendComparativeReport(userId, comparative, comparativeAnalysisText);
   return { comparative, comparativeAnalysisText, notifications };
+}
+
+// Generate + persist the intelligent analysis for one patient WITHOUT notifying.
+// Used by the scheduled MedGemma batch job (LLM_PROVIDER=vertex) so the deep
+// analysis is stored and later served instantly, off the request path.
+async function runPreventiveAnalysis(userId) {
+  const history = await getIndicatorHistory(userId);
+  const comparative = computeComparativeAnalysis(history);
+  if (comparative.trends.length === 0) return { userId, skipped: 'no-trends' };
+
+  const criticalFindings = await getCriticalFindingsForUser(userId);
+  const narrative = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings);
+  if (!narrative) return { userId, skipped: 'no-narrative' };
+
+  const score = computeHealthScore(comparative.trends, criticalFindings);
+  const saved = await analysisStore.saveAnalysis(userId, {
+    text: narrative.text, score, provider: narrative.provider,
+    model: narrative.model, trendsCount: comparative.trends.length,
+  });
+  return { userId, provider: narrative.provider, model: narrative.model, score, savedId: saved && saved.id };
 }
 
 // Create/update a Manchester triage entry when indicators are in alert (non-blocking).
@@ -507,9 +546,28 @@ router.get('/comparative', async (req, res) => {
       ? computeHealthScore(comparative.trends, criticalFindings)
       : null;
 
+    // Prefer the persisted "análise histórica inteligente" (e.g. the scheduled
+    // MedGemma batch result) so the request path never waits on a GPU. Generate
+    // live (Groq) only when nothing is stored yet, or when refresh=1 is asked.
     let analysis = null;
+    let analysisMeta = null;
     if (req.query.analyze === '1' && comparative.trends.length > 0) {
-      analysis = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings);
+      const stored = await analysisStore.getLatestAnalysis(userId).catch(() => null);
+      const forceRefresh = req.query.refresh === '1';
+      if (stored && !forceRefresh) {
+        analysis = stored.analysis_text;
+        analysisMeta = { provider: stored.provider, model: stored.model, generated_at: stored.created_at, mode: 'stored' };
+      } else {
+        const narrative = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings);
+        if (narrative) {
+          analysis = narrative.text;
+          analysisMeta = { provider: narrative.provider, model: narrative.model, generated_at: new Date().toISOString(), mode: 'live' };
+          await analysisStore.saveAnalysis(userId, {
+            text: narrative.text, score, provider: narrative.provider,
+            model: narrative.model, trendsCount: comparative.trends.length,
+          }).catch(err => console.warn('[EXAM COMPARATIVE] saveAnalysis failed:', err.message));
+        }
+      }
     }
 
     res.json({
@@ -517,6 +575,7 @@ router.get('/comparative', async (req, res) => {
       alerts: comparative.alerts,
       history,
       analysis,
+      analysis_meta: analysisMeta,
       score,
     });
   } catch (err) {
@@ -628,3 +687,5 @@ router.put('/:id', async (req, res) => {
 });
 
 module.exports = router;
+// Reusable orchestration for the scheduled MedGemma batch job (scripts/runMedgemmaBatch.js).
+module.exports.runPreventiveAnalysis = runPreventiveAnalysis;
