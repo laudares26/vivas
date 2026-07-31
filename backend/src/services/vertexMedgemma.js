@@ -92,6 +92,20 @@ function stripThinking(text) {
   return out.replace(/<unused9\d>/g, '').trim();
 }
 
+// Small models occasionally fall into a degenerate decoding loop, emitting
+// garbage like "Sr Sr Sr…" or "rVrVrV…" instead of finishing. Detect it so the
+// caller can discard the response and fall back to a clean narrative rather
+// than persisting/showing junk.
+function looksDegenerate(text) {
+  if (!text || text.length < 40) return true;
+  // A short chunk (<=6 chars) repeated back-to-back many times.
+  if (/(.{1,6}?)\1{8,}/s.test(text)) return true;
+  // Very low character diversity in the tail (typical of a stuck loop).
+  const tail = text.slice(-400).replace(/\s/g, '');
+  if (tail.length > 120 && new Set(tail).size / tail.length < 0.12) return true;
+  return false;
+}
+
 async function chatCompletion(messages, options = {}) {
   if (!isConfigured()) {
     throw new Error('Vertex MedGemma not configured');
@@ -115,8 +129,8 @@ async function chatCompletion(messages, options = {}) {
     top_p: options.topP != null ? options.topP : 0.9,
     // Penalize repetition — MedGemma can otherwise fall into a degenerate loop
     // (e.g. echoing a numeric series forever) and never reach its conclusion.
-    frequency_penalty: options.frequencyPenalty != null ? options.frequencyPenalty : 0.6,
-    presence_penalty: options.presencePenalty != null ? options.presencePenalty : 0.3,
+    frequency_penalty: options.frequencyPenalty != null ? options.frequencyPenalty : 0.8,
+    presence_penalty: options.presencePenalty != null ? options.presencePenalty : 0.5,
   };
 
   // MedGemma's thinking makes it much slower than Groq, so callers' tight

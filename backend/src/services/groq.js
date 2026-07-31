@@ -257,6 +257,14 @@ REGRAS OBRIGATORIAS:
 
   const DISCLAIMER = 'Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude.';
   let answer = await chatCompletion(messages, { temperature: 0.3, maxTokens: 1000, timeoutMs: 45000 });
+  // Some models echo a patient name printed in the raw lab text. Strip
+  // "(o/do/da) paciente <Nome Proprio>" so no (possibly wrong) name is shown.
+  if (typeof answer === 'string') {
+    answer = answer.replace(
+      /\b(d[aeo]s?\s+)?pacientes?\s+[A-ZÀ-Ý][a-zà-ÿ]+(?:\s+(?:d[aeo]s?\s+)?[A-ZÀ-Ý][a-zà-ÿ]+){1,3}/g,
+      'o paciente'
+    );
+  }
   // Guarantee the disclaimer even when a model is cut off before writing it.
   if (typeof answer === 'string') {
     const norm = answer.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
