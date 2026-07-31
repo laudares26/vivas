@@ -32,3 +32,9 @@ until [ "$(gcloud ai endpoints describe "$ENDPOINT_ID" --region="$REGION" \
   sleep 30; echo -n "."
 done
 echo " ready."
+
+# The dedicated endpoint DNS CHANGES on every (re)deploy, so the batch must use
+# the fresh value. Print it for the caller to pass as VERTEX_MEDGEMMA_DNS.
+DNS="$(gcloud ai endpoints describe "$ENDPOINT_ID" --region="$REGION" \
+  --format='value(dedicatedEndpointDns)')"
+echo "VERTEX_MEDGEMMA_DNS=$DNS"

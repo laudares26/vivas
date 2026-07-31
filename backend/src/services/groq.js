@@ -255,7 +255,16 @@ REGRAS OBRIGATORIAS:
     },
   ];
 
-  return chatCompletion(messages, { temperature: 0.3, maxTokens: 1000, timeoutMs: 45000 });
+  const DISCLAIMER = 'Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude.';
+  let answer = await chatCompletion(messages, { temperature: 0.3, maxTokens: 1000, timeoutMs: 45000 });
+  // Guarantee the disclaimer even when a model is cut off before writing it.
+  if (typeof answer === 'string') {
+    const norm = answer.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (!norm.includes('nao substitui a avaliacao de um profissional')) {
+      answer = `${answer.trim()}\n\n${DISCLAIMER}`;
+    }
+  }
+  return answer;
 }
 
 // LLM-generated comparative/historical analysis across multiple exams over time.

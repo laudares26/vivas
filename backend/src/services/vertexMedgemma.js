@@ -113,6 +113,10 @@ async function chatCompletion(messages, options = {}) {
     temperature: options.temperature != null ? options.temperature : 0.5,
     max_tokens: answerTokens + thinkTokens,
     top_p: options.topP != null ? options.topP : 0.9,
+    // Penalize repetition — MedGemma can otherwise fall into a degenerate loop
+    // (e.g. echoing a numeric series forever) and never reach its conclusion.
+    frequency_penalty: options.frequencyPenalty != null ? options.frequencyPenalty : 0.6,
+    presence_penalty: options.presencePenalty != null ? options.presencePenalty : 0.3,
   };
 
   // MedGemma's thinking makes it much slower than Groq, so callers' tight
