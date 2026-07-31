@@ -14,7 +14,11 @@
 //   VERTEX_MEDGEMMA_URL         (optional) full chat/completions URL. If unset,
 //                               it is derived from the vars below.
 //   VERTEX_MEDGEMMA_ENDPOINT_ID (optional) numeric id of a dedicated endpoint.
-//   GOOGLE_APPLICATION_CREDENTIALS  path to the service-account JSON key
+//
+// Credentials (either one):
+//   GOOGLE_VERTEX_SA_KEY            the service-account JSON key as a string
+//                               (preferred on Fly/containers — no file needed).
+//   GOOGLE_APPLICATION_CREDENTIALS  path to the service-account JSON key file
 //                               (standard Application Default Credentials).
 
 let GoogleAuth;
@@ -24,13 +28,29 @@ try {
   GoogleAuth = null;
 }
 
+function hasCredentials() {
+  return !!(process.env.GOOGLE_VERTEX_SA_KEY || process.env.GOOGLE_APPLICATION_CREDENTIALS);
+}
+
 let authClientPromise = null;
 function getAccessTokenProvider() {
   if (!GoogleAuth) throw new Error('google-auth-library not installed');
   if (!authClientPromise) {
-    const auth = new GoogleAuth({
-      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-    });
+    const opts = { scopes: ['https://www.googleapis.com/auth/cloud-platform'] };
+    // Prefer the JSON key passed inline (env var), so no key file is required.
+    if (process.env.GOOGLE_VERTEX_SA_KEY) {
+      let credentials;
+      try {
+        credentials = JSON.parse(process.env.GOOGLE_VERTEX_SA_KEY);
+      } catch {
+        throw new Error('GOOGLE_VERTEX_SA_KEY is not valid JSON');
+      }
+      opts.credentials = credentials;
+      if (credentials.project_id && !process.env.VERTEX_PROJECT_ID) {
+        opts.projectId = credentials.project_id;
+      }
+    }
+    const auth = new GoogleAuth(opts);
     authClientPromise = auth.getClient();
   }
   return authClientPromise;
@@ -39,6 +59,7 @@ function getAccessTokenProvider() {
 function isConfigured() {
   return !!(
     GoogleAuth &&
+    hasCredentials() &&
     process.env.VERTEX_PROJECT_ID &&
     process.env.VERTEX_LOCATION &&
     (process.env.VERTEX_MEDGEMMA_URL || process.env.VERTEX_MEDGEMMA_ENDPOINT_ID)
