@@ -30,12 +30,15 @@ async function ensureTable() {
 async function saveAnalysis(userId, { text, score, provider, model, trendsCount }) {
   if (!userId || !text) return null;
   await ensureTable();
+  // computeHealthScore() returns { score, label, ... }; accept either the object
+  // or a bare number so callers don't have to unwrap it.
+  const numericScore = (score && typeof score === 'object') ? score.score : score;
   const { rows } = await pool.query(
     `INSERT INTO preventive_analyses
        (patient_user_id, analysis_text, health_score, provider, model, trends_count)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id, created_at`,
-    [userId, text, score != null ? score : null, provider || null, model || null,
+    [userId, text, numericScore != null ? numericScore : null, provider || null, model || null,
       trendsCount != null ? trendsCount : null]
   );
   return rows[0];
