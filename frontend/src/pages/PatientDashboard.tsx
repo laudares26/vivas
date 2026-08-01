@@ -146,10 +146,7 @@ export default function PatientDashboard() {
       >
         <div className="relative z-10 flex items-center justify-between mb-6">
           <div className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-              <Heart className="w-4 h-4 text-white" fill="white" />
-            </span>
-            <span className="font-display font-extrabold text-lg">vivas</span>
+            <img src="/vivas-branco.svg" alt="vivas" className="h-7 object-contain" />
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => navigate('/saude-preventiva')} className="relative" aria-label="Notificacoes">
@@ -549,7 +546,7 @@ export default function PatientDashboard() {
                   <p className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Carteirinha Digital</p>
                   <p className="font-display font-extrabold text-lg mt-1">vivas Saude</p>
                 </div>
-                <Heart className="w-8 h-8 text-white/30" />
+                <img src="/vivas-icon-branco.svg" alt="vivas" className="w-8 h-8 object-contain opacity-40" />
               </div>
               <div className="space-y-2 mb-4">
                 <div>
