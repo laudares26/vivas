@@ -8,6 +8,18 @@ router.get('/', async (req, res) => {
     const params = [];
     const conditions = [];
 
+    // A patient may only see the professional(s) linked to them (care team).
+    // This keeps agendamento/teleconsulta scoped to their own doctor instead of
+    // exposing the whole platform roster.
+    if (req.user && req.user.role === 'paciente') {
+      params.push(req.user.id);
+      conditions.push(`email IN (
+        SELECT u.email FROM users u
+        JOIN professional_patient_relationships ppr ON ppr.professional_user_id = u.id
+        WHERE ppr.patient_user_id = $${params.length}
+      )`);
+    }
+
     if (category) {
       params.push(category);
       conditions.push(`category = $${params.length}`);

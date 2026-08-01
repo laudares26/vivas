@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Video, VideoOff, Mic, MicOff, Phone, MonitorUp, MessageSquare, Clock, User, CalendarDays, CheckCircle2, XCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { api } from '../services/api'
 
 interface TimeSlot {
   hour: string
@@ -10,33 +11,13 @@ interface TimeSlot {
 }
 
 interface Professional {
-  id: number
+  id: string
   name: string
   specialty: string
   avatar_color: string
 }
 
-interface ScheduledConsult {
-  id: number
-  professional: string
-  patient: string
-  date: string
-  hour: string
-  status: 'agendada' | 'em_andamento' | 'concluida'
-}
-
-const MY_PROFESSIONALS: Professional[] = [
-  { id: 1, name: 'Dr. Ricardo Oliveira', specialty: 'Cardiologista', avatar_color: '#0057B8' },
-  { id: 2, name: 'Dra. Ana Psicóloga', specialty: 'Psicóloga', avatar_color: '#7C3AED' },
-  { id: 3, name: 'Dr. Bruno Hodos', specialty: 'Clínica Geral', avatar_color: '#16A34A' },
-  { id: 4, name: 'Dra. Carla Sousa', specialty: 'Psicóloga', avatar_color: '#EA580C' },
-]
-
-const SCHEDULED_CONSULTS: ScheduledConsult[] = [
-  { id: 1, professional: 'Dr. Ricardo Oliveira', patient: 'Maria Silva', date: '2026-06-16', hour: '09:00', status: 'agendada' },
-  { id: 2, professional: 'Dra. Ana Psicóloga', patient: 'Maria Silva', date: '2026-06-17', hour: '14:00', status: 'agendada' },
-  { id: 3, professional: 'Dr. Bruno Hodos', patient: 'Maria Silva', date: '2026-06-18', hour: '10:00', status: 'agendada' },
-]
+const PROF_COLORS = ['#0057B8', '#7C3AED', '#16A34A', '#EA580C', '#DB2777']
 
 function generateSlots(): TimeSlot[] {
   const hours = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00']
@@ -57,7 +38,8 @@ export default function Teleconsulta() {
   const [selectedDate, setSelectedDate] = useState('')
   const [slots, setSlots] = useState<TimeSlot[]>([])
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
-  const [consults] = useState<ScheduledConsult[]>(SCHEDULED_CONSULTS)
+  const [myProfessionals, setMyProfessionals] = useState<Professional[]>([])
+  const [consults, setConsults] = useState<{ id: string; professional: string; patient: string; date: string; hour: string; status: string }[]>([])
 
   const [inCall, setInCall] = useState(false)
   const [muted, setMuted] = useState(false)
@@ -80,6 +62,32 @@ export default function Teleconsulta() {
   useEffect(() => {
     if (isPaciente ? selectedProfessional && selectedDate : selectedDate) { setSlots(generateSlots()); setSelectedSlot(null) }
   }, [selectedProfessional, selectedDate, isPaciente])
+
+  // Load the patient's real care team (only their linked professional[s]) and
+  // their real upcoming consultations — never the whole platform roster.
+  useEffect(() => {
+    if (!isPaciente) return
+    api.getProfessionals()
+      .then(list => setMyProfessionals(list.map((p, i) => ({
+        id: p.id,
+        name: p.full_name,
+        specialty: p.specialty || p.category || 'Profissional de saúde',
+        avatar_color: PROF_COLORS[i % PROF_COLORS.length],
+      }))))
+      .catch(() => setMyProfessionals([]))
+    api.getAppointments()
+      .then(appts => setConsults(appts
+        .filter(a => new Date(a.date_time) >= new Date())
+        .map(a => ({
+          id: a.id,
+          professional: a.professional_name || 'Profissional',
+          patient: a.patient_name || '',
+          date: a.date_time.split('T')[0],
+          hour: new Date(a.date_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          status: a.status,
+        }))))
+      .catch(() => setConsults([]))
+  }, [isPaciente])
 
   const formatTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
@@ -184,14 +192,18 @@ export default function Teleconsulta() {
             <div className="card">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2"><User className="w-5 h-5 text-vivas-blue" />Seus Profissionais de Saúde</h3>
               <p className="text-xs text-gray-500 mb-3">Selecione o profissional para verificar horários disponíveis em comum</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {MY_PROFESSIONALS.map(prof => (
-                  <button key={prof.id} onClick={() => setSelectedProfessional(prof)} className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${selectedProfessional?.id === prof.id ? 'border-vivas-blue bg-wine-soft' : 'border-gray-200 hover:bg-gray-50'}`}>
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ backgroundColor: prof.avatar_color }}>{prof.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
-                    <div className="min-w-0"><p className="text-sm font-medium text-gray-900 truncate">{prof.name}</p><p className="text-xs text-gray-500">{prof.specialty}</p></div>
-                  </button>
-                ))}
-              </div>
+              {myProfessionals.length === 0 ? (
+                <p className="text-sm text-gray-500">Você ainda não tem um profissional de saúde vinculado.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {myProfessionals.map(prof => (
+                    <button key={prof.id} onClick={() => setSelectedProfessional(prof)} className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${selectedProfessional?.id === prof.id ? 'border-vivas-blue bg-wine-soft' : 'border-gray-200 hover:bg-gray-50'}`}>
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ backgroundColor: prof.avatar_color }}>{prof.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
+                      <div className="min-w-0"><p className="text-sm font-medium text-gray-900 truncate">{prof.name}</p><p className="text-xs text-gray-500">{prof.specialty}</p></div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           <div className="card">
@@ -246,6 +258,9 @@ export default function Teleconsulta() {
           <div className="card">
             <h3 className="font-semibold text-gray-900 mb-3">Próximas Consultas</h3>
             <div className="space-y-2">
+              {consults.length === 0 && (
+                <p className="text-sm text-gray-500">Nenhuma consulta agendada.</p>
+              )}
               {consults.map(c => (
                 <div key={c.id} className="p-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all">
                   <div className="flex items-center justify-between mb-1">
