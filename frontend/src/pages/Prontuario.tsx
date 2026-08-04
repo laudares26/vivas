@@ -4,6 +4,7 @@ import { FileText, Search, Stethoscope, TestTubeDiagonal, Pill, Syringe, AlertTr
 import { api, type Patient, type EHREntry, type ExamComparative } from '../services/api'
 import { useToast } from '../components/Toast'
 import AnalysisBadge from '../components/AnalysisBadge'
+import TrendDecisionBanner from '../components/TrendDecisionBanner'
 
 const TYPE_CONFIG: Record<string, { icon: typeof FileText; color: string; bg: string }> = {
   consulta: { icon: Stethoscope, color: 'text-wine', bg: 'bg-wine-soft' },
@@ -162,13 +163,22 @@ export default function Prontuario() {
                   </div>
                 ) : comparative && comparative.trends.length > 0 ? (
                   <div className="space-y-4">
+                    <TrendDecisionBanner decision={comparative.trend_decision} variant="professional" />
                     <div className="space-y-2">
                       {comparative.trends.map(t => {
                         const Icon = t.direction === 'estavel' ? Minus : (t.direction === 'subiu' ? TrendingUp : TrendingDown)
                         const color = t.worsening ? 'text-red-600' : (t.direction === 'estavel' ? 'text-gray-400' : 'text-green-600')
+                        const tm = t.trend_metrics
                         return (
                           <div key={t.name} className="flex items-center justify-between text-xs sm:text-sm border-b border-gray-100 pb-2">
-                            <span className="font-medium text-gray-700">{t.label}</span>
+                            <span className="font-medium text-gray-700 flex items-center gap-1.5">
+                              {t.label}
+                              {tm?.active && (
+                                <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold">
+                                  τ={tm.tau}{tm.projecao_anos != null ? ` · ~${tm.projecao_anos}a` : ''}
+                                </span>
+                              )}
+                            </span>
                             <div className="flex items-center gap-2">
                               {t.first_value != null && <span className="text-gray-400">{t.first_value}→</span>}
                               <span className="font-semibold text-gray-900">{t.current_value} {t.unit}</span>

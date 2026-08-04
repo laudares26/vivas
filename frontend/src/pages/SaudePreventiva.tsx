@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast'
 import { useAuth } from '../contexts/AuthContext'
 import AnalysisBadge from '../components/AnalysisBadge'
 import { api, type ExamBatchResult, type Exam, type ExamComparative } from '../services/api'
+import TrendDecisionBanner from '../components/TrendDecisionBanner'
 
 interface HealthExam {
   id: number
@@ -224,13 +225,22 @@ export default function SaudePreventiva() {
               </div>
             ) : comparative && comparative.trends.length > 0 ? (
               <div className="space-y-4">
+                <TrendDecisionBanner decision={comparative.trend_decision} />
                 <div className="space-y-2">
                   {comparative.trends.map(t => {
                     const Icon = t.direction === 'estavel' ? Minus : (t.direction === 'subiu' ? TrendingUp : TrendingDown)
                     const color = t.worsening ? 'text-red-600' : (t.direction === 'estavel' ? 'text-gray-400' : 'text-green-600')
+                    const tm = t.trend_metrics
                     return (
                       <div key={t.name} className="flex items-center justify-between text-xs sm:text-sm border-b border-gray-100 pb-2">
-                        <span className="font-medium text-gray-700">{t.label}</span>
+                        <span className="font-medium text-gray-700 flex items-center gap-1.5">
+                          {t.label}
+                          {tm?.active && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold">
+                              tendência{tm.projecao_anos != null ? ` · ~${tm.projecao_anos}a` : ''}
+                            </span>
+                          )}
+                        </span>
                         <div className="flex items-center gap-2">
                           {t.first_value != null && <span className="text-gray-400">{t.first_value}→</span>}
                           <span className="font-semibold text-gray-900">{t.current_value} {t.unit}</span>
@@ -632,6 +642,8 @@ export default function SaudePreventiva() {
                   <p className="font-semibold text-sm text-green-800">{batchResult.files_processed} exame(s) analisado(s)!</p>
                   <p className="text-xs text-green-700 mt-1">{batchResult.total_indicators} indicador(es) extraído(s) no total</p>
                 </div>
+
+                <TrendDecisionBanner decision={batchResult.comparative?.trend_decision} />
 
                 {batchResult.comparative?.trends?.length > 0 && (
                   <div className="p-4 bg-white border border-wine-line rounded-lg">

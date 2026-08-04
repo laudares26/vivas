@@ -5,6 +5,7 @@ const {
   THRESHOLDS, classifyIndicator,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
   buildFallbackComparativeText, detectPriorityPatterns, computeHealthScore,
+  buildTrendPreventiveText,
 } = require('../services/notifications');
 const {
   extractIndicatorsFromText, extractCollectionDate, extractCriticalFindings, extractTextFromFile,
@@ -246,7 +247,7 @@ async function getExamTextsForUser(userId) {
 // Returns { text, provider, model }. `provider` is the LLM that actually served
 // the narrative ("medgemma" / "groq"), or "fallback" when the deterministic text
 // was used because no LLM was available.
-async function buildComparativeNarrative(userId, trends, history, criticalFindings) {
+async function buildComparativeNarrative(userId, trends, history, criticalFindings, trendDecision = null) {
   if (!trends || trends.length === 0) return null;
 
   // Deterministic safety net: high-priority patterns (hematologic / plasma-cell)
@@ -256,6 +257,15 @@ async function buildComparativeNarrative(userId, trends, history, criticalFindin
   // even when the markers are present. We prepend any priority pattern the LLM
   // did not already cover so a myeloma/leukemia signal is never dropped.
   const priority = detectPriorityPatterns(trends, criticalFindings);
+
+  // Preventive decision layer (motor de tendência): a sustained + concordant
+  // in-range drift is a deterministic signal that must be surfaced even when no
+  // value is out of range. Treat it like a priority pattern so it is injected
+  // into the narrative if the LLM did not cover it on its own.
+  const trendText = buildTrendPreventiveText(trendDecision);
+  if (trendText) {
+    priority.unshift({ key: 'trend_decision', term: 'tendência sustentada', text: trendText });
+  }
 
   let llmText = null;
   if (groq.isConfigured()) {
@@ -277,7 +287,7 @@ async function buildComparativeNarrative(userId, trends, history, criticalFindin
   }
 
   if (!llmText) {
-    return { text: buildFallbackComparativeText(trends, criticalFindings), provider: 'fallback', model: null };
+    return { text: buildFallbackComparativeText(trends, criticalFindings, trendDecision), provider: 'fallback', model: null };
   }
 
   const provider = groq.getLastProvider();
@@ -296,11 +306,11 @@ async function analyzeHistoryAndNotify(userId) {
   const comparative = computeComparativeAnalysis(history);
   const criticalFindings = await getCriticalFindingsForUser(userId);
 
-  const narrative = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings);
+  const narrative = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings, comparative.trendDecision);
   const comparativeAnalysisText = narrative ? narrative.text : null;
 
   if (narrative && comparative.trends.length > 0) {
-    const score = computeHealthScore(comparative.trends, criticalFindings);
+    const score = computeHealthScore(comparative.trends, criticalFindings, comparative.trendDecision);
     await analysisStore.saveAnalysis(userId, {
       text: narrative.text, score, provider: narrative.provider,
       model: narrative.model, trendsCount: comparative.trends.length,
@@ -320,10 +330,10 @@ async function runPreventiveAnalysis(userId) {
   if (comparative.trends.length === 0) return { userId, skipped: 'no-trends' };
 
   const criticalFindings = await getCriticalFindingsForUser(userId);
-  const narrative = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings);
+  const narrative = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings, comparative.trendDecision);
   if (!narrative) return { userId, skipped: 'no-narrative' };
 
-  const score = computeHealthScore(comparative.trends, criticalFindings);
+  const score = computeHealthScore(comparative.trends, criticalFindings, comparative.trendDecision);
   const saved = await analysisStore.saveAnalysis(userId, {
     text: narrative.text, score, provider: narrative.provider,
     model: narrative.model, trendsCount: comparative.trends.length,
@@ -493,6 +503,7 @@ router.post('/upload-batch', withUploadErrors(examUpload.array('files', MAX_BATC
         trends: comparative.trends,
         alerts: comparative.alerts,
         analysis: comparativeAnalysisText,
+        trend_decision: comparative.trendDecision || null,
       },
       notifications,
     });
@@ -543,7 +554,7 @@ router.get('/comparative', async (req, res) => {
       ? await getCriticalFindingsForUser(userId)
       : [];
     const score = comparative.trends.length > 0
-      ? computeHealthScore(comparative.trends, criticalFindings)
+      ? computeHealthScore(comparative.trends, criticalFindings, comparative.trendDecision)
       : null;
 
     // Prefer the persisted "análise histórica inteligente" (e.g. the scheduled
@@ -558,7 +569,7 @@ router.get('/comparative', async (req, res) => {
         analysis = stored.analysis_text;
         analysisMeta = { provider: stored.provider, model: stored.model, generated_at: stored.created_at, mode: 'stored' };
       } else {
-        const narrative = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings);
+        const narrative = await buildComparativeNarrative(userId, comparative.trends, history, criticalFindings, comparative.trendDecision);
         if (narrative) {
           analysis = narrative.text;
           analysisMeta = { provider: narrative.provider, model: narrative.model, generated_at: new Date().toISOString(), mode: 'live' };
@@ -577,6 +588,7 @@ router.get('/comparative', async (req, res) => {
       analysis,
       analysis_meta: analysisMeta,
       score,
+      trend_decision: comparative.trendDecision || null,
     });
   } catch (err) {
     console.error('[EXAM COMPARATIVE] Error:', err);

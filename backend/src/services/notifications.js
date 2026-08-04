@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const pool = require('../config/database');
+const trendEngine = require('./trendEngine');
 
 // SMTP configuration — uses env vars if available, otherwise logs to console
 let transporter = null;
@@ -403,8 +404,59 @@ function computeComparativeAnalysis(history) {
     }
   }
 
+  // Preventive decision layer (motor de tendência): evaluate sustained,
+  // margin-consuming, concordant trends even when every value is still in range.
+  const trendDecision = trendEngine.analyzeTrends(history);
+  for (const t of trends) {
+    const m = trendDecision.markers[t.name];
+    if (m && m.n >= trendEngine.DEFAULT_PARAMS.N_MIN) {
+      t.trend_metrics = {
+        active: m.ativo,
+        tau: m.tau,
+        consumo: m.consumo,
+        projecao_anos: m.projecao_anos,
+        eixo: m.eixo,
+      };
+    }
+  }
+
   trends.sort((a, b) => (b.worsening === a.worsening ? 0 : b.worsening ? 1 : -1));
-  return { trends, alerts };
+  return { trends, alerts, trendDecision };
+}
+
+// Patient-facing preventive message for a sustained/concordant trend, phrased as
+// an ALERT and never as a diagnosis (spec §9). Returns null when level is green.
+function buildTrendPreventiveText(trendDecision) {
+  if (!trendDecision || trendDecision.level === 'verde') return null;
+  const axis = trendDecision.top_axis && trendDecision.axes[trendDecision.top_axis];
+  if (!axis) return null;
+  const active = (axis.markers || []).filter(m => m.ativo);
+  const labels = active.map(m => m.label);
+  const listStr = labels.join(', ');
+  const n = labels.length;
+
+  if (trendDecision.level === 'vermelho') {
+    let p = `Identificamos uma tendência sustentada e concordante em ${n} indicador(es) (${listStr}) ao longo do seu histórico. Todos ainda estão dentro da faixa de referência, mas o movimento conjunto merece atenção preventiva.`;
+    if (axis.proj_min_anos != null) {
+      p += ` No ritmo atual, um dos indicadores tende a sair da faixa em cerca de ${axis.proj_min_anos} ano(s).`;
+    }
+    p += ' Isto é um alerta, não um diagnóstico. Recomendamos avaliação com um médico.';
+    return p;
+  }
+  // amarelo
+  return `Alguns indicadores mostram uma tendência que vale acompanhar (${listStr}), ainda dentro da faixa de referência. Sugerimos manter o monitoramento e conversar com seu médico na próxima consulta. Isto é um alerta, não um diagnóstico.`;
+}
+
+// Professional-facing detail for a sustained/concordant trend (spec §9).
+function buildTrendProfessionalText(trendDecision) {
+  if (!trendDecision || trendDecision.level === 'verde') return null;
+  const axis = trendDecision.top_axis && trendDecision.axes[trendDecision.top_axis];
+  if (!axis) return null;
+  const active = (axis.markers || []).filter(m => m.ativo);
+  const detail = active
+    .map(m => `${m.label} (τ=${m.tau}, consumo=${(m.consumo * 100).toFixed(0)}%${m.projecao_anos != null ? `, saída da faixa ~${m.projecao_anos}a` : ''})`)
+    .join('; ');
+  return `Deriva concordante no eixo ${trendDecision.top_axis}: ${detail}. Sugere-se correlação clínica.`;
 }
 
 // Deterministic, non-LLM comparative narrative used as a fallback whenever the
@@ -491,7 +543,7 @@ function detectPriorityPatterns(trends, criticalFindings = []) {
 // fixed placeholder. Worsening/out-of-range indicators lower the score; a
 // detected high-priority pattern (hematologic/plasma-cell) caps it low so a
 // serious trajectory can never read as "Saúde em dia".
-function computeHealthScore(trends, criticalFindings = []) {
+function computeHealthScore(trends, criticalFindings = [], trendDecision = null) {
   const list = Array.isArray(trends) ? trends : [];
   let score = 100;
   for (const t of list) {
@@ -503,25 +555,39 @@ function computeHealthScore(trends, criticalFindings = []) {
   const priority = detectPriorityPatterns(trends, criticalFindings);
   if (priority.length) score = Math.min(score, 38);
 
+  // Preventive decision layer: a sustained + concordant trend (all values still
+  // in range) must lower the score so a slow trajectory can never read as
+  // "Saúde em dia" just because nothing crossed a limit yet.
+  const trendLevel = trendDecision ? trendDecision.level : 'verde';
+  if (trendLevel === 'vermelho') score = Math.min(score, 35);
+  else if (trendLevel === 'amarelo') score = Math.min(score, 62);
+
   score = Math.max(5, Math.min(98, Math.round(score)));
   let label, tone;
-  if (priority.length || score < 40) { label = 'Requer atenção'; tone = 'alerta'; }
-  else if (score < 70) { label = 'Atenção'; tone = 'atencao'; }
+  if (priority.length || trendLevel === 'vermelho' || score < 40) { label = 'Requer atenção'; tone = 'alerta'; }
+  else if (trendLevel === 'amarelo' || score < 70) { label = 'Atenção'; tone = 'atencao'; }
   else { label = 'Saúde em dia'; tone = 'bom'; }
-  return { score, label, tone, priorityCount: priority.length };
+  return { score, label, tone, priorityCount: priority.length, trendLevel };
 }
 
-function buildFallbackComparativeText(trends, criticalFindings = []) {
+function buildFallbackComparativeText(trends, criticalFindings = [], trendDecision = null) {
   const list = Array.isArray(trends) ? trends : [];
   const byName = Object.fromEntries(list.map(t => [t.name, t]));
   const parts = [];
+
+  // Preventive decision layer takes precedence: a sustained + concordant trend
+  // (all values still in range) must be surfaced BEFORE the range-based summary,
+  // otherwise the narrative would say "nada em piora relevante" while markers
+  // are clearly drifting together toward the risk edge.
+  const trendText = buildTrendPreventiveText(trendDecision);
+  if (trendText) parts.push(trendText);
 
   const worsened = list.filter(t => t.worsening && (t.current_status === 'alerta' || t.current_status === 'atencao'));
   if (worsened.length) {
     parts.push('Ao considerar toda a trajetória dos exames enviados, os seguintes indicadores merecem atenção preventiva: ' +
       worsened.map(t => `${t.label} (${t.first_value != null ? t.first_value + '→' : ''}${t.current_value} ${t.unit})`).join('; ') + '.');
-  } else {
-    parts.push('Ao considerar toda a trajetória dos exames enviados, não há indicadores em piora relevante no momento.');
+  } else if (!trendText) {
+    parts.push('Ao considerar toda a trajetória dos exames enviados, não há indicadores fora da faixa nem tendência sustentada concordante no momento.');
   }
 
   const isAlert = (n) => byName[n] && (byName[n].current_status === 'alerta' || byName[n].current_status === 'atencao');
@@ -627,8 +693,12 @@ function buildComparativeProfessionalEmail(professionalName, patientName, patien
 // Only emails when there is at least one alert (worsening/out-of-range) — matching
 // the existing single-exam notification behaviour.
 async function sendComparativeReport(patientUserId, comparative, aiText) {
-  const { trends, alerts } = comparative;
-  if (!alerts || alerts.length === 0) {
+  const { trends, alerts, trendDecision } = comparative;
+  // Notify on an out-of-range alert OR on a preventive trend decision (a
+  // sustained + concordant drift while still in range) — the whole point of the
+  // decision layer is that it fires BEFORE anything crosses a limit.
+  const trendTriggers = trendDecision && trendDecision.level !== 'verde';
+  if ((!alerts || alerts.length === 0) && !trendTriggers) {
     return { notified: false, reason: 'Nenhuma tendência preocupante identificada', trends };
   }
 
@@ -745,6 +815,7 @@ module.exports = {
   checkAndNotify, classifyIndicator, THRESHOLDS, sendEmail,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
   buildFallbackComparativeText, detectPriorityPatterns, computeHealthScore,
+  buildTrendPreventiveText, buildTrendProfessionalText,
   sendInvitePatientEmail, sendPostConsultDiscountEmail,
   getTransporter, getFromAddress, sendRawEmail,
 };
