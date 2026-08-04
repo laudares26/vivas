@@ -18,6 +18,8 @@ export default function TrendDecisionBanner({
   const active = (axis.markers || []).filter(m => m.ativo)
   const labels = active.map(m => m.label).join(', ')
   const isRed = decision.level === 'vermelho'
+  const inRange = !axis.any_out_of_range
+  const hasProj = axis.proj_min_anos != null && axis.proj_min_anos > 0
   const cls = isRed
     ? 'bg-red-50 border-red-300 text-red-800'
     : 'bg-amber-50 border-amber-300 text-amber-800'
@@ -34,14 +36,14 @@ export default function TrendDecisionBanner({
             <p className="text-xs mt-1 leading-relaxed">
               Deriva concordante no eixo <strong>{decision.top_axis}</strong>: {active.length} marcador(es) com tendência sustentada ({labels}).
               {' '}Consumo de margem até {(axis.consumo_max * 100).toFixed(0)}%
-              {axis.proj_min_anos != null && `, projeção de saída da faixa em ~${axis.proj_min_anos} ano(s)`}.
-              {' '}Todos ainda dentro da faixa de referência. Sugere-se correlação clínica.
+              {hasProj && `, projeção de saída da faixa em ~${axis.proj_min_anos} ano(s)`}.
+              {' '}{inRange ? 'Todos ainda dentro da faixa de referência.' : 'Parte dos marcadores já fora da faixa de referência.'} Sugere-se correlação clínica.
             </p>
           ) : (
             <p className="text-xs mt-1 leading-relaxed">
-              {active.length} indicador(es) ({labels}) mostram movimento consistente na mesma direção de risco,
-              <strong> ainda dentro da faixa de referência</strong>.
-              {axis.proj_min_anos != null && ` No ritmo atual, um deles tende a sair da faixa em ~${axis.proj_min_anos} ano(s).`}
+              {active.length} indicador(es) ({labels}) mostram movimento consistente na mesma direção de risco
+              {inRange ? <strong>, ainda dentro da faixa de referência</strong> : ' (parte já fora da faixa de referência)'}.
+              {hasProj && ` No ritmo atual, um deles tende a sair da faixa em ~${axis.proj_min_anos} ano(s).`}
             </p>
           )}
           <p className="text-[11px] mt-1 opacity-80">

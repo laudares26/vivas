@@ -435,16 +435,24 @@ function buildTrendPreventiveText(trendDecision) {
   const listStr = labels.join(', ');
   const n = labels.length;
 
+  // Only claim "still within range" when no active marker has already crossed
+  // its reference limit; otherwise the message would downplay an abnormal value.
+  const dentroDaFaixa = !axis.any_out_of_range;
+  const faixaFrase = dentroDaFaixa
+    ? 'Todos ainda estão dentro da faixa de referência, mas o movimento conjunto merece atenção preventiva.'
+    : 'Parte deles já saiu da faixa de referência e o movimento conjunto reforça a atenção.';
+
   if (trendDecision.level === 'vermelho') {
-    let p = `Identificamos uma tendência sustentada e concordante em ${n} indicador(es) (${listStr}) ao longo do seu histórico. Todos ainda estão dentro da faixa de referência, mas o movimento conjunto merece atenção preventiva.`;
-    if (axis.proj_min_anos != null) {
+    let p = `Identificamos uma tendência sustentada e concordante em ${n} indicador(es) (${listStr}) ao longo do seu histórico. ${faixaFrase}`;
+    if (axis.proj_min_anos != null && axis.proj_min_anos > 0) {
       p += ` No ritmo atual, um dos indicadores tende a sair da faixa em cerca de ${axis.proj_min_anos} ano(s).`;
     }
     p += ' Isto é um alerta, não um diagnóstico. Recomendamos avaliação com um médico.';
     return p;
   }
   // amarelo
-  return `Alguns indicadores mostram uma tendência que vale acompanhar (${listStr}), ainda dentro da faixa de referência. Sugerimos manter o monitoramento e conversar com seu médico na próxima consulta. Isto é um alerta, não um diagnóstico.`;
+  const faixaAmarelo = dentroDaFaixa ? ', ainda dentro da faixa de referência,' : '';
+  return `Alguns indicadores mostram uma tendência que vale acompanhar (${listStr})${faixaAmarelo} Sugerimos manter o monitoramento e conversar com seu médico na próxima consulta. Isto é um alerta, não um diagnóstico.`;
 }
 
 // Professional-facing detail for a sustained/concordant trend (spec §9).
@@ -454,7 +462,12 @@ function buildTrendProfessionalText(trendDecision) {
   if (!axis) return null;
   const active = (axis.markers || []).filter(m => m.ativo);
   const detail = active
-    .map(m => `${m.label} (τ=${m.tau}, consumo=${(m.consumo * 100).toFixed(0)}%${m.projecao_anos != null ? `, saída da faixa ~${m.projecao_anos}a` : ''})`)
+    .map(m => {
+      const proj = m.fora_faixa
+        ? ', já fora da faixa'
+        : (m.projecao_anos != null ? `, saída da faixa ~${m.projecao_anos}a` : '');
+      return `${m.label} (τ=${m.tau}, consumo=${(m.consumo * 100).toFixed(0)}%${proj})`;
+    })
     .join('; ');
   return `Deriva concordante no eixo ${trendDecision.top_axis}: ${detail}. Sugere-se correlação clínica.`;
 }

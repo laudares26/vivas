@@ -254,6 +254,7 @@ export type TrendLevel = 'verde' | 'amarelo' | 'vermelho';
 export interface TrendMarker {
   name: string; label: string; ativo: boolean;
   tau?: number; consumo?: number; projecao_anos?: number | null;
+  fora_faixa?: boolean;
 }
 
 export interface TrendAxis {
@@ -262,6 +263,7 @@ export interface TrendAxis {
   proj_min_anos: number | null;
   consumo_max: number;
   eixo_score: number;
+  any_out_of_range?: boolean;
   markers: TrendMarker[];
 }
 

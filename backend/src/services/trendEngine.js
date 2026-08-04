@@ -101,9 +101,15 @@ function analisarMarcador(series, cfg, params) {
   const valorAtual = median(vals.slice(-3));
   const limite = cfg.direcao === 'teto' ? cfg.hi : cfg.lo;
   const rumoLimite = cfg.direcao === 'teto' ? slope > 0 : slope < 0;
-  const projecao = (rumoLimite && Number.isFinite(slope) && slope !== 0)
-    ? Math.abs((limite - valorAtual) / slope)
-    : Infinity;
+  // Whether the robust current value has already crossed the risk edge. When it
+  // has, the "years until it leaves the range" is 0 (it already left) — never a
+  // positive projection, which would falsely claim the crossing is years away.
+  const foraFaixa = cfg.direcao === 'teto' ? valorAtual >= cfg.hi : valorAtual <= cfg.lo;
+  const projecao = foraFaixa
+    ? 0
+    : ((rumoLimite && Number.isFinite(slope) && slope !== 0)
+      ? Math.abs((limite - valorAtual) / slope)
+      : Infinity);
 
   // §4.4(3) the trend must persist after dropping the last point, so the signal
   // exists BEFORE any rupture and is not created by the last reading alone.
@@ -130,6 +136,7 @@ function analisarMarcador(series, cfg, params) {
     slope: Number.isFinite(slope) ? +slope.toFixed(4) : null,
     consumo: +cAtual.toFixed(3),
     projecao_anos: Number.isFinite(projecao) ? +projecao.toFixed(1) : null,
+    fora_faixa: foraFaixa,
     valor_atual: valorAtual,
     n: pts.length,
   };
@@ -159,6 +166,7 @@ function decidirEixo(markers, params) {
     proj_min_anos: Number.isFinite(projMin) ? projMin : null,
     consumo_max: +consumoMax.toFixed(3),
     eixo_score: +eixoScore.toFixed(3),
+    any_out_of_range: ativos.some(m => m.fora_faixa),
   };
 }
 
