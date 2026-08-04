@@ -240,6 +240,36 @@ export interface ExamTrend {
   direction: 'subiu' | 'desceu' | 'estavel';
   worsening: boolean;
   current_status: string; previous_status: string | null;
+  trend_metrics?: {
+    active: boolean;
+    tau: number;
+    consumo: number;
+    projecao_anos: number | null;
+    eixo: string;
+  };
+}
+
+export type TrendLevel = 'verde' | 'amarelo' | 'vermelho';
+
+export interface TrendMarker {
+  name: string; label: string; ativo: boolean;
+  tau?: number; consumo?: number; projecao_anos?: number | null;
+}
+
+export interface TrendAxis {
+  nivel: TrendLevel;
+  concord_count: number;
+  proj_min_anos: number | null;
+  consumo_max: number;
+  eixo_score: number;
+  markers: TrendMarker[];
+}
+
+export interface TrendDecision {
+  level: TrendLevel;
+  top_axis: string | null;
+  axes: Record<string, TrendAxis>;
+  markers: Record<string, TrendMarker & { eixo: string; direcao: string; n: number }>;
 }
 
 export interface AnalysisMeta {
@@ -255,7 +285,8 @@ export interface ExamComparative {
   history?: Record<string, Array<{ value: number; unit: string; recorded_at: string }>>;
   analysis?: string | null;
   analysis_meta?: AnalysisMeta | null;
-  score?: { score: number; label: string; tone: string; priorityCount: number };
+  score?: { score: number; label: string; tone: string; priorityCount: number; trendLevel?: TrendLevel };
+  trend_decision?: TrendDecision | null;
 }
 
 export interface ExamBatchResult {
@@ -267,6 +298,7 @@ export interface ExamBatchResult {
     trends: ExamTrend[];
     alerts: ExamComparative['alerts'];
     analysis: string | null;
+    trend_decision?: TrendDecision | null;
   };
   notifications: {
     notified: boolean;
