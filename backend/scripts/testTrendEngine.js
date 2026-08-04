@@ -52,3 +52,16 @@ const flat = {
 };
 const d = analyzeTrends(flat);
 console.log('Scenario D (flat/noisy in-range):', d.level, '| leuco tau:', d.markers.leucocitos.tau, 'plaq tau:', d.markers.plaquetas.tau);
+
+// Scenario E: markers already OUT of range — projection must be 0 (already left),
+// never a positive "years away", and axis must be flagged any_out_of_range.
+const outOfRange = {
+  leucocitos: series(9000, 20000, 30),  // ends at 20000, well above hi=11000
+  plaquetas: series(300000, 520000, 30), // ends above hi=450000
+  acido_urico: series(5.0, 6.5, 30),
+};
+const e = analyzeTrends(outOfRange);
+console.log('Scenario E (already out of range):', e.level,
+  '| leuco fora_faixa:', e.markers.leucocitos.fora_faixa, 'proj:', e.markers.leucocitos.projecao_anos,
+  '| axis any_out_of_range:', e.axes.mieloproliferativo.any_out_of_range,
+  'proj_min:', e.axes.mieloproliferativo.proj_min_anos);
