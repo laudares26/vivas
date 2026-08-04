@@ -237,7 +237,7 @@ export default function SaudePreventiva() {
                           {t.label}
                           {tm?.active && (
                             <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold">
-                              tendência{tm.projecao_anos != null ? ` · ~${tm.projecao_anos}a` : ''}
+                              tendência{tm.fora_faixa ? ' · já fora' : (tm.projecao_anos != null && tm.projecao_anos > 0 ? ` · ~${tm.projecao_anos}a` : '')}
                             </span>
                           )}
                         </span>

@@ -175,7 +175,7 @@ export default function Prontuario() {
                               {t.label}
                               {tm?.active && (
                                 <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold">
-                                  τ={tm.tau}{tm.projecao_anos != null ? ` · ~${tm.projecao_anos}a` : ''}
+                                  τ={tm.tau}{tm.fora_faixa ? ' · já fora' : (tm.projecao_anos != null && tm.projecao_anos > 0 ? ` · ~${tm.projecao_anos}a` : '')}
                                 </span>
                               )}
                             </span>
