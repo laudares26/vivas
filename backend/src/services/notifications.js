@@ -451,7 +451,7 @@ function buildTrendPreventiveText(trendDecision) {
     return p;
   }
   // amarelo
-  const faixaAmarelo = dentroDaFaixa ? ', ainda dentro da faixa de referência,' : '';
+  const faixaAmarelo = dentroDaFaixa ? ', ainda dentro da faixa de referência.' : '.';
   return `Alguns indicadores mostram uma tendência que vale acompanhar (${listStr})${faixaAmarelo} Sugerimos manter o monitoramento e conversar com seu médico na próxima consulta. Isto é um alerta, não um diagnóstico.`;
 }
 
