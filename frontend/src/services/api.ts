@@ -245,6 +245,7 @@ export interface ExamTrend {
     tau: number;
     consumo: number;
     projecao_anos: number | null;
+    fora_faixa?: boolean;
     eixo: string;
   };
 }

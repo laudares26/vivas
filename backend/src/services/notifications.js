@@ -415,6 +415,7 @@ function computeComparativeAnalysis(history) {
         tau: m.tau,
         consumo: m.consumo,
         projecao_anos: m.projecao_anos,
+        fora_faixa: m.fora_faixa,
         eixo: m.eixo,
       };
     }
