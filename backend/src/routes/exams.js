@@ -565,7 +565,11 @@ router.get('/comparative', async (req, res) => {
     if (req.query.analyze === '1' && comparative.trends.length > 0) {
       const stored = await analysisStore.getLatestAnalysis(userId).catch(() => null);
       const forceRefresh = req.query.refresh === '1';
-      if (stored && !forceRefresh) {
+      // Serve a stored analysis only when it is a genuine LLM interpretation.
+      // Legacy/stale deterministic rows (provider 'fallback') are ignored so the
+      // narrative is regenerated live and stays consistent with the trend banner.
+      const storedIsLLM = stored && stored.provider && stored.provider !== 'fallback';
+      if (storedIsLLM && !forceRefresh) {
         analysis = stored.analysis_text;
         analysisMeta = { provider: stored.provider, model: stored.model, generated_at: stored.created_at, mode: 'stored' };
       } else {

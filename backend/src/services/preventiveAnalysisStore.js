@@ -29,6 +29,11 @@ async function ensureTable() {
 
 async function saveAnalysis(userId, { text, score, provider, model, trendsCount }) {
   if (!userId || !text) return null;
+  // Only persist genuine LLM interpretations (MedGemma/Groq). The deterministic
+  // fallback is cheap to rebuild and must always reflect the current engine
+  // logic (e.g. the trend decision layer), so it is never cached — otherwise a
+  // stale fallback could contradict the live preventive banner.
+  if (!provider || provider === 'fallback') return null;
   await ensureTable();
   // computeHealthScore() returns { score, label, ... }; accept either the object
   // or a bare number so callers don't have to unwrap it.
