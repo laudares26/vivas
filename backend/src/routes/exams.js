@@ -5,8 +5,10 @@ const {
   THRESHOLDS, classifyIndicator,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
   buildFallbackComparativeText, detectPriorityPatterns, computeHealthScore,
-  buildTrendPreventiveText,
+  buildTrendPreventiveText, maybeSendTeleconsultSuggestion,
 } = require('../services/notifications');
+
+const PROFESSIONAL_ROLES = ['medico', 'psicologo'];
 const {
   extractIndicatorsFromText, extractCollectionDate, extractCriticalFindings, extractTextFromFile,
 } = require('../services/examExtraction');
@@ -585,6 +587,17 @@ router.get('/comparative', async (req, res) => {
       }
     }
 
+    // When a linked professional views a patient whose preventive trend fires,
+    // suggest a teleconsult: persist a professional-facing alert and email them
+    // once (idempotent per axis/level, so reloads never resend).
+    let teleconsultSuggested = false;
+    const trendFires = comparative.trendDecision && comparative.trendDecision.level !== 'verde';
+    if (trendFires && PROFESSIONAL_ROLES.includes(req.user.role) && userId !== req.user.id) {
+      teleconsultSuggested = true;
+      maybeSendTeleconsultSuggestion(userId, comparative.trendDecision)
+        .catch(err => console.warn('[EXAM COMPARATIVE] teleconsult suggestion failed:', err.message));
+    }
+
     res.json({
       trends: comparative.trends,
       alerts: comparative.alerts,
@@ -593,6 +606,7 @@ router.get('/comparative', async (req, res) => {
       analysis_meta: analysisMeta,
       score,
       trend_decision: comparative.trendDecision || null,
+      teleconsult_suggested: teleconsultSuggested,
     });
   } catch (err) {
     console.error('[EXAM COMPARATIVE] Error:', err);

@@ -247,7 +247,7 @@ async function checkAndNotify(patientUserId, indicators) {
   const patientHtml = buildPatientAlertEmail(patient.full_name, alerts);
   results.patient = await sendEmail(
     patient.email,
-    `VIVAS — Indicadores de saúde requerem atenção`,
+    `VIVAS: indicadores de saúde requerem atenção`,
     patientHtml
   );
 
@@ -256,7 +256,7 @@ async function checkAndNotify(patientUserId, indicators) {
     const profHtml = buildProfessionalAlertEmail(prof.full_name, patient.full_name, patient.email, alerts);
     const profEmailResult = await sendEmail(
       prof.email,
-      `VIVAS — Alerta de paciente: ${patient.full_name}`,
+      `VIVAS: alerta de paciente: ${patient.full_name}`,
       profHtml
     );
     results.professionals.push({ id: prof.id, name: prof.full_name, email: prof.email, ...profEmailResult });
@@ -545,7 +545,7 @@ function detectPriorityPatterns(trends, criticalFindings = []) {
     if (allBits.length) p += ': ' + allBits.join(', ');
     p += '. Esse padrão pode sugerir uma discrasia de células plasmáticas / possível mieloma múltiplo (uma forma de câncer ósseo/da medula), um quadro de evolução lenta em que nenhum exame isolado fecha o caso.';
     p += ' Recomenda-se, como próximo passo, a realização de ELETROFORESE DE PROTEÍNAS SÉRICAS (e, se disponível, imunofixação, dosagem de cadeias leves livres kappa/lambda e beta-2-microglobulina), além de avaliação com hematologista.';
-    p += ' Estes achados NÃO confirmam diagnóstico e precisam de correlação clínica — variações de PSA, glicemia e perfil lipídico não devem ser interpretadas como o sinal principal aqui.';
+    p += ' Estes achados NÃO confirmam diagnóstico e precisam de correlação clínica: variações de PSA, glicemia e perfil lipídico não devem ser interpretadas como o sinal principal aqui.';
     patterns.push({ key: 'plasma_cell', term: 'eletroforese', text: p });
   }
 
@@ -633,8 +633,8 @@ function trendArrow(direction, worsening) {
 function buildComparativeTable(trends) {
   return trends.map(t => {
     const color = t.worsening ? '#DC2626' : (t.direction === 'estavel' ? '#6b7280' : '#16A34A');
-    const prev = t.previous_value != null ? `${t.previous_value} ${t.unit}` : '—';
-    const variation = t.delta == null ? '—' : `${t.delta > 0 ? '+' : ''}${t.delta} ${t.unit} (${t.delta_pct > 0 ? '+' : ''}${t.delta_pct}%)`;
+    const prev = t.previous_value != null ? `${t.previous_value} ${t.unit}` : '-';
+    const variation = t.delta == null ? '-' : `${t.delta > 0 ? '+' : ''}${t.delta} ${t.unit} (${t.delta_pct > 0 ? '+' : ''}${t.delta_pct}%)`;
     return `
     <tr>
       <td style="padding:8px;border-bottom:1px solid #eee;">${t.label}</td>
@@ -678,7 +678,7 @@ function buildComparativeProfessionalEmail(professionalName, patientName, patien
   return `
     <div style="font-family:'Segoe UI',sans-serif;max-width:640px;margin:0 auto;">
       <div style="background:linear-gradient(135deg,#7B1E3C,#5E1730);padding:20px;text-align:center;">
-        <h1 style="color:white;margin:0;font-size:22px;">VIVAS — Evolução de Paciente</h1>
+        <h1 style="color:white;margin:0;font-size:22px;">VIVAS: Evolução de Paciente</h1>
         <p style="color:#E9C4BE;margin:5px 0 0;">Análise Comparativa de Exames</p>
       </div>
       <div style="padding:24px;background:white;">
@@ -734,14 +734,14 @@ async function sendComparativeReport(patientUserId, comparative, aiText) {
 
   results.patient = await sendEmail(
     patient.email,
-    'VIVAS — Análise comparativa dos seus exames',
+    'VIVAS: análise comparativa dos seus exames',
     buildComparativePatientEmail(patient.full_name, trends, aiText)
   );
 
   for (const prof of profResult.rows) {
     const profEmailResult = await sendEmail(
       prof.email,
-      `VIVAS — Evolução de exames do paciente: ${patient.full_name}`,
+      `VIVAS: evolução de exames do paciente: ${patient.full_name}`,
       buildComparativeProfessionalEmail(prof.full_name, patient.full_name, patient.email, trends, aiText)
     );
     results.professionals.push({ id: prof.id, name: prof.full_name, email: prof.email, ...profEmailResult });
@@ -779,7 +779,7 @@ function emailShell(title, subtitle, innerHtml) {
         ${innerHtml}
       </div>
       <div style="padding: 16px; background: #f8fafc; text-align: center; font-size: 12px; color: #6b7280;">
-        <p>vivas Saúde Inteligente${title ? ' — ' + title : ''}</p>
+        <p>vivas Saúde Inteligente${title ? ': ' + title : ''}</p>
       </div>
     </div>`;
 }
@@ -791,7 +791,7 @@ async function sendInvitePatientEmail({ patientName, patientEmail, professionalN
     : 'a combinar';
   const inner = `
     <p>Olá <strong>${patientName || 'paciente'}</strong>,</p>
-    <p>Você foi convidado(a) por <strong>${professionalName}</strong>${specialty ? ` (${specialty})` : ''} para uma consulta na vivas — e a sua <strong>primeira consulta é gratuita</strong>.</p>
+    <p>Você foi convidado(a) por <strong>${professionalName}</strong>${specialty ? ` (${specialty})` : ''} para uma consulta na vivas, e a sua <strong>primeira consulta é gratuita</strong>.</p>
     <div style="background:#F6E7E1;border-left:4px solid #7B1E3C;padding:16px;margin:18px 0;border-radius:6px;">
       <p style="margin:0 0 6px;"><strong>Profissional:</strong> ${professionalName}${specialty ? ' · ' + specialty : ''}</p>
       <p style="margin:0 0 6px;"><strong>Data e hora:</strong> ${when}</p>
@@ -825,11 +825,101 @@ async function sendPostConsultDiscountEmail({ patientName, patientEmail, discoun
   return sendEmail(patientEmail, `Seu presente vivas: ${discountPercent}% de desconto no plano`, emailShell('Convite para assinar', 'Bem-vindo(a) à vivas', inner));
 }
 
+// ---------------------------------------------------------------------------
+// Teleconsult suggestion (professional-facing preventive alert + email)
+// ---------------------------------------------------------------------------
+
+// Persists the suggestions so the email is sent ONCE per
+// professional+patient+axis+level, instead of on every panel reload.
+let teleconsultSchemaReady = null;
+function ensureTeleconsultTable() {
+  if (!teleconsultSchemaReady) {
+    teleconsultSchemaReady = pool.query(`
+      CREATE TABLE IF NOT EXISTS teleconsult_suggestions (
+        id SERIAL PRIMARY KEY,
+        professional_user_id UUID NOT NULL,
+        patient_user_id UUID NOT NULL,
+        patient_id UUID,
+        axis VARCHAR(60) NOT NULL,
+        level VARCHAR(20) NOT NULL,
+        email_sent BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE (professional_user_id, patient_user_id, axis, level)
+      )
+    `).catch(e => { teleconsultSchemaReady = null; throw e; });
+  }
+  return teleconsultSchemaReady;
+}
+
+function buildTeleconsultSuggestionEmail(professionalName, patientName, trendDecision) {
+  const detail = buildTrendProfessionalText(trendDecision) || 'Deriva concordante identificada no histórico de exames.';
+  const isRed = trendDecision && trendDecision.level === 'vermelho';
+  const inner = `
+    <p>Olá <strong>${professionalName}</strong>,</p>
+    <p>A análise inteligente do histórico de exames de <strong>${patientName}</strong> identificou uma
+    ${isRed ? '<strong>tendência sustentada e concordante</strong>' : 'tendência que vale acompanhar'},
+    mesmo com valores ainda dentro (ou próximos) da faixa de referência.</p>
+    <div style="background:#F6E7E1;border-left:4px solid #7B1E3C;padding:14px;margin:18px 0;border-radius:6px;">
+      <p style="margin:0;font-size:13px;">${detail}</p>
+    </div>
+    <p><strong>Sugerimos agendar uma teleconsulta com este paciente o quanto antes</strong> para correlação clínica.</p>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${PLATFORM_URL}/prontuario" style="display:inline-block;background:#7B1E3C;color:white;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:600;">Abrir prontuário e agendar</a>
+    </div>
+    <p style="color:#6B5B62;font-size:13px;">Este é um alerta preventivo, não um diagnóstico. A decisão clínica é sempre sua.</p>`;
+  return emailShell('Sugestão de teleconsulta', 'Alerta preventivo', inner);
+}
+
+// Emails linked professionals suggesting a teleconsult when the preventive
+// trend layer fires, once per professional+patient+axis+level (idempotent).
+async function maybeSendTeleconsultSuggestion(patientUserId, trendDecision) {
+  if (!trendDecision || trendDecision.level === 'verde') return { sent: false, reason: 'sem tendência' };
+  const axis = trendDecision.top_axis || 'geral';
+  const level = trendDecision.level;
+
+  await ensureTeleconsultTable();
+
+  const patientResult = await pool.query('SELECT id, email, full_name FROM users WHERE id = $1', [patientUserId]);
+  if (patientResult.rows.length === 0) return { sent: false, reason: 'Paciente não encontrado' };
+  const patient = patientResult.rows[0];
+  const patientRow = await pool.query('SELECT id FROM patients WHERE email = $1 ORDER BY created_at ASC LIMIT 1', [patient.email]);
+  const patientId = patientRow.rows[0]?.id || null;
+
+  const profResult = await pool.query(
+    `SELECT u.id, u.email, u.full_name FROM professional_patient_relationships ppr
+     JOIN users u ON u.id = ppr.professional_user_id
+     WHERE ppr.patient_user_id = $1 AND u.active = true`, [patientUserId]
+  );
+
+  const sent = [];
+  for (const prof of profResult.rows) {
+    const inserted = await pool.query(
+      `INSERT INTO teleconsult_suggestions (professional_user_id, patient_user_id, patient_id, axis, level)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (professional_user_id, patient_user_id, axis, level) DO NOTHING
+       RETURNING id`,
+      [prof.id, patientUserId, patientId, axis, level]
+    );
+    if (inserted.rows.length === 0) continue; // already suggested for this axis/level
+
+    const result = await sendEmail(
+      prof.email,
+      `VIVAS: sugestão de teleconsulta com ${patient.full_name}`,
+      buildTeleconsultSuggestionEmail(prof.full_name, patient.full_name, trendDecision)
+    );
+    await pool.query('UPDATE teleconsult_suggestions SET email_sent = true WHERE id = $1', [inserted.rows[0].id]);
+    sent.push({ id: prof.id, email: prof.email, ...result });
+  }
+
+  return { sent: sent.length > 0, professionals: sent };
+}
+
 module.exports = {
   checkAndNotify, classifyIndicator, THRESHOLDS, sendEmail,
   getIndicatorHistory, computeComparativeAnalysis, sendComparativeReport,
   buildFallbackComparativeText, detectPriorityPatterns, computeHealthScore,
   buildTrendPreventiveText, buildTrendProfessionalText,
   sendInvitePatientEmail, sendPostConsultDiscountEmail,
+  maybeSendTeleconsultSuggestion,
   getTransporter, getFromAddress, sendRawEmail,
 };

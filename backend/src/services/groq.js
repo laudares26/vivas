@@ -142,7 +142,8 @@ REGRAS:
 3. Sugira acoes preventivas gerais (habitos, acompanhamento) sem prescrever medicamentos ou doses.
 4. Sempre reforce que o paciente deve confirmar com um profissional de saude (medico) pela VivaS.
 5. Seja objetivo e estruturado. Use no maximo ~250 palavras.
-6. Finalize com a frase: "Esta analise e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
+6. NAO use travessoes (—) no texto; use virgula, dois-pontos ou ponto.
+7. Finalize com a frase: "Esta analise e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
     },
     {
       role: 'user',
@@ -257,6 +258,7 @@ REGRAS OBRIGATORIAS:
 - NAO cite, repita nem invente NOME de paciente, medico, laboratorio ou qualquer identificador que apareca (ou nao) nos documentos. Refira-se sempre a "voce" ou "o paciente", de forma generica.
 - Seja objetivo e estruturado (pode usar topicos). Use no maximo ~350 palavras.
 - Escreva em portugues do Brasil.
+- NAO use travessoes (—) no texto; use virgula, dois-pontos ou ponto.
 - Finalize SEMPRE com: "Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
     },
     {
@@ -332,7 +334,8 @@ REGRAS:
 6. Sugira acoes preventivas gerais (habitos, acompanhamento, especialista adequado) sem prescrever medicamentos ou doses.
 7. Reforce que o paciente deve confirmar com um profissional de saude (medico/hematologista) pela VivaS.
 8. Seja objetivo e estruturado. Use no maximo ~320 palavras.
-9. Finalize com: "Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
+9. NAO use travessoes (—) no texto; use virgula, dois-pontos ou ponto.
+10. Finalize com: "Esta analise comparativa e um suporte preventivo inteligente e nao substitui a avaliacao de um profissional de saude."`,
     },
     {
       role: 'user',

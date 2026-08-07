@@ -103,7 +103,7 @@ function generateSampleStudies(): DicomStudy[] {
 }
 
 function formatDicomDate(d: string | null): string {
-  if (!d || d.length < 8) return '—'
+  if (!d || d.length < 8) return '-'
   return `${d.slice(6, 8)}/${d.slice(4, 6)}/${d.slice(0, 4)}`
 }
 
@@ -806,10 +806,10 @@ export default function DicomViewer() {
                           </div>
                           <p className="text-sm text-gray-600 truncate">{study.study_description || 'Sem descrição'}</p>
                           <div className="flex items-center flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-gray-400">
-                            <span>ID: {study.patient_id || '—'}</span>
+                            <span>ID: {study.patient_id || '-'}</span>
                             <span>Data: {formatDicomDate(study.study_date)}</span>
                             <span>{formatDicomTime(study.study_time)}</span>
-                            <span>Acc#: {study.accession_number || '—'}</span>
+                            <span>Acc#: {study.accession_number || '-'}</span>
                           </div>
                         </div>
 
@@ -850,12 +850,12 @@ export default function DicomViewer() {
                         <div className="px-4 pb-4 border-t border-gray-100 pt-3">
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                             <div><span className="text-gray-400">Paciente:</span> <span className="font-medium">{(study.patient_name || '').replace(/\^/g, ' ')}</span></div>
-                            <div><span className="text-gray-400">ID:</span> <span className="font-medium">{study.patient_id || '—'}</span></div>
+                            <div><span className="text-gray-400">ID:</span> <span className="font-medium">{study.patient_id || '-'}</span></div>
                             <div><span className="text-gray-400">Nascimento:</span> <span className="font-medium">{formatDicomDate(study.patient_birth_date)}</span></div>
-                            <div><span className="text-gray-400">Sexo:</span> <span className="font-medium">{study.patient_sex === 'M' ? 'Masculino' : study.patient_sex === 'F' ? 'Feminino' : '—'}</span></div>
-                            <div className="col-span-2"><span className="text-gray-400">Descrição:</span> <span className="font-medium">{study.study_description || '—'}</span></div>
+                            <div><span className="text-gray-400">Sexo:</span> <span className="font-medium">{study.patient_sex === 'M' ? 'Masculino' : study.patient_sex === 'F' ? 'Feminino' : '-'}</span></div>
+                            <div className="col-span-2"><span className="text-gray-400">Descrição:</span> <span className="font-medium">{study.study_description || '-'}</span></div>
                             <div><span className="text-gray-400">Modalidade:</span> <span className="font-medium">{study.modality}</span></div>
-                            <div><span className="text-gray-400">Acesso:</span> <span className="font-medium">{study.accession_number || '—'}</span></div>
+                            <div><span className="text-gray-400">Acesso:</span> <span className="font-medium">{study.accession_number || '-'}</span></div>
                           </div>
                           <div className="mt-3 flex gap-2">
                             <button
@@ -931,8 +931,8 @@ export default function DicomViewer() {
                 </div>
                 <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-gray-400 text-xs">
                   <span>Data: {formatDicomDate(selectedStudy.study_date)}</span>
-                  <span>ID: {selectedStudy.patient_id || '—'}</span>
-                  <span>Sexo: {selectedStudy.patient_sex || '—'}</span>
+                  <span>ID: {selectedStudy.patient_id || '-'}</span>
+                  <span>Sexo: {selectedStudy.patient_sex || '-'}</span>
                 </div>
               </div>
 
@@ -992,14 +992,14 @@ export default function DicomViewer() {
                     <h4 className="text-white font-semibold mb-3 flex items-center gap-2"><Info size={16} /> Informações DICOM</h4>
                     <div className="space-y-2 text-gray-300">
                       <div className="flex justify-between"><span className="text-gray-500">Paciente:</span><span>{(selectedStudy.patient_name || '').replace(/\^/g, ' ')}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-500">ID:</span><span>{selectedStudy.patient_id || '—'}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">ID:</span><span>{selectedStudy.patient_id || '-'}</span></div>
                       <div className="flex justify-between"><span className="text-gray-500">Nascimento:</span><span>{formatDicomDate(selectedStudy.patient_birth_date)}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-500">Sexo:</span><span>{selectedStudy.patient_sex || '—'}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Sexo:</span><span>{selectedStudy.patient_sex || '-'}</span></div>
                       <div className="border-t border-gray-700 my-2" />
-                      <div className="flex justify-between"><span className="text-gray-500">Estudo:</span><span className="text-right max-w-[150px] truncate">{selectedStudy.study_description || '—'}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Estudo:</span><span className="text-right max-w-[150px] truncate">{selectedStudy.study_description || '-'}</span></div>
                       <div className="flex justify-between"><span className="text-gray-500">Data:</span><span>{formatDicomDate(selectedStudy.study_date)}</span></div>
                       <div className="flex justify-between"><span className="text-gray-500">Modalidade:</span><span>{selectedStudy.modality}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-500">Acesso:</span><span>{selectedStudy.accession_number || '—'}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Acesso:</span><span>{selectedStudy.accession_number || '-'}</span></div>
                       <div className="flex justify-between"><span className="text-gray-500">Séries:</span><span>{selectedStudy.num_series}</span></div>
                       <div className="flex justify-between"><span className="text-gray-500">Imagens:</span><span>{selectedStudy.num_instances}</span></div>
                       <div className="border-t border-gray-700 my-2" />
@@ -1108,7 +1108,7 @@ export default function DicomViewer() {
                         </div>
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">{source.name}</div>
-                          <div className="text-sm text-gray-500">{source.ae_title || '—'} @ {source.host}:{source.port} ({source.protocol})</div>
+                          <div className="text-sm text-gray-500">{source.ae_title || '-'} @ {source.host}:{source.port} ({source.protocol})</div>
                         </div>
                         <div className={`px-2 py-1 rounded text-xs ${source.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                           {source.active ? 'Ativo' : 'Inativo'}

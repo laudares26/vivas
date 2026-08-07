@@ -1,10 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { FileText, Search, Stethoscope, TestTubeDiagonal, Pill, Syringe, AlertTriangle, User, TrendingUp, TrendingDown, Minus, Loader2, Clock } from 'lucide-react'
+import { FileText, Search, Stethoscope, TestTubeDiagonal, Pill, Syringe, AlertTriangle, User, TrendingUp, TrendingDown, Minus, Loader2, Clock, Video } from 'lucide-react'
 import { api, type Patient, type EHREntry, type ExamComparative } from '../services/api'
 import { useToast } from '../components/Toast'
 import AnalysisBadge from '../components/AnalysisBadge'
 import TrendDecisionBanner from '../components/TrendDecisionBanner'
+import Modal from '../components/Modal'
+
+// Default the teleconsult to tomorrow at 08:00 (local), formatted for datetime-local.
+function defaultTeleconsultSlot(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  d.setHours(8, 0, 0, 0)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 const TYPE_CONFIG: Record<string, { icon: typeof FileText; color: string; bg: string }> = {
   consulta: { icon: Stethoscope, color: 'text-wine', bg: 'bg-wine-soft' },
@@ -22,8 +32,40 @@ export default function Prontuario() {
   const [loading, setLoading] = useState(false)
   const [comparative, setComparative] = useState<ExamComparative | null>(null)
   const [loadingComparative, setLoadingComparative] = useState(false)
+  const [teleModalOpen, setTeleModalOpen] = useState(false)
+  const [teleDateTime, setTeleDateTime] = useState('')
+  const [teleNotes, setTeleNotes] = useState('')
+  const [scheduling, setScheduling] = useState(false)
   const { addToast } = useToast()
   const [searchParams] = useSearchParams()
+
+  const trendFires = !!comparative?.trend_decision && comparative.trend_decision.level !== 'verde'
+
+  const openTeleModal = () => {
+    setTeleDateTime(defaultTeleconsultSlot())
+    setTeleNotes('Teleconsulta preventiva sugerida pela análise de tendência dos exames.')
+    setTeleModalOpen(true)
+  }
+
+  const handleScheduleTeleconsult = async () => {
+    if (!selectedPatient || !teleDateTime) return
+    setScheduling(true)
+    try {
+      // professional_id is forced to the logged-in professional by the backend.
+      await api.createAppointment({
+        patient_id: selectedPatient.id,
+        date_time: teleDateTime,
+        type: 'Teleconsulta',
+        notes: teleNotes,
+      })
+      addToast('success', 'Teleconsulta agendada')
+      setTeleModalOpen(false)
+    } catch (err) {
+      addToast('error', err instanceof Error ? err.message : 'Erro ao agendar')
+    } finally {
+      setScheduling(false)
+    }
+  }
 
   useEffect(() => {
     const nome = searchParams.get('nome') || ''
@@ -38,7 +80,7 @@ export default function Prontuario() {
           || r.data.find(p => p.full_name.toLowerCase().includes(nome.toLowerCase()))
       }
       if (match) { setSelectedPatient(match); loadEntries(match.id); return }
-      // Patient not in the list yet — fetch directly by id so the prontuário still opens.
+      // Patient not in the list yet: fetch directly by id so the prontuário still opens.
       if (pid) {
         try {
           const p = await api.getPatient(pid)
@@ -147,14 +189,14 @@ export default function Prontuario() {
                 )}
               </div>
 
-              {/* Historical AI analysis — considers ALL of the patient's exams */}
+              {/* Historical AI analysis: considers ALL of the patient's exams */}
               <div className="card">
                 <div className="flex items-center gap-2 mb-1">
                   <TrendingUp className="w-5 h-5 text-wine" />
                   <h3 className="font-semibold text-gray-900">Análise histórica inteligente</h3>
                 </div>
                 <p className="text-sm text-gray-500 mb-4">
-                  Evolução considerando <strong>todos os exames do paciente</strong> — não apenas o último.
+                  Evolução considerando <strong>todos os exames do paciente</strong>, não apenas o último.
                 </p>
                 {loadingComparative ? (
                   <div className="flex items-center gap-3 p-4 bg-wine-soft rounded-lg">
@@ -164,6 +206,20 @@ export default function Prontuario() {
                 ) : comparative && comparative.trends.length > 0 ? (
                   <div className="space-y-4">
                     <TrendDecisionBanner decision={comparative.trend_decision} variant="professional" />
+                    {trendFires && (
+                      <div className="p-4 rounded-lg border border-wine-line bg-wine-soft flex items-start gap-3">
+                        <Video className="w-5 h-5 text-wine shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-gray-900">Sugerimos agendar uma teleconsulta</p>
+                          <p className="text-xs text-gray-600 mt-0.5">
+                            A análise de tendência deste paciente indica acompanhamento preventivo. Marque uma teleconsulta o quanto antes.
+                          </p>
+                        </div>
+                        <button onClick={openTeleModal} className="btn-primary !py-2 flex items-center gap-2 shrink-0">
+                          <Video className="w-4 h-4" /> Agendar teleconsulta
+                        </button>
+                      </div>
+                    )}
                     <div className="space-y-2">
                       {comparative.trends.map(t => {
                         const Icon = t.direction === 'estavel' ? Minus : (t.direction === 'subiu' ? TrendingUp : TrendingDown)
@@ -203,7 +259,7 @@ export default function Prontuario() {
                     ) : (
                       <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
                         <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                        <p className="text-xs text-amber-700">Análise aprofundada por MedGemma em processamento — disponível em instantes.</p>
+                        <p className="text-xs text-amber-700">Análise inteligente em processamento, disponível em instantes.</p>
                       </div>
                     )}
                   </div>
@@ -261,6 +317,33 @@ export default function Prontuario() {
           )}
         </div>
       </div>
+
+      <Modal open={teleModalOpen} onClose={() => setTeleModalOpen(false)} title="Agendar teleconsulta">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
+            <input className="input-field bg-gray-50" value={selectedPatient?.full_name || ''} readOnly />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+            <input className="input-field bg-gray-50" value="Teleconsulta" readOnly />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Data e Hora *</label>
+            <input type="datetime-local" className="input-field" value={teleDateTime} onChange={e => setTeleDateTime(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+            <textarea className="input-field" rows={2} value={teleNotes} onChange={e => setTeleNotes(e.target.value)} />
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+          <button onClick={() => setTeleModalOpen(false)} className="btn-ghost">Cancelar</button>
+          <button onClick={handleScheduleTeleconsult} disabled={scheduling || !teleDateTime} className="btn-primary flex items-center gap-2">
+            {scheduling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />} Agendar teleconsulta
+          </button>
+        </div>
+      </Modal>
     </div>
   )
 }
