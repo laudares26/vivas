@@ -2,7 +2,7 @@ import { AlertCircle } from 'lucide-react'
 import type { TrendDecision } from '../services/api'
 
 // Preventive decision layer banner (motor de tendência). Surfaces a sustained +
-// concordant drift while every value is still inside the reference range — the
+// concordant drift while every value is still inside the reference range, the
 // signal the range-based engine used to miss. `variant` tailors the wording for
 // the patient vs. the professional panel.
 export default function TrendDecisionBanner({
@@ -30,7 +30,7 @@ export default function TrendDecisionBanner({
         <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
         <div className="min-w-0">
           <p className="font-semibold text-sm">
-            {isRed ? 'Alerta preventivo — tendência sustentada e concordante' : 'Atenção — tendência a acompanhar'}
+            {isRed ? 'Alerta preventivo: tendência sustentada e concordante' : 'Atenção: tendência a acompanhar'}
           </p>
           {variant === 'professional' ? (
             <p className="text-xs mt-1 leading-relaxed">

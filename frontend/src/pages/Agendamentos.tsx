@@ -211,7 +211,7 @@ export default function Agendamentos() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
             <select className="input-field" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
-              <option>Consulta</option><option>Retorno</option><option>Exame</option><option>Procedimento</option>
+              <option>Consulta</option><option>Teleconsulta</option><option>Retorno</option><option>Exame</option><option>Procedimento</option>
             </select>
           </div>
           <div>

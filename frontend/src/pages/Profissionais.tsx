@@ -135,7 +135,7 @@ export default function Profissionais() {
                   </td>
                   <td className="px-6 py-3 font-mono text-xs text-gray-600">{p.professional_id}</td>
                   <td className="px-6 py-3 text-gray-600">{p.specialty}</td>
-                  <td className="px-6 py-3">{p.cnes ? <span className="badge-cnes text-xs">CNES {p.cnes}</span> : '—'}</td>
+                  <td className="px-6 py-3">{p.cnes ? <span className="badge-cnes text-xs">CNES {p.cnes}</span> : '-'}</td>
                   <td className="px-6 py-3">
                     <div className="flex items-center gap-1 text-gray-600 text-xs">
                       <CalendarDays className="w-3.5 h-3.5 text-gray-400" />

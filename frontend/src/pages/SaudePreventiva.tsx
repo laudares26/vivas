@@ -208,14 +208,14 @@ export default function SaudePreventiva() {
 
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Análise histórica inteligente — considera TODOS os exames enviados */}
+          {/* Análise histórica inteligente: considera TODOS os exames enviados */}
           <div className="card border border-wine-line">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="w-5 h-5 text-wine" />
               <h3 className="text-lg font-semibold text-gray-900">Análise histórica inteligente</h3>
             </div>
             <p className="text-sm text-gray-500 mb-4">
-              Interpretação da sua evolução considerando <strong>todos os exames enviados</strong> — não apenas o último.
+              Interpretação da sua evolução considerando <strong>todos os exames enviados</strong>, não apenas o último.
             </p>
 
             {loadingComparative ? (
@@ -265,7 +265,7 @@ export default function SaudePreventiva() {
                 ) : (
                   <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
                     <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                    <p className="text-xs text-amber-700">Análise aprofundada por MedGemma em processamento — disponível em instantes. Recarregue a página em alguns minutos.</p>
+                    <p className="text-xs text-amber-700">Análise inteligente em processamento, disponível em instantes. Recarregue a página em alguns minutos.</p>
                   </div>
                 )}
               </div>
@@ -304,11 +304,11 @@ export default function SaudePreventiva() {
                         )}
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xl font-bold text-gray-900">{value != null ? value : '—'}</span>
+                        <span className="text-xl font-bold text-gray-900">{value != null ? value : '-'}</span>
                       </div>
                     </div>
                     <div>
-                      <p className={`text-sm font-medium ${labelColor}`}>{s ? s.label : '—'}</p>
+                      <p className={`text-sm font-medium ${labelColor}`}>{s ? s.label : '-'}</p>
                       <p className="text-xs text-gray-500">{sub}</p>
                     </div>
                   </div>
@@ -479,7 +479,7 @@ export default function SaudePreventiva() {
             </h3>
             {myExams.length === 0 ? (
               <p className="text-sm text-gray-400 py-4 text-center">
-                Você ainda não enviou exames. Use a aba "Enviar Exame" para adicionar seus PDFs/imagens — eles ficam guardados aqui para você e seu médico consultarem quando quiser.
+                Você ainda não enviou exames. Use a aba "Enviar Exame" para adicionar seus PDFs/imagens, que ficam guardados aqui para você e seu médico consultarem quando quiser.
               </p>
             ) : (
               <div className="space-y-2">
@@ -599,7 +599,7 @@ export default function SaudePreventiva() {
               <label htmlFor="exam-upload" className="cursor-pointer">
                 <Upload className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-sm font-medium text-gray-700">Clique para selecionar um ou mais arquivos</p>
-                <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG ou DICOM (máx. 25MB cada) — pode selecionar vários</p>
+                <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG ou DICOM (máx. 25MB cada), pode selecionar vários</p>
               </label>
             </div>
 

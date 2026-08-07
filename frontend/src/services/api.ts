@@ -290,6 +290,7 @@ export interface ExamComparative {
   analysis_meta?: AnalysisMeta | null;
   score?: { score: number; label: string; tone: string; priorityCount: number; trendLevel?: TrendLevel };
   trend_decision?: TrendDecision | null;
+  teleconsult_suggested?: boolean;
 }
 
 export interface ExamBatchResult {

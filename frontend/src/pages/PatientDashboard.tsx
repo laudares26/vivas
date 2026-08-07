@@ -41,7 +41,7 @@ export default function PatientDashboard() {
     const file = files[0]
     setSelectedFile(file)
 
-    // PDFs cannot be analyzed as images — skip quality check
+    // PDFs cannot be analyzed as images, skip quality check
     if (file.type === 'application/pdf') {
       setCapturedImage(null)
       setImageQuality('good')
@@ -206,7 +206,7 @@ export default function PatientDashboard() {
                   transform="rotate(-90 42 42)" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-display font-extrabold text-2xl text-ink">{scoreValue != null ? scoreValue : '—'}</span>
+                <span className="font-display font-extrabold text-2xl text-ink">{scoreValue != null ? scoreValue : '-'}</span>
                 <span className="text-xs text-muted font-semibold">de 100</span>
               </div>
             </div>

@@ -133,7 +133,7 @@ export default function Cupons() {
                       <button onClick={() => copyCode(c.code)} className="text-gray-400 hover:text-gray-600"><Copy className="w-3.5 h-3.5" /></button>
                     </div>
                   </td>
-                  <td className="px-6 py-3 text-gray-600">{c.campaign || '—'}</td>
+                  <td className="px-6 py-3 text-gray-600">{c.campaign || '-'}</td>
                   <td className="px-6 py-3 font-medium text-gray-900">{c.discount}</td>
                   <td className="px-6 py-3 text-gray-600">{c.redemptions?.toLocaleString() || 0}{c.max_redemptions ? ` / ${c.max_redemptions.toLocaleString()}` : ''}</td>
                   <td className="px-6 py-3 text-gray-600">

@@ -168,9 +168,9 @@ export default function Pacientes() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-3">{p.cns ? <span className="badge-sus text-xs">CNS {p.cns}</span> : <span className="text-gray-400">—</span>}</td>
+                    <td className="px-6 py-3">{p.cns ? <span className="badge-sus text-xs">CNS {p.cns}</span> : <span className="text-gray-400">-</span>}</td>
                     <td className="px-6 py-3 text-gray-600 font-mono text-xs">{p.cpf}</td>
-                    <td className="px-6 py-3 text-gray-600">{p.birth_date ? `${calcAge(p.birth_date)} anos` : '—'}</td>
+                    <td className="px-6 py-3 text-gray-600">{p.birth_date ? `${calcAge(p.birth_date)} anos` : '-'}</td>
                     <td className="px-6 py-3">
                       <span className={`badge ${p.convenio === 'SUS' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
                         {p.convenio || 'SUS'}

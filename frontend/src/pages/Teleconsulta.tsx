@@ -64,7 +64,7 @@ export default function Teleconsulta() {
   }, [selectedProfessional, selectedDate, isPaciente])
 
   // Load the patient's real care team (only their linked professional[s]) and
-  // their real upcoming consultations — never the whole platform roster.
+  // their real upcoming consultations, never the whole platform roster.
   useEffect(() => {
     if (!isPaciente) return
     api.getProfessionals()
