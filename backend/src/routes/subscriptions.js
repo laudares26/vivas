@@ -68,13 +68,13 @@ router.post('/checkout', async (req, res) => {
     const planData = PLANS[plan];
     
     if (plan === 'empresa') {
-      return res.json({ redirect: 'mailto:contato@vivasaudeinteligente.com.br?subject=VivaS Empresas' });
+      return res.json({ redirect: 'mailto:contato@vivasaudeinteligente.com.br?subject=vivas Empresas' });
     }
 
     // Apply post-consultation invite discount (e.g. 5% off) when a valid code is provided.
     const discount = await getValidDiscount(discountCode);
     const unitAmount = discount ? Math.round(planData.price * (1 - discount.percent / 100)) : planData.price;
-    const productName = discount ? `VivaS ${planData.name} (${discount.percent}% desconto)` : `VivaS ${planData.name}`;
+    const productName = discount ? `vivas ${planData.name} (${discount.percent}% desconto)` : `vivas ${planData.name}`;
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -222,7 +222,7 @@ router.post('/family-members', authenticate, async (req, res) => {
     
     const result = await pool.query(
       `INSERT INTO patients (name, email, date_of_birth, gender, phone, titular_id, user_id, convenio, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'VivaS', 'ativo')
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'vivas', 'ativo')
        RETURNING *`,
       [name, email || null, dateOfBirth || null, gender || null, phone || null, titularId, req.user.id]
     );
@@ -380,13 +380,14 @@ async function checkAbandonedCheckouts() {
       const phone = session.telefone;
       const email = session.email;
       const nome = session.nome || 'cliente';
-      const planName = PLANS[session.plan]?.name || session.plan || 'VivaS';
+      const planName = PLANS[session.plan]?.name || session.plan || 'vivas';
+      const accessName = `acesso ${String(planName).toLowerCase()}`;
 
       if (phone) {
         const cleanPhone = phone.replace(/\D/g, '');
         if (cleanPhone.length >= 10) {
           const brPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
-          const msg = `Oi, ${nome}! Vi que voce iniciou a contratacao do plano ${planName} na VivaS, mas o pagamento ainda nao foi finalizado. Posso te ajudar com alguma duvida ou enviar o link novamente? Estou aqui para ajudar!`;
+          const msg = `Oi, ${nome}! Vi que voce iniciou a ativacao do seu ${accessName} a vivas, mas o pagamento ainda nao foi concluido. Se tiver alguma duvida, posso te ajudar ou enviar o link novamente. Estou aqui!`;
           const waResult = await sendWhatsAppMessage(brPhone, msg);
           await pool.query(
             `UPDATE checkout_sessions SET whatsapp_sent = true WHERE id = $1`,
@@ -403,20 +404,22 @@ async function checkAbandonedCheckouts() {
           {
             await sendRawEmail({
               to: email,
-              subject: `${nome}, sua cotacao vivas esta esperando por voce`,
+              subject: `${nome}, sua vivas está a um passo de começar a cuidar de você`,
               html: `
                 <div style="font-family:'Plus Jakarta Sans',sans-serif;max-width:520px;margin:0 auto;padding:32px;">
                   <div style="background:#7B1E3C;padding:24px;border-radius:12px 12px 0 0;text-align:center;">
-                    <h2 style="color:white;margin:0;">VivaS Saude Inteligente</h2>
+                    <h2 style="color:white;margin:0;">vivas Saúde Inteligente</h2>
                   </div>
                   <div style="background:#fff;padding:32px;border:1px solid #F0E7EA;border-top:none;border-radius:0 0 12px 12px;">
-                    <p>Oi, <b>${nome}</b>!</p>
-                    <p>Notamos que voce iniciou a contratacao do plano <b>${planName}</b> mas nao finalizou o pagamento.</p>
-                    <p>Sabemos que escolher um plano de saude e uma decisao importante. Se tiver alguma duvida, estamos aqui para ajudar!</p>
+                    <p>Oi, <b>${nome}</b>,</p>
+                    <p>Notamos que você iniciou a ativação do seu <b>${accessName}</b> à vivas, mas ainda não concluiu o pagamento.</p>
+                    <p>Diferente de olhar um resultado por vez, a vivas lê a sua trajetória de saúde ao longo do tempo. Ela reúne seus exames, cruza o histórico e avisa quando aparece uma tendência que merece atenção, encaminhando você ao profissional certo. Tudo em linguagem de alerta, com o médico sempre no comando da decisão.</p>
+                    <p>Escolher cuidar de você é uma decisão importante, e a gente está aqui para ajudar no que precisar.</p>
                     <div style="text-align:center;margin:28px 0;">
-                      <a href="https://vivasaudeinteligente.com.br/cotacao" style="background:#7B1E3C;color:white;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:600;">Retomar minha cotacao</a>
+                      <a href="https://vivasaudeinteligente.com.br/cotacao" style="display:inline-block;background:#7B1E3C;color:#ffffff;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:600;font-size:15px;line-height:20px;white-space:nowrap;mso-padding-alt:0;">Retomar minha ativação</a>
                     </div>
-                    <p style="color:#6B5B62;font-size:13px;">Ou fale direto conosco pelo WhatsApp: <a href="https://wa.me/5511947382375" style="color:#25D366;">+55 11 94738-2375</a></p>
+                    <p style="color:#6B5B62;font-size:13px;">Alguma dúvida? Responda este e-mail ou fale com a gente no WhatsApp: <a href="https://wa.me/5511947382375" style="color:#25D366;">+55 11 94738-2375</a></p>
+                    <p style="color:#6B5B62;font-size:13px;margin-top:20px;">Equipe vivas</p>
                   </div>
                 </div>
               `
@@ -581,7 +584,7 @@ router.post('/quote', async (req, res) => {
       const html = `
         <div style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px 20px">
           <div style="text-align:center;margin-bottom:24px">
-            <h1 style="color:#7B1E3C;font-size:28px;margin:0">VivaS</h1>
+            <h1 style="color:#7B1E3C;font-size:28px;margin:0">vivas</h1>
             <p style="color:#6B7280;font-size:14px;margin-top:4px">Saúde preventiva inteligente</p>
           </div>
           <p style="font-size:15px;color:#1A1A2E">Olá, <strong>${nome}</strong>!</p>
@@ -647,7 +650,7 @@ router.get('/confirm-quote', async (req, res) => {
     let depAdd = planType === 'familia' ? deps * 1990 : 0;
     let totalCents = base + mentalAdd + empresaAdd + depAdd;
 
-    let description = `VivaS ${planType === 'individual' ? 'Individual' : 'Família'}`;
+    let description = `vivas ${planType === 'individual' ? 'Individual' : 'Família'}`;
     if (hasMental) description += ' + Saúde Mental';
     if (hasEmpresa) description += ' + Empresarial';
     if (deps > 0) description += ` (${deps} dep.)`;

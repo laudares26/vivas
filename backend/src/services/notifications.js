@@ -134,7 +134,7 @@ function buildPatientAlertEmail(patientName, alerts) {
   return `
     <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: linear-gradient(135deg, #7B1E3C, #5E1730); padding: 20px; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 22px;">VIVAS Saúde Preventiva</h1>
+        <h1 style="color: white; margin: 0; font-size: 22px;">vivas Saúde Preventiva</h1>
         <p style="color: #E9C4BE; margin: 5px 0 0;">Monitoramento de Indicadores</p>
       </div>
       <div style="padding: 24px; background: white;">
@@ -154,10 +154,10 @@ function buildPatientAlertEmail(patientName, alerts) {
           <p style="margin: 0; font-size: 13px;"><strong>Apoio Preventivo:</strong> Estes dados são suporte preventivo e não constituem diagnóstico médico. Consulte seu profissional de saúde para orientações clínicas.</p>
         </div>
         <p>Recomendamos agendar uma consulta com seu profissional de saúde para avaliação.</p>
-        <a href="https://vivas.digital/login" style="display: inline-block; background: #7B1E3C; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; margin-top: 12px;">Acessar VIVAS</a>
+        <a href="https://vivas.digital/login" style="display: inline-block; background: #7B1E3C; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; margin-top: 12px;">Acessar vivas</a>
       </div>
       <div style="padding: 16px; background: #f8fafc; text-align: center; font-size: 12px; color: #6b7280;">
-        <p>VIVAS Saúde Inteligente - Suporte Preventivo</p>
+        <p>vivas Saúde Inteligente - Suporte Preventivo</p>
       </div>
     </div>
   `;
@@ -175,7 +175,7 @@ function buildProfessionalAlertEmail(professionalName, patientName, patientEmail
   return `
     <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: linear-gradient(135deg, #7B1E3C, #5E1730); padding: 20px; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 22px;">VIVAS - Alerta de Paciente</h1>
+        <h1 style="color: white; margin: 0; font-size: 22px;">vivas - Alerta de Paciente</h1>
         <p style="color: #E9C4BE; margin: 5px 0 0;">Monitoramento Preventivo</p>
       </div>
       <div style="padding: 24px; background: white;">
@@ -194,10 +194,10 @@ function buildProfessionalAlertEmail(professionalName, patientName, patientEmail
         <div style="background: #F6E7E1; border-left: 4px solid #7B1E3C; padding: 12px; margin: 16px 0; border-radius: 4px;">
           <p style="margin: 0; font-size: 13px;"><strong>Ação sugerida:</strong> Considere agendar uma consulta de acompanhamento ou teleconsulta com o paciente.</p>
         </div>
-        <a href="https://vivas.digital/login" style="display: inline-block; background: #7B1E3C; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; margin-top: 12px;">Acessar VIVAS</a>
+        <a href="https://vivas.digital/login" style="display: inline-block; background: #7B1E3C; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; margin-top: 12px;">Acessar vivas</a>
       </div>
       <div style="padding: 16px; background: #f8fafc; text-align: center; font-size: 12px; color: #6b7280;">
-        <p>VIVAS Saúde Inteligente - Notificação Profissional</p>
+        <p>vivas Saúde Inteligente - Notificação Profissional</p>
       </div>
     </div>
   `;
@@ -247,7 +247,7 @@ async function checkAndNotify(patientUserId, indicators) {
   const patientHtml = buildPatientAlertEmail(patient.full_name, alerts);
   results.patient = await sendEmail(
     patient.email,
-    `VIVAS: indicadores de saúde requerem atenção`,
+    `vivas: indicadores de saúde requerem atenção`,
     patientHtml
   );
 
@@ -256,7 +256,7 @@ async function checkAndNotify(patientUserId, indicators) {
     const profHtml = buildProfessionalAlertEmail(prof.full_name, patient.full_name, patient.email, alerts);
     const profEmailResult = await sendEmail(
       prof.email,
-      `VIVAS: alerta de paciente: ${patient.full_name}`,
+      `vivas: alerta de paciente: ${patient.full_name}`,
       profHtml
     );
     results.professionals.push({ id: prof.id, name: prof.full_name, email: prof.email, ...profEmailResult });
@@ -649,7 +649,7 @@ function buildComparativePatientEmail(patientName, trends, aiText) {
   return `
     <div style="font-family:'Segoe UI',sans-serif;max-width:640px;margin:0 auto;">
       <div style="background:linear-gradient(135deg,#7B1E3C,#5E1730);padding:20px;text-align:center;">
-        <h1 style="color:white;margin:0;font-size:22px;">VIVAS Saúde Preventiva</h1>
+        <h1 style="color:white;margin:0;font-size:22px;">vivas Saúde Preventiva</h1>
         <p style="color:#E9C4BE;margin:5px 0 0;">Análise Comparativa e Histórica dos seus Exames</p>
       </div>
       <div style="padding:24px;background:white;">
@@ -668,9 +668,9 @@ function buildComparativePatientEmail(patientName, trends, aiText) {
         <div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:12px;margin:16px 0;border-radius:4px;">
           <p style="margin:0;font-size:13px;"><strong>Apoio Preventivo:</strong> Esta análise comparativa é um suporte preventivo e não constitui diagnóstico médico. Consulte seu profissional de saúde.</p>
         </div>
-        <a href="https://vivas.digital/login" style="display:inline-block;background:#7B1E3C;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;margin-top:12px;">Acessar VIVAS</a>
+        <a href="https://vivas.digital/login" style="display:inline-block;background:#7B1E3C;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;margin-top:12px;">Acessar vivas</a>
       </div>
-      <div style="padding:16px;background:#f8fafc;text-align:center;font-size:12px;color:#6b7280;"><p>VIVAS Saúde Inteligente - Suporte Preventivo</p></div>
+      <div style="padding:16px;background:#f8fafc;text-align:center;font-size:12px;color:#6b7280;"><p>vivas Saúde Inteligente - Suporte Preventivo</p></div>
     </div>`;
 }
 
@@ -678,7 +678,7 @@ function buildComparativeProfessionalEmail(professionalName, patientName, patien
   return `
     <div style="font-family:'Segoe UI',sans-serif;max-width:640px;margin:0 auto;">
       <div style="background:linear-gradient(135deg,#7B1E3C,#5E1730);padding:20px;text-align:center;">
-        <h1 style="color:white;margin:0;font-size:22px;">VIVAS: Evolução de Paciente</h1>
+        <h1 style="color:white;margin:0;font-size:22px;">vivas: Evolução de Paciente</h1>
         <p style="color:#E9C4BE;margin:5px 0 0;">Análise Comparativa de Exames</p>
       </div>
       <div style="padding:24px;background:white;">
@@ -697,9 +697,9 @@ function buildComparativeProfessionalEmail(professionalName, patientName, patien
         <div style="background:#F6E7E1;border-left:4px solid #7B1E3C;padding:12px;margin:16px 0;border-radius:4px;">
           <p style="margin:0;font-size:13px;"><strong>Ação sugerida:</strong> Avalie a tendência dos indicadores e considere agendar acompanhamento ou teleconsulta.</p>
         </div>
-        <a href="https://vivas.digital/login" style="display:inline-block;background:#7B1E3C;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;margin-top:12px;">Acessar VIVAS</a>
+        <a href="https://vivas.digital/login" style="display:inline-block;background:#7B1E3C;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;margin-top:12px;">Acessar vivas</a>
       </div>
-      <div style="padding:16px;background:#f8fafc;text-align:center;font-size:12px;color:#6b7280;"><p>VIVAS Saúde Inteligente - Notificação Profissional</p></div>
+      <div style="padding:16px;background:#f8fafc;text-align:center;font-size:12px;color:#6b7280;"><p>vivas Saúde Inteligente - Notificação Profissional</p></div>
     </div>`;
 }
 
@@ -734,14 +734,14 @@ async function sendComparativeReport(patientUserId, comparative, aiText) {
 
   results.patient = await sendEmail(
     patient.email,
-    'VIVAS: análise comparativa dos seus exames',
+    'vivas: análise comparativa dos seus exames',
     buildComparativePatientEmail(patient.full_name, trends, aiText)
   );
 
   for (const prof of profResult.rows) {
     const profEmailResult = await sendEmail(
       prof.email,
-      `VIVAS: evolução de exames do paciente: ${patient.full_name}`,
+      `vivas: evolução de exames do paciente: ${patient.full_name}`,
       buildComparativeProfessionalEmail(prof.full_name, patient.full_name, patient.email, trends, aiText)
     );
     results.professionals.push({ id: prof.id, name: prof.full_name, email: prof.email, ...profEmailResult });
@@ -904,7 +904,7 @@ async function maybeSendTeleconsultSuggestion(patientUserId, trendDecision) {
 
     const result = await sendEmail(
       prof.email,
-      `VIVAS: sugestão de teleconsulta com ${patient.full_name}`,
+      `vivas: sugestão de teleconsulta com ${patient.full_name}`,
       buildTeleconsultSuggestionEmail(prof.full_name, patient.full_name, trendDecision)
     );
     await pool.query('UPDATE teleconsult_suggestions SET email_sent = true WHERE id = $1', [inserted.rows[0].id]);

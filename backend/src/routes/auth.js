@@ -159,7 +159,7 @@ router.post('/register', async (req, res) => {
     // Create patient record (titular)
     await pool.query(
       `INSERT INTO patients (full_name, cpf, birth_date, gender, email, user_id, convenio, status)
-       VALUES ($1, $2, NOW(), 'Não informado', $3, $4, 'VivaS', 'Ativo')
+       VALUES ($1, $2, NOW(), 'Não informado', $3, $4, 'vivas', 'Ativo')
        ON CONFLICT DO NOTHING`,
       [full_name, 'auto-' + user.id.substring(0, 8), email, user.id]
     );

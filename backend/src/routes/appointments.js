@@ -52,7 +52,7 @@ async function resolveInvitedPatient(name, email) {
   if (existing.rows.length) return existing.rows[0].id;
   const created = await pool.query(
     `INSERT INTO patients (full_name, cpf, birth_date, gender, email, convenio, status)
-     VALUES ($1, $2, NOW(), 'Não informado', $3, 'VivaS', 'Ativo')
+     VALUES ($1, $2, NOW(), 'Não informado', $3, 'vivas', 'Ativo')
      RETURNING id`,
     [name || email, 'inv-' + Math.random().toString(36).slice(2, 10), email]
   );
@@ -73,7 +73,7 @@ async function resolvePatientId(user) {
 
   const created = await pool.query(
     `INSERT INTO patients (full_name, cpf, birth_date, gender, email, user_id, convenio, status)
-     VALUES ($1, $2, NOW(), 'Não informado', $3, $4, 'VivaS', 'Ativo')
+     VALUES ($1, $2, NOW(), 'Não informado', $3, $4, 'vivas', 'Ativo')
      RETURNING id`,
     [user.full_name || user.email, 'auto-' + String(user.id).substring(0, 8), user.email, user.id]
   );
