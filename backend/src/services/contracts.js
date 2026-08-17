@@ -12,12 +12,12 @@ function wrapEmail(title, subtitle, body) {
   return `
 <div style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;max-width:700px;margin:0 auto;padding:32px 20px;color:#1A1A2E">
   <div style="text-align:center;margin-bottom:24px">
-    <h1 style="color:#7B1E3C;font-size:28px;margin:0">VivaS</h1>
+    <h1 style="color:#7B1E3C;font-size:28px;margin:0">vivas</h1>
     <p style="color:#6B7280;font-size:14px;margin-top:4px">${subtitle}</p>
   </div>
   ${body}
   <hr style="border:none;border-top:1px solid #F3F4F6;margin:24px 0">
-  <p style="font-size:11px;color:#9CA3AF;text-align:center">VivaS Saude Inteligente | ${CROSSGEO.name} - CNPJ ${CROSSGEO.cnpj} | suporte@crossgeo.com.br</p>
+  <p style="font-size:11px;color:#9CA3AF;text-align:center">vivas Saude Inteligente | ${CROSSGEO.name} - CNPJ ${CROSSGEO.cnpj} | suporte@crossgeo.com.br</p>
 </div>`;
 }
 
@@ -43,7 +43,7 @@ function contractFooter(signerName, signerDoc, date) {
 function signatureBadge() {
   return `<div style="background:#E4F4EC;border-radius:10px;padding:16px;margin:16px 0">
     <p style="font-size:13px;font-weight:600;color:#166534;margin-bottom:4px">Assinatura eletronica valida</p>
-    <p style="font-size:12px;color:#6B7280">Contrato assinado digitalmente conforme MP 2.200-2/2001 e Lei 14.063/2020. Representante VivaS: ${CROSSGEO.name} (CNPJ ${CROSSGEO.cnpj})</p>
+    <p style="font-size:12px;color:#6B7280">Contrato assinado digitalmente conforme MP 2.200-2/2001 e Lei 14.063/2020. Representante vivas: ${CROSSGEO.name} (CNPJ ${CROSSGEO.cnpj})</p>
   </div>`;
 }
 
@@ -54,16 +54,16 @@ function generateMedicoContract(data) {
 
   const body = `
     <p style="font-size:15px">Ola, <strong>${fullName}</strong>!</p>
-    <p style="font-size:14px;color:#6B7280;line-height:1.6">Seu cadastro como medico na VivaS foi realizado com sucesso. Segue seu contrato assinado eletronicamente:</p>
+    <p style="font-size:14px;color:#6B7280;line-height:1.6">Seu cadastro como medico na vivas foi realizado com sucesso. Segue seu contrato assinado eletronicamente:</p>
 
     ${contractHeader('CONTRATO DE CREDENCIAMENTO E PRESTACAO DE SERVICOS MEDICOS', date)}
-    <p style="font-size:11px;color:#6B7280;margin-bottom:8px">Profissional Medico x Plataforma VivaS - Telemedicina (Resolucao CFM n. 2.314/2022)</p>
+    <p style="font-size:11px;color:#6B7280;margin-bottom:8px">Profissional Medico x Plataforma vivas - Telemedicina (Resolucao CFM n. 2.314/2022)</p>
 
-    <p><strong>CONTRATANTE:</strong> ${CROSSGEO.name}, CNPJ ${CROSSGEO.cnpj}, ${CROSSGEO.address}, representando a plataforma VivaS Saude Inteligente.</p>
+    <p><strong>CONTRATANTE:</strong> ${CROSSGEO.name}, CNPJ ${CROSSGEO.cnpj}, ${CROSSGEO.address}, representando a plataforma vivas Saude Inteligente.</p>
     <p><strong>CONTRATADO(A):</strong> ${fullName}, CPF ${cpf}, ${crmDoc}, Especialidade: ${especialidade || 'Geral'}.</p>
 
     ${clause('1a', 'DAS DEFINICOES',
-      '1.1. Plataforma: ambiente tecnologico (web e aplicativos) de titularidade da VivaS que viabiliza triagem por tecnologia inteligente, organizacao de historico clinico, interpretacao de exames com analise de tendencias, geracao de alertas preditivos e a realizacao de teleconsultas entre o MEDICO e os USUARIOS.<br>1.2. Teleconsulta: consulta medica nao presencial, mediada por TDICs, nos termos da Resolucao CFM n. 2.314/2022 e da Lei n. 14.510/2022.<br>1.3. Usuario/Paciente: pessoa fisica que utiliza a Plataforma e que podera ser atendida pelo MEDICO.<br>1.4. SRES: Sistema de Registro Eletronico de Saude.'
+      '1.1. Plataforma: ambiente tecnologico (web e aplicativos) de titularidade da vivas que viabiliza triagem por tecnologia inteligente, organizacao de historico clinico, interpretacao de exames com analise de tendencias, geracao de alertas preditivos e a realizacao de teleconsultas entre o MEDICO e os USUARIOS.<br>1.2. Teleconsulta: consulta medica nao presencial, mediada por TDICs, nos termos da Resolucao CFM n. 2.314/2022 e da Lei n. 14.510/2022.<br>1.3. Usuario/Paciente: pessoa fisica que utiliza a Plataforma e que podera ser atendida pelo MEDICO.<br>1.4. SRES: Sistema de Registro Eletronico de Saude.'
     )}
 
     ${clause('2a', 'DO OBJETO',
@@ -71,7 +71,7 @@ function generateMedicoContract(data) {
     )}
 
     ${clause('3a', 'DA HABILITACAO E REQUISITOS DO MEDICO',
-      '3.1. O MEDICO declara e garante que: possui inscricao ativa e regular no CRM; detem titulo de especialista ou registro de qualificacao compativel; mantem certificado digital no padrao ICP-Brasil para assinatura qualificada; e mantera seus dados permanentemente atualizados.<br>3.2. A VivaS podera, a qualquer tempo, solicitar comprovacao documental e suspender ou cancelar o credenciamento em caso de irregularidade.'
+      '3.1. O MEDICO declara e garante que: possui inscricao ativa e regular no CRM; detem titulo de especialista ou registro de qualificacao compativel; mantem certificado digital no padrao ICP-Brasil para assinatura qualificada; e mantera seus dados permanentemente atualizados.<br>3.2. A vivas podera, a qualquer tempo, solicitar comprovacao documental e suspender ou cancelar o credenciamento em caso de irregularidade.'
     )}
 
     ${clause('4a', 'DA NATUREZA DA RELACAO E INEXISTENCIA DE VINCULO',
@@ -83,11 +83,11 @@ function generateMedicoContract(data) {
     )}
 
     ${clause('6a', 'DAS OBRIGACOES DA VIVAS',
-      '6.1. Disponibilizar o ambiente tecnologico em condicoes adequadas de funcionamento; manter sede em territorio nacional e inscricao no CRM; efetuar os repasses devidos; adotar medidas de seguranca da informacao; disponibilizar canal de suporte tecnico e operacional.<br>6.2. A VivaS nao garante volume minimo de atendimentos.'
+      '6.1. Disponibilizar o ambiente tecnologico em condicoes adequadas de funcionamento; manter sede em territorio nacional e inscricao no CRM; efetuar os repasses devidos; adotar medidas de seguranca da informacao; disponibilizar canal de suporte tecnico e operacional.<br>6.2. A vivas nao garante volume minimo de atendimentos.'
     )}
 
     ${clause('7a', 'DA REMUNERACAO E DOS REPASSES',
-      '7.1. O credenciamento na Plataforma e gratuito para o MEDICO.<br>7.2. Por cada teleconsulta efetivamente realizada, o MEDICO fara jus a remuneracao conforme tabela vigente na Plataforma, retendo a VivaS taxa pela intermediacao e uso da Plataforma.<br>7.3. Os repasses serao realizados na conta bancaria indicada pelo MEDICO em ate 7 dias uteis apos o fechamento do ciclo mensal.'
+      '7.1. O credenciamento na Plataforma e gratuito para o MEDICO.<br>7.2. Por cada teleconsulta efetivamente realizada, o MEDICO fara jus a remuneracao conforme tabela vigente na Plataforma, retendo a vivas taxa pela intermediacao e uso da Plataforma.<br>7.3. Os repasses serao realizados na conta bancaria indicada pelo MEDICO em ate 7 dias uteis apos o fechamento do ciclo mensal.'
     )}
 
     ${clause('8a', 'DA AGENDA, CANCELAMENTOS E AUSENCIAS',
@@ -95,27 +95,27 @@ function generateMedicoContract(data) {
     )}
 
     ${clause('9a', 'DA PROTECAO DE DADOS PESSOAIS (LGPD)',
-      '9.1. As Partes tratarao dados pessoais e dados sensiveis de saude em conformidade com a Lei n. 13.709/2018 (LGPD).<br>9.2. O MEDICO atua como controlador dos dados clinicos relativos ao ato medico; a VivaS atua como operadora quanto a infraestrutura.<br>9.3. O MEDICO obriga-se ao sigilo profissional e a confidencialidade.'
+      '9.1. As Partes tratarao dados pessoais e dados sensiveis de saude em conformidade com a Lei n. 13.709/2018 (LGPD).<br>9.2. O MEDICO atua como controlador dos dados clinicos relativos ao ato medico; a vivas atua como operadora quanto a infraestrutura.<br>9.3. O MEDICO obriga-se ao sigilo profissional e a confidencialidade.'
     )}
 
     ${clause('10a', 'DA PROPRIEDADE INTELECTUAL',
-      '10.1. A Plataforma, o software, as marcas e os algoritmos sao de titularidade exclusiva da VivaS.<br>10.2. O MEDICO autoriza a VivaS a exibir seu nome, especialidade, CRM e foto profissional na Plataforma.'
+      '10.1. A Plataforma, o software, as marcas e os algoritmos sao de titularidade exclusiva da vivas.<br>10.2. O MEDICO autoriza a vivas a exibir seu nome, especialidade, CRM e foto profissional na Plataforma.'
     )}
 
     ${clause('11a', 'DA RESPONSABILIDADE',
-      '11.1. O MEDICO responde, de forma pessoal e subjetiva, por todos os atos praticados no exercicio profissional.<br>11.2. A VivaS responde apenas por falhas diretamente imputaveis a infraestrutura tecnologica.'
+      '11.1. O MEDICO responde, de forma pessoal e subjetiva, por todos os atos praticados no exercicio profissional.<br>11.2. A vivas responde apenas por falhas diretamente imputaveis a infraestrutura tecnologica.'
     )}
 
     ${clause('12a', 'DA VIGENCIA E RESCISAO',
-      '12.1. Vigencia por prazo indeterminado, a partir do aceite eletronico.<br>12.2. Rescisao imotivada por qualquer das Partes mediante aviso previo de 30 dias, sem multa.<br>12.3. Rescisao imediata pela VivaS em caso de perda de regularidade profissional, infracao etica ou legal.'
+      '12.1. Vigencia por prazo indeterminado, a partir do aceite eletronico.<br>12.2. Rescisao imotivada por qualquer das Partes mediante aviso previo de 30 dias, sem multa.<br>12.3. Rescisao imediata pela vivas em caso de perda de regularidade profissional, infracao etica ou legal.'
     )}
 
     ${clause('13a', 'DA CONFIDENCIALIDADE E NAO ALICIAMENTO',
-      '13.1. O MEDICO mantera em sigilo as informacoes comerciais e tecnicas da VivaS por 2 anos apos o termino do Contrato.<br>13.2. O MEDICO nao utilizara dados de Usuarios para alicia-los a canais externos.'
+      '13.1. O MEDICO mantera em sigilo as informacoes comerciais e tecnicas da vivas por 2 anos apos o termino do Contrato.<br>13.2. O MEDICO nao utilizara dados de Usuarios para alicia-los a canais externos.'
     )}
 
     ${clause('14a', 'DAS DISPOSICOES GERAIS',
-      '14.1. A tolerancia nao implica novacao ou renuncia.<br>14.2. A eventual nulidade de uma clausula nao prejudica as demais.<br>14.3. A VivaS podera alterar este Contrato mediante comunicacao previa.'
+      '14.1. A tolerancia nao implica novacao ou renuncia.<br>14.2. A eventual nulidade de uma clausula nao prejudica as demais.<br>14.3. A vivas podera alterar este Contrato mediante comunicacao previa.'
     )}
 
     ${clause('15a', 'DO FORO',
@@ -137,7 +137,7 @@ function generateMedicoContract(data) {
       <p style="font-size:12px;color:#6B7280;margin-top:6px">Acesse <a href="https://vivas.digital/login" style="color:#7B1E3C">vivas.digital</a> e altere sua senha no primeiro acesso.</p>
     </div>`;
 
-  return wrapEmail('VivaS', 'Contrato de Credenciamento - Medico', body);
+  return wrapEmail('vivas', 'Contrato de Credenciamento - Medico', body);
 }
 
 function generatePsicologoContract(data) {
@@ -147,16 +147,16 @@ function generatePsicologoContract(data) {
 
   const body = `
     <p style="font-size:15px">Ola, <strong>${fullName}</strong>!</p>
-    <p style="font-size:14px;color:#6B7280;line-height:1.6">Seu cadastro como psicologo na VivaS foi realizado com sucesso. Segue seu contrato assinado eletronicamente:</p>
+    <p style="font-size:14px;color:#6B7280;line-height:1.6">Seu cadastro como psicologo na vivas foi realizado com sucesso. Segue seu contrato assinado eletronicamente:</p>
 
     ${contractHeader('CONTRATO DE CREDENCIAMENTO E PRESTACAO DE SERVICOS PSICOLOGICOS', date)}
-    <p style="font-size:11px;color:#6B7280;margin-bottom:8px">Profissional de Psicologia x Plataforma VivaS - Atendimento mediado por TDICs (Resolucao CFP n. 09/2024)</p>
+    <p style="font-size:11px;color:#6B7280;margin-bottom:8px">Profissional de Psicologia x Plataforma vivas - Atendimento mediado por TDICs (Resolucao CFP n. 09/2024)</p>
 
-    <p><strong>CONTRATANTE:</strong> ${CROSSGEO.name}, CNPJ ${CROSSGEO.cnpj}, ${CROSSGEO.address}, representando a plataforma VivaS Saude Inteligente.</p>
+    <p><strong>CONTRATANTE:</strong> ${CROSSGEO.name}, CNPJ ${CROSSGEO.cnpj}, ${CROSSGEO.address}, representando a plataforma vivas Saude Inteligente.</p>
     <p><strong>CONTRATADO(A):</strong> ${fullName}, CPF ${cpf}, ${crpDoc}, Especialidade: ${especialidade || 'Psicologia Geral'}.</p>
 
     ${clause('1a', 'DAS DEFINICOES',
-      '1.1. Plataforma: ambiente tecnologico de titularidade da VivaS que viabiliza a oferta de servicos psicologicos mediados por TDICs, agendamento, registro documental e atendimento aos Usuarios.<br>1.2. TDICs: Tecnologias Digitais da Informacao e da Comunicacao, na forma da Resolucao CFP n. 09/2024.<br>1.3. Atendimento on-line: servico psicologico prestado a distancia, em tempo real ou nao, mediado por TDICs.<br>1.4. Usuario: pessoa fisica que utiliza a Plataforma e que podera ser atendida pelo PSICOLOGO.'
+      '1.1. Plataforma: ambiente tecnologico de titularidade da vivas que viabiliza a oferta de servicos psicologicos mediados por TDICs, agendamento, registro documental e atendimento aos Usuarios.<br>1.2. TDICs: Tecnologias Digitais da Informacao e da Comunicacao, na forma da Resolucao CFP n. 09/2024.<br>1.3. Atendimento on-line: servico psicologico prestado a distancia, em tempo real ou nao, mediado por TDICs.<br>1.4. Usuario: pessoa fisica que utiliza a Plataforma e que podera ser atendida pelo PSICOLOGO.'
     )}
 
     ${clause('2a', 'DO OBJETO',
@@ -176,7 +176,7 @@ function generatePsicologoContract(data) {
     )}
 
     ${clause('6a', 'DAS OBRIGACOES DA VIVAS',
-      '6.1. Disponibilizar o ambiente tecnologico seguro e funcional; manter plano de contingencia para queda de conexao; efetuar os repasses; tratar os dados em conformidade com a LGPD; disponibilizar suporte tecnico.<br>6.2. A VivaS nao garante volume minimo de atendimentos.'
+      '6.1. Disponibilizar o ambiente tecnologico seguro e funcional; manter plano de contingencia para queda de conexao; efetuar os repasses; tratar os dados em conformidade com a LGPD; disponibilizar suporte tecnico.<br>6.2. A vivas nao garante volume minimo de atendimentos.'
     )}
 
     ${clause('7a', 'DA NATUREZA DA RELACAO E INEXISTENCIA DE VINCULO',
@@ -192,23 +192,23 @@ function generatePsicologoContract(data) {
     )}
 
     ${clause('10a', 'DA PROTECAO DE DADOS PESSOAIS (LGPD)',
-      '10.1. As Partes tratarao dados pessoais e dados sensiveis de saude conforme a LGPD.<br>10.2. O PSICOLOGO atua como controlador dos dados relativos ao atendimento; a VivaS atua como operadora.<br>10.3. O PSICOLOGO obriga-se ao sigilo profissional.'
+      '10.1. As Partes tratarao dados pessoais e dados sensiveis de saude conforme a LGPD.<br>10.2. O PSICOLOGO atua como controlador dos dados relativos ao atendimento; a vivas atua como operadora.<br>10.3. O PSICOLOGO obriga-se ao sigilo profissional.'
     )}
 
     ${clause('11a', 'DA PROPRIEDADE INTELECTUAL',
-      '11.1. A Plataforma, o software e as marcas sao de titularidade exclusiva da VivaS. O PSICOLOGO autoriza a exibicao de seu nome, abordagem, CRP e foto profissional na Plataforma.'
+      '11.1. A Plataforma, o software e as marcas sao de titularidade exclusiva da vivas. O PSICOLOGO autoriza a exibicao de seu nome, abordagem, CRP e foto profissional na Plataforma.'
     )}
 
     ${clause('12a', 'DA RESPONSABILIDADE',
-      '12.1. O PSICOLOGO responde, de forma pessoal e subjetiva, pelos atos praticados no exercicio profissional.<br>12.2. A VivaS responde apenas por falhas diretamente imputaveis a infraestrutura tecnologica.'
+      '12.1. O PSICOLOGO responde, de forma pessoal e subjetiva, pelos atos praticados no exercicio profissional.<br>12.2. A vivas responde apenas por falhas diretamente imputaveis a infraestrutura tecnologica.'
     )}
 
     ${clause('13a', 'DA VIGENCIA E RESCISAO',
-      '13.1. Vigencia por prazo indeterminado, a partir do aceite eletronico.<br>13.2. Rescisao imotivada por qualquer das Partes mediante aviso previo de 30 dias, sem multa.<br>13.3. Rescisao imediata pela VivaS em caso de perda de regularidade profissional, infracao etica ou legal.'
+      '13.1. Vigencia por prazo indeterminado, a partir do aceite eletronico.<br>13.2. Rescisao imotivada por qualquer das Partes mediante aviso previo de 30 dias, sem multa.<br>13.3. Rescisao imediata pela vivas em caso de perda de regularidade profissional, infracao etica ou legal.'
     )}
 
     ${clause('14a', 'DA CONFIDENCIALIDADE E NAO ALICIAMENTO',
-      '14.1. O PSICOLOGO mantera sigilo sobre informacoes de negocio da VivaS por 2 anos apos o termino, e nao utilizara dados de Usuarios para alicia-los a canais externos.'
+      '14.1. O PSICOLOGO mantera sigilo sobre informacoes de negocio da vivas por 2 anos apos o termino, e nao utilizara dados de Usuarios para alicia-los a canais externos.'
     )}
 
     ${clause('15a', 'DAS DISPOSICOES GERAIS E DO FORO',
@@ -230,7 +230,7 @@ function generatePsicologoContract(data) {
       <p style="font-size:12px;color:#6B7280;margin-top:6px">Acesse <a href="https://vivas.digital/login" style="color:#7B1E3C">vivas.digital</a> e altere sua senha no primeiro acesso.</p>
     </div>`;
 
-  return wrapEmail('VivaS', 'Contrato de Credenciamento - Psicologo', body);
+  return wrapEmail('vivas', 'Contrato de Credenciamento - Psicologo', body);
 }
 
 function generatePacienteTerms(data) {
@@ -240,32 +240,32 @@ function generatePacienteTerms(data) {
 
   const body = `
     <p style="font-size:15px">Ola, <strong>${fullName}</strong>!</p>
-    <p style="font-size:14px;color:#6B7280;line-height:1.6">Bem-vindo(a) a VivaS! Segue seu contrato de termos e condicoes de uso, assinado eletronicamente no momento do seu cadastro:</p>
+    <p style="font-size:14px;color:#6B7280;line-height:1.6">Bem-vindo(a) a vivas! Segue seu contrato de termos e condicoes de uso, assinado eletronicamente no momento do seu cadastro:</p>
 
     ${contractHeader('TERMOS E CONDICOES DE USO, CONTRATO DE PRESTACAO DE SERVICOS E TERMO DE CONSENTIMENTO', date)}
-    <p style="font-size:11px;color:#6B7280;margin-bottom:8px">Usuario (Cliente/Paciente) x Plataforma VivaS | Plano: ${planLabel}</p>
+    <p style="font-size:11px;color:#6B7280;margin-bottom:8px">Usuario (Cliente/Paciente) x Plataforma vivas | Plano: ${planLabel}</p>
 
-    <p><strong>CONTRATANTE:</strong> ${CROSSGEO.name}, CNPJ ${CROSSGEO.cnpj}, ${CROSSGEO.address}, representando a plataforma VivaS Saude Inteligente.</p>
+    <p><strong>CONTRATANTE:</strong> ${CROSSGEO.name}, CNPJ ${CROSSGEO.cnpj}, ${CROSSGEO.address}, representando a plataforma vivas Saude Inteligente.</p>
     <p><strong>USUARIO:</strong> ${fullName}${cpf ? ', CPF ' + cpf : ''}, Email: ${email}.</p>
 
     ${clause('1a', 'DAS DEFINICOES',
-      '1.1. Plataforma: ecossistema digital da VivaS (site e aplicativos) de saude preventiva.<br>1.2. Usuario: pessoa fisica que se cadastra e utiliza a Plataforma.<br>1.3. Profissional: medico, psicologo ou outro profissional de saude credenciado que realiza atendimentos.<br>1.4. Teleconsulta: atendimento de saude a distancia, mediado por TDICs.'
+      '1.1. Plataforma: ecossistema digital da vivas (site e aplicativos) de saude preventiva.<br>1.2. Usuario: pessoa fisica que se cadastra e utiliza a Plataforma.<br>1.3. Profissional: medico, psicologo ou outro profissional de saude credenciado que realiza atendimentos.<br>1.4. Teleconsulta: atendimento de saude a distancia, mediado por TDICs.'
     )}
 
     ${clause('2a', 'DO OBJETO E DOS SERVICOS',
-      '2.1. A VivaS oferece uma plataforma de saude preventiva inteligente, que pode incluir: (i) triagem inicial por tecnologia inteligente; (ii) organizacao do historico clinico e da linha do tempo de saude; (iii) interpretacao de exames com analise de tendencias; (iv) alertas preditivos que identificam sinais e antecipam riscos; (v) teleconsultas com profissionais credenciados, sob modelo subsidiado; e (vi) beneficios e descontos junto a parceiros.<br>2.2. A VivaS atua como intermediadora e provedora de tecnologia, conectando o Usuario a Profissionais e parceiros independentes.'
+      '2.1. A vivas oferece uma plataforma de saude preventiva inteligente, que pode incluir: (i) triagem inicial por tecnologia inteligente; (ii) organizacao do historico clinico e da linha do tempo de saude; (iii) interpretacao de exames com analise de tendencias; (iv) alertas preditivos que identificam sinais e antecipam riscos; (v) teleconsultas com profissionais credenciados, sob modelo subsidiado; e (vi) beneficios e descontos junto a parceiros.<br>2.2. A vivas atua como intermediadora e provedora de tecnologia, conectando o Usuario a Profissionais e parceiros independentes.'
     )}
 
     ${clause('3a', 'DA NATUREZA E DAS LIMITACOES DO SERVICO',
-      '3.1. A VivaS nao e operadora de plano de saude nem de seguro-saude e nao oferece cobertura de internacao, cirurgia, procedimentos hospitalares ou reembolso assistencial.<br>3.2. Os alertas e analises gerados por tecnologia inteligente tem carater informativo e preventivo, nao constituem diagnostico e nao substituem a avaliacao de um profissional de saude.<br>3.3. A teleconsulta e ato complementar e nao substitui o atendimento presencial.<br>3.4. A Plataforma nao e um servico de urgencia ou emergencia. Em caso de emergencia, procure o pronto-socorro mais proximo ou acione o SAMU (192) ou os Bombeiros (193).'
+      '3.1. A vivas nao e operadora de plano de saude nem de seguro-saude e nao oferece cobertura de internacao, cirurgia, procedimentos hospitalares ou reembolso assistencial.<br>3.2. Os alertas e analises gerados por tecnologia inteligente tem carater informativo e preventivo, nao constituem diagnostico e nao substituem a avaliacao de um profissional de saude.<br>3.3. A teleconsulta e ato complementar e nao substitui o atendimento presencial.<br>3.4. A Plataforma nao e um servico de urgencia ou emergencia. Em caso de emergencia, procure o pronto-socorro mais proximo ou acione o SAMU (192) ou os Bombeiros (193).'
     )}
 
     ${clause('4a', 'DO CADASTRO E DA CONTA',
-      '4.1. O Usuario deve fornecer informacoes verdadeiras, exatas e atualizadas, sendo o unico responsavel por elas e pela guarda de suas credenciais.<br>4.2. E vedado o uso por menores de 18 anos sem assistencia ou representacao dos responsaveis legais.<br>4.3. A VivaS podera suspender ou cancelar contas com indicios de fraude, uso indevido ou violacao destes Termos.'
+      '4.1. O Usuario deve fornecer informacoes verdadeiras, exatas e atualizadas, sendo o unico responsavel por elas e pela guarda de suas credenciais.<br>4.2. E vedado o uso por menores de 18 anos sem assistencia ou representacao dos responsaveis legais.<br>4.3. A vivas podera suspender ou cancelar contas com indicios de fraude, uso indevido ou violacao destes Termos.'
     )}
 
     ${clause('5a', 'DOS PLANOS, PRECOS E PAGAMENTO',
-      '5.1. A VivaS oferece planos de assinatura (valores vigentes, sujeitos a reajuste mediante aviso previo).<br>5.2. As teleconsultas nao estao incluidas de forma ilimitada na assinatura; serao cobradas por consulta, a valor subsidiado/com desconto.<br>5.3. A cobranca e recorrente, na periodicidade contratada, renovando-se automaticamente ate cancelamento.<br>5.4. O nao pagamento podera ensejar a suspensao do acesso.'
+      '5.1. A vivas oferece planos de assinatura (valores vigentes, sujeitos a reajuste mediante aviso previo).<br>5.2. As teleconsultas nao estao incluidas de forma ilimitada na assinatura; serao cobradas por consulta, a valor subsidiado/com desconto.<br>5.3. A cobranca e recorrente, na periodicidade contratada, renovando-se automaticamente ate cancelamento.<br>5.4. O nao pagamento podera ensejar a suspensao do acesso.'
     )}
 
     ${clause('6a', 'DO DIREITO DE ARREPENDIMENTO E DO CANCELAMENTO',
@@ -277,19 +277,19 @@ function generatePacienteTerms(data) {
     )}
 
     ${clause('8a', 'DA PROTECAO DE DADOS PESSOAIS (LGPD)',
-      '8.1. A VivaS trata dados pessoais e dados sensiveis de saude conforme a Lei n. 13.709/2018 (LGPD).<br>8.2. Bases legais: execucao de contrato; tutela da saude; cumprimento de obrigacao legal; e consentimento para finalidades especificas.<br>8.3. Finalidades: prestacao dos servicos, triagem, alertas, agendamento, faturamento, seguranca e melhoria da Plataforma.<br>8.4. Compartilhamento: com Profissionais responsaveis pelo atendimento, operadores de tecnologia/pagamento e parceiros.<br>8.5. Direitos do titular: confirmacao, acesso, correcao, anonimizacao, portabilidade, eliminacao e revogacao do consentimento, exerciveis pelo canal suporte@crossgeo.com.br.<br>8.6. Seguranca: criptografia, autenticacao e registro de logs.'
+      '8.1. A vivas trata dados pessoais e dados sensiveis de saude conforme a Lei n. 13.709/2018 (LGPD).<br>8.2. Bases legais: execucao de contrato; tutela da saude; cumprimento de obrigacao legal; e consentimento para finalidades especificas.<br>8.3. Finalidades: prestacao dos servicos, triagem, alertas, agendamento, faturamento, seguranca e melhoria da Plataforma.<br>8.4. Compartilhamento: com Profissionais responsaveis pelo atendimento, operadores de tecnologia/pagamento e parceiros.<br>8.5. Direitos do titular: confirmacao, acesso, correcao, anonimizacao, portabilidade, eliminacao e revogacao do consentimento, exerciveis pelo canal suporte@crossgeo.com.br.<br>8.6. Seguranca: criptografia, autenticacao e registro de logs.'
     )}
 
     ${clause('9a', 'DAS OBRIGACOES DO USUARIO',
-      '9.1. O Usuario obriga-se a: usar a Plataforma de forma licita; prestar informacoes verdadeiras de saude; nao compartilhar suas credenciais; nao gravar atendimentos sem consentimento; e respeitar os direitos de propriedade intelectual da VivaS.'
+      '9.1. O Usuario obriga-se a: usar a Plataforma de forma licita; prestar informacoes verdadeiras de saude; nao compartilhar suas credenciais; nao gravar atendimentos sem consentimento; e respeitar os direitos de propriedade intelectual da vivas.'
     )}
 
     ${clause('10a', 'DAS RESPONSABILIDADES E LIMITACOES',
-      '10.1. A VivaS empregara esforcos para manter a Plataforma disponivel e segura, mas nao garante funcionamento ininterrupto.<br>10.2. A responsabilidade tecnica pelos atos de saude e exclusiva dos Profissionais.<br>10.3. A VivaS nao se responsabiliza por danos decorrentes de uso indevido ou informacoes incorretas do Usuario.'
+      '10.1. A vivas empregara esforcos para manter a Plataforma disponivel e segura, mas nao garante funcionamento ininterrupto.<br>10.2. A responsabilidade tecnica pelos atos de saude e exclusiva dos Profissionais.<br>10.3. A vivas nao se responsabiliza por danos decorrentes de uso indevido ou informacoes incorretas do Usuario.'
     )}
 
     ${clause('11a', 'DA PROPRIEDADE INTELECTUAL',
-      '11.1. Todo o conteudo, software, marcas, modelos de tecnologia inteligente e materiais da Plataforma pertencem a VivaS.'
+      '11.1. Todo o conteudo, software, marcas, modelos de tecnologia inteligente e materiais da Plataforma pertencem a vivas.'
     )}
 
     ${clause('12a', 'DO SUPORTE E DOS CANAIS DE ATENDIMENTO',
@@ -297,7 +297,7 @@ function generatePacienteTerms(data) {
     )}
 
     ${clause('13a', 'DAS ALTERACOES DESTES TERMOS',
-      '13.1. A VivaS podera alterar estes Termos, comunicando previamente o Usuario. A continuidade do uso implica concordancia.'
+      '13.1. A vivas podera alterar estes Termos, comunicando previamente o Usuario. A continuidade do uso implica concordancia.'
     )}
 
     ${clause('14a', 'DA VIGENCIA, LEGISLACAO E FORO',
@@ -312,7 +312,7 @@ function generatePacienteTerms(data) {
 
     ${signatureBadge()}`;
 
-  return wrapEmail('VivaS', 'Termos e Condicoes de Uso', body);
+  return wrapEmail('vivas', 'Termos e Condicoes de Uso', body);
 }
 
 module.exports = { generateMedicoContract, generatePsicologoContract, generatePacienteTerms, CROSSGEO };

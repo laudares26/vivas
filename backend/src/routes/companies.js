@@ -23,7 +23,7 @@ router.post('/lead', async (req, res) => {
         process.env.LEADS_NOTIFY_EMAIL || 'contato@vivas.digital',
         'vivas Empresas - Novo lead B2B',
         `<div style="font-family:Arial,sans-serif;max-width:600px;">
-          <h2 style="color:#7B1E3C;">Novo Lead B2B - VivaS Empresas</h2>
+          <h2 style="color:#7B1E3C;">Novo Lead B2B - vivas Empresas</h2>
           <table style="width:100%;border-collapse:collapse;">
             <tr><td style="padding:8px;border-bottom:1px solid #eee;font-weight:bold;">Nome</td><td style="padding:8px;border-bottom:1px solid #eee;">${name}</td></tr>
             <tr><td style="padding:8px;border-bottom:1px solid #eee;font-weight:bold;">Empresa</td><td style="padding:8px;border-bottom:1px solid #eee;">${company || '-'}</td></tr>
@@ -178,11 +178,11 @@ router.post('/employees', authenticate, async (req, res) => {
       const companyName = companyResult.rows[0]?.name || 'sua empresa';
       await sendEmail(
         email,
-        'VivaS - Bem-vindo ao plano empresarial',
+        'vivas - Bem-vindo ao plano empresarial',
         `<div style="font-family:Arial,sans-serif;max-width:600px;">
-          <h2 style="color:#7B1E3C;">Bem-vindo ao VivaS!</h2>
+          <h2 style="color:#7B1E3C;">Bem-vindo ao vivas!</h2>
           <p>Olá ${full_name},</p>
-          <p>${companyName} cadastrou você no plano VivaS Empresas. Agora você tem acesso completo à plataforma de saúde preventiva.</p>
+          <p>${companyName} cadastrou você no plano vivas Empresas. Agora você tem acesso completo à plataforma de saúde preventiva.</p>
           <p><strong>Acesse:</strong> <a href="https://vivas.digital/login" style="color:#7B1E3C;">https://vivas.digital/login</a></p>
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Senha inicial:</strong> vivas2026</p>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VivaS - Cadastro de Profissionais de Saúde</title>
+  <title>vivas - Cadastro de Profissionais de Saúde</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -271,7 +271,7 @@
           <div class="contract-box" id="contractBox">
             <h3 id="contractTitle">CONTRATO DE CREDENCIAMENTO E PRESTACAO DE SERVICOS</h3>
             <div class="clause" id="contractSubtitle" style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:12px"></div>
-            <div class="clause"><strong>CONTRATANTE:</strong> CROSSGEO LTDA, inscrita no CNPJ sob o n. 56.195.515/0001-49, com sede na R. da Patagonia, 404, Sion, Belo Horizonte/MG, CEP 30.320-135, neste ato representando a plataforma VivaS Saude Inteligente.</div>
+            <div class="clause"><strong>CONTRATANTE:</strong> CROSSGEO LTDA, inscrita no CNPJ sob o n. 56.195.515/0001-49, com sede na R. da Patagonia, 404, Sion, Belo Horizonte/MG, CEP 30.320-135, neste ato representando a plataforma vivas Saude Inteligente.</div>
             <div class="clause"><strong>CONTRATADO(A):</strong> <span id="contractName">___</span>, inscrito(a) no CPF sob o n. <span id="contractCPF">___</span>, portador(a) do <span id="contractCRM">CRM/CRP</span> n. <span id="contractCRMNum">___</span>/<span id="contractUF">__</span>, especialidade <span id="contractEsp">___</span>.</div>
             <div class="clause" id="contractClauses"></div>
             <p style="margin-top:16px;text-align:center;font-size:11px;color:var(--muted)">Belo Horizonte, <span id="contractDate">__/__/____</span></p>
@@ -288,7 +288,7 @@
 
           <div class="checkbox-row">
             <input type="checkbox" id="acceptTerms" onchange="checkContract()" />
-            <label for="acceptTerms">Li e aceito os termos do contrato de credenciamento e prestacao de servicos profissionais com a VivaS.</label>
+            <label for="acceptTerms">Li e aceito os termos do contrato de credenciamento e prestacao de servicos profissionais com a vivas.</label>
           </div>
 
           <button class="btn-primary" id="btnSign" onclick="submitContract()" disabled>Assinar contrato eletronicamente</button>
@@ -302,7 +302,7 @@
           </div>
           <div style="text-align:center">
             <h2 style="font-size:22px;font-weight:800;color:var(--wine-deep);margin-bottom:8px">Cadastro realizado com sucesso!</h2>
-            <p style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:16px">Seu contrato assinado foi enviado para <strong id="emailConfirm"></strong>. Você já pode acessar a plataforma VivaS como profissional de saúde.</p>
+            <p style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:16px">Seu contrato assinado foi enviado para <strong id="emailConfirm"></strong>. Você já pode acessar a plataforma vivas como profissional de saúde.</p>
             <div style="background:var(--wine-soft);border-radius:12px;padding:16px;margin-bottom:20px;text-align:left">
               <p style="font-size:13px;font-weight:600;color:var(--wine-deep);margin-bottom:6px">Próximos passos:</p>
               <p style="font-size:13px;color:var(--muted)">1. Acesse vivas.digital com seu email e senha temporária (enviada por email)</p>
@@ -444,13 +444,13 @@
       document.getElementById('contractTitle').textContent = title;
 
       const subtitle = isMedico
-        ? 'Profissional Medico x Plataforma VivaS - Telemedicina (Resolucao CFM n. 2.314/2022)'
-        : 'Profissional de Psicologia x Plataforma VivaS - Atendimento mediado por TDICs (Resolucao CFP n. 09/2024)';
+        ? 'Profissional Medico x Plataforma vivas - Telemedicina (Resolucao CFM n. 2.314/2022)'
+        : 'Profissional de Psicologia x Plataforma vivas - Atendimento mediado por TDICs (Resolucao CFP n. 09/2024)';
       document.getElementById('contractSubtitle').textContent = subtitle;
 
       const prof = isMedico ? 'MEDICO' : 'PSICOLOGO';
       const clauses = isMedico ? [
-        ['1a - DAS DEFINICOES', 'Plataforma: ambiente tecnologico da VivaS que viabiliza triagem inteligente, organizacao de historico clinico, interpretacao de exames, alertas preditivos e teleconsultas. Teleconsulta: consulta medica nao presencial (Resolucao CFM n. 2.314/2022). SRES: Sistema de Registro Eletronico de Saude.'],
+        ['1a - DAS DEFINICOES', 'Plataforma: ambiente tecnologico da vivas que viabiliza triagem inteligente, organizacao de historico clinico, interpretacao de exames, alertas preditivos e teleconsultas. Teleconsulta: consulta medica nao presencial (Resolucao CFM n. 2.314/2022). SRES: Sistema de Registro Eletronico de Saude.'],
         ['2a - DO OBJETO', 'Credenciamento do MEDICO na Plataforma e regulacao da prestacao de servicos medicos na modalidade de teleconsulta. A Plataforma atua como meio tecnologico, nao exercendo a Medicina nem interferindo na autonomia tecnica do MEDICO. A consulta presencial e o padrao-ouro de referencia.'],
         ['3a - DA HABILITACAO', 'O MEDICO declara que possui inscricao ativa no CRM; detem titulo de especialista compativel; mantem certificado digital ICP-Brasil; e mantera seus dados permanentemente atualizados.'],
         ['4a - DA NATUREZA DA RELACAO', 'O MEDICO presta servicos com plena autonomia tecnica e profissional, sem subordinacao, habitualidade obrigatoria ou exclusividade. Nao se estabelece vinculo empregaticio entre as Partes.'],
@@ -458,29 +458,29 @@
         ['6a - DAS OBRIGACOES DA VIVAS', 'Disponibilizar ambiente tecnologico adequado; manter sede em territorio nacional e inscricao no CRM; efetuar repasses devidos; adotar medidas de seguranca; disponibilizar suporte tecnico.'],
         ['7a - DA REMUNERACAO', 'Credenciamento gratuito. Remuneracao por teleconsulta conforme tabela vigente. Repasses em ate 7 dias uteis apos fechamento do ciclo mensal.'],
         ['8a - DA AGENDA', 'O MEDICO gerencia sua propria agenda. Cancelamentos com 24h de antecedencia minima. Faltas reiteradas poderao ensejar descredenciamento.'],
-        ['9a - PROTECAO DE DADOS (LGPD)', 'Tratamento conforme Lei n. 13.709/2018. O MEDICO e controlador dos dados clinicos; a VivaS e operadora quanto a infraestrutura.'],
-        ['10a - PROPRIEDADE INTELECTUAL', 'Plataforma, software e marcas sao de titularidade exclusiva da VivaS.'],
-        ['11a - RESPONSABILIDADE', 'O MEDICO responde pessoalmente por todos os atos profissionais. A VivaS responde por falhas da infraestrutura tecnologica.'],
+        ['9a - PROTECAO DE DADOS (LGPD)', 'Tratamento conforme Lei n. 13.709/2018. O MEDICO e controlador dos dados clinicos; a vivas e operadora quanto a infraestrutura.'],
+        ['10a - PROPRIEDADE INTELECTUAL', 'Plataforma, software e marcas sao de titularidade exclusiva da vivas.'],
+        ['11a - RESPONSABILIDADE', 'O MEDICO responde pessoalmente por todos os atos profissionais. A vivas responde por falhas da infraestrutura tecnologica.'],
         ['12a - VIGENCIA E RESCISAO', 'Prazo indeterminado. Rescisao imotivada com 30 dias de aviso previo. Rescisao imediata em caso de irregularidade profissional.'],
-        ['13a - CONFIDENCIALIDADE', 'Sigilo sobre informacoes da VivaS por 2 anos apos o termino.'],
-        ['14a - DISPOSICOES GERAIS', 'Tolerancia nao implica novacao. VivaS podera alterar o Contrato mediante comunicacao previa.'],
+        ['13a - CONFIDENCIALIDADE', 'Sigilo sobre informacoes da vivas por 2 anos apos o termino.'],
+        ['14a - DISPOSICOES GERAIS', 'Tolerancia nao implica novacao. vivas podera alterar o Contrato mediante comunicacao previa.'],
         ['15a - DO FORO', 'Comarca de Belo Horizonte/MG.'],
         ['16a - DO ACEITE ELETRONICO', 'O aceite eletronico constitui assinatura eletronica com plena validade juridica, registrada com data, hora e endereco IP.']
       ] : [
-        ['1a - DAS DEFINICOES', 'Plataforma: ambiente tecnologico da VivaS para servicos psicologicos mediados por TDICs. TDICs: Tecnologias Digitais da Informacao e da Comunicacao (Resolucao CFP n. 09/2024). Atendimento on-line: servico psicologico prestado a distancia.'],
+        ['1a - DAS DEFINICOES', 'Plataforma: ambiente tecnologico da vivas para servicos psicologicos mediados por TDICs. TDICs: Tecnologias Digitais da Informacao e da Comunicacao (Resolucao CFP n. 09/2024). Atendimento on-line: servico psicologico prestado a distancia.'],
         ['2a - DO OBJETO', 'Credenciamento do PSICOLOGO na Plataforma e regulacao da prestacao de servicos psicologicos na modalidade mediada por TDICs, observado o CEPP e a Resolucao CFP n. 09/2024. A Plataforma nao interfere na autonomia tecnica do PSICOLOGO.'],
         ['3a - CARACTERISTICAS DO SERVICO (Art. 7, CFP 09/2024)', 'Natureza: atendimento psicologico (psicoterapia, orientacao, avaliacao). Recursos: videochamada criptografada, chat seguro e registro documental. Especificidades: dependencia de conexao estavel; necessidade de ambiente privativo.'],
         ['4a - DA HABILITACAO', 'O PSICOLOGO declara que possui inscricao ativa no CRP; reside em territorio nacional; e capacitado para servicos via TDICs; utilizara instrumentos psicologicos somente quando regulamentados e com parecer do SATEPSI.'],
         ['5a - DAS OBRIGACOES DO PSICOLOGO', 'Avaliar viabilidade do atendimento on-line; obter consentimento; manter registro documental com sigilo; manter referencia de rede de apoio; realizar atendimento em ambiente privativo; responder integralmente pelo ato profissional.'],
-        ['6a - DAS OBRIGACOES DA VIVAS', 'Disponibilizar ambiente seguro; manter plano de contingencia; efetuar repasses; tratar dados conforme LGPD; disponibilizar suporte tecnico. A VivaS nao garante volume minimo de atendimentos.'],
+        ['6a - DAS OBRIGACOES DA VIVAS', 'Disponibilizar ambiente seguro; manter plano de contingencia; efetuar repasses; tratar dados conforme LGPD; disponibilizar suporte tecnico. A vivas nao garante volume minimo de atendimentos.'],
         ['7a - DA NATUREZA DA RELACAO', 'O PSICOLOGO atua com autonomia tecnica, sem subordinacao ou exclusividade. Nao se estabelece vinculo empregaticio.'],
         ['8a - DA REMUNERACAO', 'Credenciamento gratuito. Remuneracao por atendimento conforme tabela vigente. Repasses em ate 7 dias uteis. Reajustes com 30 dias de antecedencia.'],
         ['9a - DA AGENDA', 'O PSICOLOGO gerencia a propria agenda. Cancelamentos com 24h de antecedencia. Faltas reiteradas poderao ensejar descredenciamento.'],
-        ['10a - PROTECAO DE DADOS (LGPD)', 'Tratamento conforme LGPD. O PSICOLOGO e controlador dos dados de atendimento; a VivaS e operadora.'],
-        ['11a - PROPRIEDADE INTELECTUAL', 'Plataforma, software e marcas sao de titularidade exclusiva da VivaS.'],
-        ['12a - RESPONSABILIDADE', 'O PSICOLOGO responde pessoalmente pelos atos profissionais. A VivaS responde por falhas da infraestrutura.'],
+        ['10a - PROTECAO DE DADOS (LGPD)', 'Tratamento conforme LGPD. O PSICOLOGO e controlador dos dados de atendimento; a vivas e operadora.'],
+        ['11a - PROPRIEDADE INTELECTUAL', 'Plataforma, software e marcas sao de titularidade exclusiva da vivas.'],
+        ['12a - RESPONSABILIDADE', 'O PSICOLOGO responde pessoalmente pelos atos profissionais. A vivas responde por falhas da infraestrutura.'],
         ['13a - VIGENCIA E RESCISAO', 'Prazo indeterminado. Rescisao imotivada com 30 dias de aviso previo. Rescisao imediata em caso de irregularidade.'],
-        ['14a - CONFIDENCIALIDADE', 'Sigilo sobre informacoes da VivaS por 2 anos apos o termino.'],
+        ['14a - CONFIDENCIALIDADE', 'Sigilo sobre informacoes da vivas por 2 anos apos o termino.'],
         ['15a - DISPOSICOES GERAIS E FORO', 'Tolerancia nao implica novacao. Foro: Comarca de Belo Horizonte/MG.'],
         ['16a - DO ACEITE ELETRONICO', 'O aceite eletronico constitui assinatura eletronica com plena validade juridica, registrada com data, hora e endereco IP.']
       ];

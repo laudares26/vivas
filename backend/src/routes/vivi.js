@@ -2,7 +2,7 @@ const router = require('express').Router();
 const groq = require('../services/groq');
 
 // Local fallback used only when the LLM is unavailable.
-const FALLBACK = 'Estou com uma instabilidade momentanea para responder. Se for urgente, procure atendimento imediato (SAMU 192) ou, em crise emocional, ligue para o CVV no 188. Voce tambem pode iniciar uma teleconsulta pela VivaS. Pode tentar novamente em instantes?';
+const FALLBACK = 'Estou com uma instabilidade momentanea para responder. Se for urgente, procure atendimento imediato (SAMU 192) ou, em crise emocional, ligue para o CVV no 188. Voce tambem pode iniciar uma teleconsulta pela vivas. Pode tentar novamente em instantes?';
 
 // POST /api/vivi/chat — LLM-powered health/psychiatry/psychology assistant
 router.post('/chat', async (req, res) => {

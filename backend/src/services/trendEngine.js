@@ -13,7 +13,7 @@
 //      same clinical direction (concordance)?
 // The alert is born from the combination of the three.
 //
-// Reference: "VivaS — Camada de Decisão Preventiva (motor de tendência)".
+// Reference: "vivas — Camada de Decisão Preventiva (motor de tendência)".
 
 // Default tunable parameters (spec §6/§8). These are a STARTING POINT, not
 // truth — they are meant to be calibrated with the progressive-cut datasets.
